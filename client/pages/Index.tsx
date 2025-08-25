@@ -467,7 +467,7 @@ export default function Index() {
       <div key={section.id} className="border border-border rounded-lg p-4 space-y-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            {section.type === 'markdown' && <Markdown className="h-4 w-4" />}
+            {section.type === 'markdown' && <Hash className="h-4 w-4" />}
             {section.type === 'text' && <Type className="h-4 w-4" />}
             {section.type === 'code' && <Code className="h-4 w-4" />}
             {section.type === 'image' && <Image className="h-4 w-4" />}
