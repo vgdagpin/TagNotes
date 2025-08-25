@@ -133,6 +133,21 @@ export const handleDeleteNote: RequestHandler = (req, res) => {
     res.status(204).send();
 }
 
+export const handleUpdateNoteTitle: RequestHandler = (req, res) => {
+    const { noteId } = req.params;
+    const { title } = req.body;
+
+    const note = mockNotes.find(n => n.id === noteId);
+    if (!note) {
+        return res.status(404).json({ error: 'Note not found' });
+    }
+
+    note.title = title;
+    note.updatedAt = new Date();
+
+    res.status(200).json(note);
+}
+
 export const handleCreateNote: RequestHandler = (req, res) => {
     const { id, title, sections, tags, createdAt, updatedAt } = req.body;
 
@@ -232,6 +247,26 @@ export const handleUpdateSectionContent: RequestHandler = (req, res) => {
     }
 
     section.content = content;
+    note.updatedAt = new Date();
+
+    res.status(200).json(section);
+}
+
+export const handleUpdateSectionLanguage: RequestHandler = (req, res) => {
+    const { noteId, sectionId } = req.params;
+    const { language } = req.body;
+
+    const note = mockNotes.find(n => n.id === noteId);
+    if (!note) {
+        return res.status(404).json({ error: 'Note not found' });
+    }
+
+    const section = note.sections.find(s => s.id === sectionId);
+    if (!section) {
+        return res.status(404).json({ error: 'Section not found' });
+    }
+
+    section.language = language;
     note.updatedAt = new Date();
 
     res.status(200).json(section);

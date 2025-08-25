@@ -2,7 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { handleDemo } from "./routes/demo";
-import { handleGetNotes, handleFindNote, handleAddNoteSection, handleDeleteNoteSection, handleUpdateSectionContent, handleCreateNote, handleAddNoteTag, handleRemoveNoteTag, handleDeleteNote } from "./routes/notes";
+import { handleGetNotes, handleFindNote, handleAddNoteSection, handleDeleteNoteSection, handleUpdateSectionContent, handleCreateNote, handleAddNoteTag, handleRemoveNoteTag, handleDeleteNote, handleUpdateNoteTitle, handleUpdateSectionLanguage } from "./routes/notes";
 
 export function createServer() {
   const app = express();
@@ -23,6 +23,7 @@ export function createServer() {
   app.get('/api/notes', handleGetNotes);
   app.get('/api/notes/:noteId', handleFindNote);
   app.delete('/api/notes/:noteId', handleDeleteNote);
+  app.put('/api/notes/:noteId/setTitle', handleUpdateNoteTitle);
 
   app.post('/api/notes', handleCreateNote);
 
@@ -33,6 +34,7 @@ export function createServer() {
   app.delete('/api/notes/:noteId/deleteSection/:sectionId', handleDeleteNoteSection);
 
   app.put('/api/notes/:noteId/updateSection/:sectionId/content', handleUpdateSectionContent);
+  app.put('/api/notes/:noteId/updateSection/:sectionId/language', handleUpdateSectionLanguage);
 
   return app;
 }

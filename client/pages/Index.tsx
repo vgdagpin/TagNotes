@@ -225,8 +225,10 @@ export default function Index() {
   // Save section changes
   const saveSection = (noteId: string, sectionId: string) => {
     const content = sectionContents[sectionId] || "";
+    const language = sectionLanguages[sectionId] || "";
 
     axios.put(`/api/notes/${noteId}/updateSection/${sectionId}/content`, { content });
+    axios.put(`/api/notes/${noteId}/updateSection/${sectionId}/language`, { language });
 
     setNotes((prev) =>
       prev.map((note) => ({
@@ -334,6 +336,8 @@ export default function Index() {
   // Save title changes
   const saveTitle = (noteId: string) => {
     const title = titleContents[noteId]?.trim() || "Untitled";
+
+    axios.put(`/api/notes/${noteId}/setTitle`, { title });
 
     setNotes((prev) =>
       prev.map((note) =>
