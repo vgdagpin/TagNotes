@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +28,6 @@ import {
 } from "lucide-react";
 import TnSection from "./tn-section";
 import { Note, Section } from "@shared/api";
-import { set } from "date-fns";
 
 
 type TnNoteViewerProps = {
@@ -38,9 +37,26 @@ type TnNoteViewerProps = {
 };
 
 const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
-    const [note, setNote] = useState<Note | null>(null);
+    const [note, setNote] = useState<Note>({ id: noteId, title: "", tags: [], sections: [], createdAt: new Date(), updatedAt: new Date() });
     const [editingTitle, setEditingTitle] = useState(false);
-    const [editingSection, setEditingSection] = useState(false);
+
+    useEffect(() => {
+        const fetchNote = async () => {
+            const res = await axios.get(`/api/notes/${noteId}`);
+            const data = res.data;
+            setNote({
+                ...data,
+                createdAt: new Date(data.createdAt),
+                updatedAt: new Date(data.updatedAt),
+                sections: data.sections.map((section: any) => ({
+                    ...section,
+                    createdAt: new Date(section.createdAt),
+                })),
+            });
+        };
+
+        fetchNote();
+    }, [noteId]);
 
     // Format date for display
     const formatDate = (date: Date) => {
@@ -74,14 +90,14 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
         });
     };
 
-      // Delete note
-      const deleteNote = (noteId: string) => {
+    // Delete note
+    const deleteNote = (noteId: string) => {
         if (!window.confirm("Are you sure you want to delete this note? This action cannot be undone.")) return;
-    
+
         axios.delete(`/api/notes/${noteId}`);
-    
+
         onDeleteNote?.call(null, noteId);
-      };
+    };
 
     // Remove tag from note
     const removeTagFromNote = (noteId: string, tagToRemove: string) => {
@@ -155,48 +171,85 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
     }
 
     const saveTitle = () => {
-    
-        axios.put(`/api/notes/${note.id}/setTitle`, { title : note.title });
-    
+
+        axios.put(`/api/notes/${note.id}/setTitle`, { title: note.title });
+
         setEditingTitle(false);
     };
 
     // Add new section to note
-  const addSection = (noteId: string, sectionType: Section["type"]) => {
-    const newSection: Section = {
-      id: generateId(),
-      type: sectionType,
-      content: "",
-      language: sectionType === "code" ? "javascript" : undefined,
-      createdAt: new Date(),
+    const addSection = (noteId: string, sectionType: Section["type"]) => {
+        const newSection: Section = {
+            id: generateId(),
+            type: sectionType,
+            content: "",
+            language: sectionType === "code" ? "javascript" : undefined,
+            createdAt: new Date(),
+        };
+
+        axios.post(`/api/notes/${noteId}/addSection`, newSection);
+
+        setNote((prev) => {
+            if (!prev) return null;
+            return {
+                ...prev,
+                sections: [...prev.sections, newSection],
+                updatedAt: new Date(),
+            };
+        });
+
+        // setNotes((prev) =>
+        //   prev.map((note) =>
+        //     note.id === noteId
+        //       ? {
+        //         ...note,
+        //         sections: [...note.sections, newSection],
+        //         updatedAt: new Date(),
+        //       }
+        //       : note,
+        //   ),
+        // );
+
+        // setSectionContents((prev) => ({ ...prev, [newSection.id]: "" }));
+        // setEditingSections((prev) => new Set([...prev, newSection.id]));
     };
 
-    axios.post(`/api/notes/${noteId}/addSection`, newSection);
+    // Save section changes
+    const saveSection = (sectionId: string, content: string, language?: string) => {
 
-    setNote((prev) => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        sections: [...prev.sections, newSection],
-        updatedAt: new Date(),
-      };
-    });
+        axios.put(`/api/notes/${noteId}/updateSection/${sectionId}/content`, { content });
 
-    // setNotes((prev) =>
-    //   prev.map((note) =>
-    //     note.id === noteId
-    //       ? {
-    //         ...note,
-    //         sections: [...note.sections, newSection],
-    //         updatedAt: new Date(),
-    //       }
-    //       : note,
-    //   ),
-    // );
+        if (language) {
+            axios.put(`/api/notes/${noteId}/updateSection/${sectionId}/language`, { language });
+        }
 
-    // setSectionContents((prev) => ({ ...prev, [newSection.id]: "" }));
-    // setEditingSections((prev) => new Set([...prev, newSection.id]));
-  };
+        setNote((prev) => {
+            if (!prev) return null;
+            return {
+                ...prev,
+                sections: prev.sections.map((section) =>
+                    section.id === sectionId ? { ...section, content, language } : section
+                ),
+                updatedAt: new Date(),
+            };
+        });
+
+        //   setNotes((prev) =>
+        //     prev.map((note) => ({
+        //       ...note,
+        //       sections: note.sections.map((section) =>
+        //         section.id === sectionId ? { ...section, content } : section,
+        //       ),
+        //       updatedAt: new Date(),
+        //     })),
+        //   );
+
+        //   setEditingSections((prev) => {
+        //     const newSet = new Set(prev);
+        //     newSet.delete(sectionId);
+        //     return newSet;
+        //   });
+    };
 
     return (
         <TabsContent
@@ -356,13 +409,11 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
                         <TnSection
                             key={section.id}
                             section={section}
-                            isEditingSection={editingSection}
                             noteId={noteId}
-                            onToggleSectionEdit={(sectionId) => setEditingSection(true)}
-                            // onSaveSection={(sectionId) => saveSection(noteId, sectionId)}
-                            // onDeleteSection={(noteId, sectionId) => deleteSection(noteId, sectionId)}
-                            // onUpdateSectionLanguage={(sectionId, language) => updateSectionLanguage(sectionId, language)}
-                            // onUpdateSectionContent={(sectionId, content) => updateSectionContent(sectionId, content)}
+                            onSaveSection={(content, language) => saveSection(section.id, content, language)}
+                        // onDeleteSection={(noteId, sectionId) => deleteSection(noteId, sectionId)}
+                        // onUpdateSectionLanguage={(sectionId, language) => updateSectionLanguage(sectionId, language)}
+                        // onUpdateSectionContent={(sectionId, content) => updateSectionContent(sectionId, content)}
                         />
                     )
                 )}

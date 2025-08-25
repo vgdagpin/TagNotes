@@ -26,6 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Note, Section } from "@shared/api";
 import TnSection from "@/components/tagnotes/tn-section";
+import TnNoteViewer from "@/components/tagnotes/tn-note-viewer";
 
 export default function Index() {
   // State management
@@ -72,16 +73,16 @@ export default function Index() {
     const contents: Record<string, string> = {};
     const languages: Record<string, string> = {};
     const titles: Record<string, string> = {};
-    notes.forEach((note) => {
-      tags[note.id] = [...note.tags];
-      titles[note.id] = note.title;
-      note.sections.forEach((section) => {
-        contents[section.id] = section.content;
-        if (section.language) {
-          languages[section.id] = section.language;
-        }
-      });
-    });
+    // notes.forEach((note) => {
+    //   tags[note.id] = [...note.tags];
+    //   titles[note.id] = note.title;
+    //   note.sections.forEach((section) => {
+    //     contents[section.id] = section.content;
+    //     if (section.language) {
+    //       languages[section.id] = section.language;
+    //     }
+    //   });
+    // });
     setNoteTags(tags);
     setSectionContents(contents);
     setSectionLanguages(languages);
@@ -578,219 +579,8 @@ export default function Index() {
                 const note = notes.find((n) => n.id === noteId);
                 if (!note) return null;
 
-                return (
-                  <TabsContent
-                    key={noteId}
-                    value={noteId}
-                    className="h-full mt-0 data-[state=active]:flex flex-col"
-                    onPaste={(e) => {
-                      handleImagePaste(noteId, e.nativeEvent);
-                    }}
-                  >
-                    {/* Note Header */}
-                    <div className="p-4 border-b border-border bg-card group">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          {/* Editable Title */}
-                          <div className="flex items-center gap-2 mb-1">
-                            {editingTitles.has(noteId) ? (
-                              <Input
-                                value={titleContents[noteId] || note.title}
-                                onChange={(e) =>
-                                  updateTitleContent(noteId, e.target.value)
-                                }
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") {
-                                    saveTitle(noteId);
-                                  } else if (e.key === "Escape") {
-                                    setTitleContents((prev) => ({
-                                      ...prev,
-                                      [noteId]: note.title,
-                                    }));
-                                    toggleTitleEdit(noteId);
-                                  }
-                                }}
-                                onBlur={() => saveTitle(noteId)}
-                                className="text-xl font-semibold bg-transparent border-none p-0 h-auto focus-visible:ring-1 focus-visible:ring-ring"
-                                autoFocus
-                              />
-                            ) : (
-                              <>
-                                <h2
-                                  className="text-xl font-semibold text-foreground cursor-pointer hover:bg-accent hover:bg-opacity-50 rounded px-1 py-0.5 -mx-1 transition-colors"
-                                  onClick={() => toggleTitleEdit(noteId)}
-                                  title="Click to edit title"
-                                >
-                                  {note.title}
-                                </h2>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                  onClick={() => toggleTitleEdit(noteId)}
-                                >
-                                  <Edit3 className="h-3 w-3" />
-                                </Button>
-                              </>
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground mb-3">
-                            Updated {formatDate(note.updatedAt)}
-                          </p>
-
-                          {/* Tags Section */}
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Tag className="h-4 w-4" />
-                              Tags
-                            </div>
-
-                            <div className="space-y-2">
-                              {/* Tag Input */}
-                              <div className="flex gap-2">
-                                <Input
-                                  placeholder="Add tag..."
-                                  className="flex-1"
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter") {
-                                      const input =
-                                        e.target as HTMLInputElement;
-                                      addTagToNote(noteId, input.value);
-                                      input.value = "";
-                                    }
-                                  }}
-                                />
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    const input = (e.target as HTMLElement)
-                                      .closest(".flex")
-                                      ?.querySelector(
-                                        "input",
-                                      ) as HTMLInputElement;
-                                    if (input) {
-                                      addTagToNote(noteId, input.value);
-                                      input.value = "";
-                                    }
-                                  }}
-                                >
-                                  <Plus className="h-4 w-4" />
-                                </Button>
-                              </div>
-
-                              {/* Display Tags */}
-                              <div className="flex flex-wrap gap-2">
-                                {(noteTags[noteId] || note.tags).map((tag) => (
-                                  <Badge
-                                    key={tag}
-                                    variant="secondary"
-                                    className="flex items-center gap-1"
-                                  >
-                                    <Hash className="h-3 w-3" />
-                                    {tag}
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
-                                      onClick={() =>
-                                        removeTagFromNote(noteId, tag)
-                                      }
-                                    >
-                                      <X className="h-3 w-3" />
-                                    </Button>
-                                  </Badge>
-                                ))}
-                                {(noteTags[noteId] || note.tags).length ===
-                                  0 && (
-                                    <span className="text-muted-foreground italic text-sm">
-                                      No tags yet
-                                    </span>
-                                  )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 ml-4">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => deleteNote(noteId)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Note Sections */}
-                    <div className="flex-1 p-4 overflow-y-auto space-y-4">
-                      {note.sections.length === 0 ? (
-                        <div className="text-center text-muted-foreground py-8">
-                          <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                          <p>
-                            No sections yet. Add a section below to get started.
-                          </p>
-                        </div>
-                      ) : (
-                        note.sections.map((section) =>
-                          <TnSection
-                            key={section.id}
-                            section={section}
-                            isEditingSection={editingSections.has(section.id)}
-                            noteId={noteId}
-                            onToggleSectionEdit={(sectionId) => toggleSectionEdit(sectionId)}
-                            onSaveSection={(sectionId) => saveSection(noteId, sectionId)}
-                            onDeleteSection={(noteId, sectionId) => deleteSection(noteId, sectionId)}
-                            onUpdateSectionLanguage={(sectionId, language) => updateSectionLanguage(sectionId, language)}
-                            onUpdateSectionContent={(sectionId, content) => updateSectionContent(sectionId, content)}
-                          />
-                        )
-                      )}
-
-                      {/* Add Section Dropdown - At Bottom */}
-                      <div className="pt-8 border-t border-border">
-                        <div className="flex items-center gap-2 mb-4 text-sm text-muted-foreground">
-                          <Plus className="h-4 w-4" />
-                          Add New Section
-                        </div>
-                        <Select
-                          onValueChange={(value) =>
-                            addSection(noteId, value as Section["type"])
-                          }
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Choose section type..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="text">
-                              <div className="flex items-center gap-2">
-                                <Type className="h-4 w-4" />
-                                Plain Text
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="markdown">
-                              <div className="flex items-center gap-2">
-                                <Hash className="h-4 w-4" />
-                                Markdown
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="code">
-                              <div className="flex items-center gap-2">
-                                <Code className="h-4 w-4" />
-                                Code
-                              </div>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Paste images from clipboard to add image sections
-                        </p>
-                      </div>
-                    </div>
-                  </TabsContent>
-                );
+                return (<TnNoteViewer key={noteId} noteId={noteId} onDeleteNote={deleteNote} />)
+              
               })}
             </div>
           </Tabs>

@@ -112,7 +112,11 @@ export const handleGetNotes: RequestHandler = (req, res) => {
     // Parse skip/take as integers, default to 0/total
     const skipNum = Number(skip) || 0;
     const takeNum = Number(take) || total;
-    const summary = filtered.slice(skipNum, skipNum + takeNum);
+    // Only return id and title for each note in the summary
+    const summary = filtered.slice(skipNum, skipNum + takeNum).map(note => ({
+        id: note.id,
+        title: note.title
+    }));
 
     res.status(200).json({
         search,

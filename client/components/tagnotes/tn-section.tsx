@@ -22,21 +22,27 @@ import {
     Image,
 } from "lucide-react";
 import { Section } from "@shared/api";
+import { useState } from "react";
 
 type TnSectionProps = {
     section: Section;
-    isEditingSection: boolean;
     noteId: string;
 
-    onToggleSectionEdit?: (sectionId: string) => void;
-    onSaveSection?: (sectionId: string) => void;
+    onSaveSection?: (content: string, language?: string) => void;
     onDeleteSection?: (noteId: string, sectionId: string) => void;
-    onUpdateSectionLanguage?: (sectionId: string, language: string) => void;
-    onUpdateSectionContent?: (sectionId: string, content: string) => void;
 };
 
-const TnSection = ({ section, isEditingSection, noteId, onToggleSectionEdit, onSaveSection, onDeleteSection, onUpdateSectionLanguage, onUpdateSectionContent }: TnSectionProps) => {
-    
+const TnSection = ({ section, noteId, onSaveSection, onDeleteSection }: TnSectionProps) => {
+    const [sectionEdit, setSectionEdit] = useState(false);
+
+    const [language, setLanguage] = useState(section.language);
+    const [content, setContent] = useState(section.content);
+
+    const handleSave = () => {
+        onSaveSection?.call(null, content, language);
+        setSectionEdit(false);
+    }
+
     return (
         <div
             key={section.id}
@@ -58,11 +64,11 @@ const TnSection = ({ section, isEditingSection, noteId, onToggleSectionEdit, onS
 
                 {/* Hover controls */}
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {isEditingSection ? (
+                    {sectionEdit ? (
                         <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => onSaveSection?.call(null, section.id)}
+                            onClick={() => handleSave()}
                         >
                             <Save className="h-3 w-3" />
                         </Button>
@@ -70,7 +76,7 @@ const TnSection = ({ section, isEditingSection, noteId, onToggleSectionEdit, onS
                         <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => onToggleSectionEdit?.call(null, section.id)}
+                            onClick={() => setSectionEdit(true)}
                         >
                             <Edit3 className="h-3 w-3" />
                         </Button>
@@ -106,14 +112,12 @@ const TnSection = ({ section, isEditingSection, noteId, onToggleSectionEdit, onS
                         />
                     </DialogContent>
                 </Dialog>
-            ) : isEditingSection ? (
+            ) : sectionEdit ? (
                 <div className="space-y-2">
                     {section.type === "code" && (
                         <Select
-                            value={section.language || "javascript"}
-                            onValueChange={(value) =>
-                                onUpdateSectionLanguage?.call(null, section.id, value)
-                            }
+                            value={language}
+                            onValueChange={(value) => setLanguage(value) }
                         >
                             <SelectTrigger className="w-40">
                                 <SelectValue />
@@ -133,8 +137,8 @@ const TnSection = ({ section, isEditingSection, noteId, onToggleSectionEdit, onS
                         </Select>
                     )}
                     <Textarea
-                        value={section.content}
-                        onChange={(e) => onUpdateSectionContent?.call(null, section.id, e.target.value)}
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
                         placeholder={`Enter ${section.type} content...`}
                         className="min-h-32 resize-vertical"
                     />
@@ -142,11 +146,11 @@ const TnSection = ({ section, isEditingSection, noteId, onToggleSectionEdit, onS
             ) : (
                 <div
                     className="prose max-w-none"
-                    onClick={() => onToggleSectionEdit?.call(section.id)}
+                    onClick={() => setSectionEdit(true)}
                 >
                     {section.type === "code" ? (
                         <SyntaxHighlighter
-                            language={section.language || "javascript"}
+                            language={language || "javascript"}
                             style={tomorrow}
                             className="rounded border cursor-pointer"
                         >
