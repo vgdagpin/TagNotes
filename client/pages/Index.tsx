@@ -207,6 +207,26 @@ export default function Index() {
     setNoteContents((prev) => ({ ...prev, [noteId]: content }));
   };
 
+  // Add tag to note
+  const addTagToNote = (noteId: string, tag: string) => {
+    const trimmedTag = tag.trim().toLowerCase();
+    if (!trimmedTag) return;
+
+    setNoteTags((prev) => {
+      const currentTags = prev[noteId] || [];
+      if (currentTags.includes(trimmedTag)) return prev;
+      return { ...prev, [noteId]: [...currentTags, trimmedTag] };
+    });
+  };
+
+  // Remove tag from note
+  const removeTagFromNote = (noteId: string, tagToRemove: string) => {
+    setNoteTags((prev) => ({
+      ...prev,
+      [noteId]: (prev[noteId] || []).filter((tag) => tag !== tagToRemove),
+    }));
+  };
+
   // Format date for display
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("en-US", {
@@ -272,6 +292,20 @@ export default function Index() {
                     <p className="text-sm text-muted-foreground mt-1">
                       {getPreviewText(note.content)}
                     </p>
+                    {note.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {note.tags.slice(0, 3).map((tag) => (
+                          <Badge key={tag} variant="secondary" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                        {note.tags.length > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{note.tags.length - 3}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
                     <p className="text-xs text-muted-foreground mt-2">
                       {formatDate(note.updatedAt)}
                     </p>
