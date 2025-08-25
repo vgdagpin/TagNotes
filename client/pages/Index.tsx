@@ -163,6 +163,8 @@ export default function Index() {
   const [editingSections, setEditingSections] = useState<Set<string>>(
     new Set(),
   );
+  const [editingTitles, setEditingTitles] = useState<Set<string>>(new Set());
+  const [titleContents, setTitleContents] = useState<Record<string, string>>({});
 
   // Initialize note tags and section contents for editing
   useEffect(() => {
