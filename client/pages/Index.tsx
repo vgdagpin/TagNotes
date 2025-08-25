@@ -5,10 +5,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { tomorrow } from "react-syntax-highlighter/dist/esm/styles/prism";
 import {
   Search,
   Plus,
@@ -31,7 +37,7 @@ import { cn } from "@/lib/utils";
 // Types for our note system
 interface Section {
   id: string;
-  type: 'markdown' | 'text' | 'code' | 'image';
+  type: "markdown" | "text" | "code" | "image";
   content: string;
   language?: string; // for code sections
   imageData?: string; // for image sections (base64)
@@ -56,13 +62,15 @@ const mockNotes: Note[] = [
       {
         id: "s1",
         type: "text",
-        content: "This is your first note! You can now add different types of sections to organize your content better.",
+        content:
+          "This is your first note! You can now add different types of sections to organize your content better.",
         createdAt: new Date("2024-01-15T10:00:00"),
       },
       {
         id: "s2",
         type: "markdown",
-        content: "## Features\\n\\n- Create new notes with the + tab\\n- Search through your notes and tags\\n- Add **markdown**, plain text, code, and image sections\\n- Edit and save changes\\n- Responsive design",
+        content:
+          "## Features\\n\\n- Create new notes with the + tab\\n- Search through your notes and tags\\n- Add **markdown**, plain text, code, and image sections\\n- Edit and save changes\\n- Responsive design",
         createdAt: new Date("2024-01-15T10:01:00"),
       },
     ],
@@ -83,7 +91,8 @@ const mockNotes: Note[] = [
       {
         id: "s4",
         type: "markdown",
-        content: "1. Personal portfolio website\\n2. Recipe management app\\n3. Habit tracker\\n4. Book reading list\\n5. Photo gallery with tags",
+        content:
+          "1. Personal portfolio website\\n2. Recipe management app\\n3. Habit tracker\\n4. Book reading list\\n5. Photo gallery with tags",
         createdAt: new Date("2024-01-14T14:31:00"),
       },
     ],
@@ -98,13 +107,15 @@ const mockNotes: Note[] = [
       {
         id: "s5",
         type: "markdown",
-        content: "## Team meeting highlights\\n\\n- Discussed Q1 goals\\n- New feature roadmap review\\n- Budget planning for next quarter\\n- Team building event planning",
+        content:
+          "## Team meeting highlights\\n\\n- Discussed Q1 goals\\n- New feature roadmap review\\n- Budget planning for next quarter\\n- Team building event planning",
         createdAt: new Date("2024-01-12T09:15:00"),
       },
       {
         id: "s6",
         type: "text",
-        content: "Action items:\\n- Follow up with design team\\n- Review budget proposal\\n- Schedule 1:1s with team members",
+        content:
+          "Action items:\\n- Follow up with design team\\n- Review budget proposal\\n- Schedule 1:1s with team members",
         createdAt: new Date("2024-01-12T09:16:00"),
       },
     ],
@@ -119,13 +130,15 @@ const mockNotes: Note[] = [
       {
         id: "s7",
         type: "markdown",
-        content: "## Useful learning resources\\n\\n### React & TypeScript\\n- React documentation\\n- TypeScript handbook\\n- Advanced React patterns",
+        content:
+          "## Useful learning resources\\n\\n### React & TypeScript\\n- React documentation\\n- TypeScript handbook\\n- Advanced React patterns",
         createdAt: new Date("2024-01-10T16:45:00"),
       },
       {
         id: "s8",
         type: "code",
-        content: "// Example React component\\nconst MyComponent = () => {\\n  const [count, setCount] = useState(0);\\n  \\n  return (\\n    <button onClick={() => setCount(count + 1)}>\\n      Count: {count}\\n    </button>\\n  );\\n};",
+        content:
+          "// Example React component\\nconst MyComponent = () => {\\n  const [count, setCount] = useState(0);\\n  \\n  return (\\n    <button onClick={() => setCount(count + 1)}>\\n      Count: {count}\\n    </button>\\n  );\\n};",
         language: "javascript",
         createdAt: new Date("2024-01-10T16:46:00"),
       },
@@ -143,10 +156,16 @@ export default function Index() {
   const [openTabs, setOpenTabs] = useState<string[]>(["1"]); // Start with first note open
   const [activeTab, setActiveTab] = useState("1");
   const [noteTags, setNoteTags] = useState<Record<string, string[]>>({});
-  const [sectionContents, setSectionContents] = useState<Record<string, string>>({});
-  const [editingSections, setEditingSections] = useState<Set<string>>(new Set());
+  const [sectionContents, setSectionContents] = useState<
+    Record<string, string>
+  >({});
+  const [editingSections, setEditingSections] = useState<Set<string>>(
+    new Set(),
+  );
   const [editingTitles, setEditingTitles] = useState<Set<string>>(new Set());
-  const [titleContents, setTitleContents] = useState<Record<string, string>>({});
+  const [titleContents, setTitleContents] = useState<Record<string, string>>(
+    {},
+  );
 
   // Initialize note tags, section contents, and title contents for editing
   useEffect(() => {
@@ -173,8 +192,8 @@ export default function Index() {
     return notes.filter(
       (note) =>
         note.title.toLowerCase().includes(query) ||
-        note.sections.some(section => 
-          section.content.toLowerCase().includes(query)
+        note.sections.some((section) =>
+          section.content.toLowerCase().includes(query),
         ) ||
         note.tags.some((tag) => tag.toLowerCase().includes(query)),
     );
@@ -196,7 +215,7 @@ export default function Index() {
           type: "text",
           content: "",
           createdAt: new Date(),
-        }
+        },
       ],
       tags: [],
       createdAt: new Date(),
@@ -216,20 +235,26 @@ export default function Index() {
   };
 
   // Add new section to note
-  const addSection = (noteId: string, sectionType: Section['type']) => {
+  const addSection = (noteId: string, sectionType: Section["type"]) => {
     const newSection: Section = {
       id: generateId(),
       type: sectionType,
       content: "",
-      language: sectionType === 'code' ? 'javascript' : undefined,
+      language: sectionType === "code" ? "javascript" : undefined,
       createdAt: new Date(),
     };
 
-    setNotes((prev) => prev.map((note) => 
-      note.id === noteId 
-        ? { ...note, sections: [...note.sections, newSection], updatedAt: new Date() }
-        : note
-    ));
+    setNotes((prev) =>
+      prev.map((note) =>
+        note.id === noteId
+          ? {
+              ...note,
+              sections: [...note.sections, newSection],
+              updatedAt: new Date(),
+            }
+          : note,
+      ),
+    );
 
     setSectionContents((prev) => ({ ...prev, [newSection.id]: "" }));
     setEditingSections((prev) => new Set([...prev, newSection.id]));
@@ -237,15 +262,17 @@ export default function Index() {
 
   // Delete section
   const deleteSection = (noteId: string, sectionId: string) => {
-    setNotes((prev) => prev.map((note) => 
-      note.id === noteId 
-        ? { 
-            ...note, 
-            sections: note.sections.filter(s => s.id !== sectionId),
-            updatedAt: new Date()
-          }
-        : note
-    ));
+    setNotes((prev) =>
+      prev.map((note) =>
+        note.id === noteId
+          ? {
+              ...note,
+              sections: note.sections.filter((s) => s.id !== sectionId),
+              updatedAt: new Date(),
+            }
+          : note,
+      ),
+    );
 
     setSectionContents((prev) => {
       const newContents = { ...prev };
@@ -267,12 +294,14 @@ export default function Index() {
 
   // Update section language (for code sections)
   const updateSectionLanguage = (sectionId: string, language: string) => {
-    setNotes((prev) => prev.map((note) => ({
-      ...note,
-      sections: note.sections.map((section) =>
-        section.id === sectionId ? { ...section, language } : section
-      ),
-    })));
+    setNotes((prev) =>
+      prev.map((note) => ({
+        ...note,
+        sections: note.sections.map((section) =>
+          section.id === sectionId ? { ...section, language } : section,
+        ),
+      })),
+    );
   };
 
   // Toggle section edit mode
@@ -291,16 +320,16 @@ export default function Index() {
   // Save section changes
   const saveSection = (sectionId: string) => {
     const content = sectionContents[sectionId] || "";
-    
-    setNotes((prev) => prev.map((note) => ({
-      ...note,
-      sections: note.sections.map((section) =>
-        section.id === sectionId 
-          ? { ...section, content }
-          : section
-      ),
-      updatedAt: new Date(),
-    })));
+
+    setNotes((prev) =>
+      prev.map((note) => ({
+        ...note,
+        sections: note.sections.map((section) =>
+          section.id === sectionId ? { ...section, content } : section,
+        ),
+        updatedAt: new Date(),
+      })),
+    );
 
     setEditingSections((prev) => {
       const newSet = new Set(prev);
@@ -316,7 +345,7 @@ export default function Index() {
 
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
-      if (item.type.indexOf('image') !== -1) {
+      if (item.type.indexOf("image") !== -1) {
         const file = item.getAsFile();
         if (file) {
           const reader = new FileReader();
@@ -341,11 +370,17 @@ export default function Index() {
       createdAt: new Date(),
     };
 
-    setNotes((prev) => prev.map((note) => 
-      note.id === noteId 
-        ? { ...note, sections: [...note.sections, newSection], updatedAt: new Date() }
-        : note
-    ));
+    setNotes((prev) =>
+      prev.map((note) =>
+        note.id === noteId
+          ? {
+              ...note,
+              sections: [...note.sections, newSection],
+              updatedAt: new Date(),
+            }
+          : note,
+      ),
+    );
   };
 
   // Open note in tab
@@ -392,12 +427,12 @@ export default function Index() {
   // Save title changes
   const saveTitle = (noteId: string) => {
     const title = titleContents[noteId]?.trim() || "Untitled";
-    
-    setNotes((prev) => prev.map((note) => 
-      note.id === noteId 
-        ? { ...note, title, updatedAt: new Date() }
-        : note
-    ));
+
+    setNotes((prev) =>
+      prev.map((note) =>
+        note.id === noteId ? { ...note, title, updatedAt: new Date() } : note,
+      ),
+    );
 
     setEditingTitles((prev) => {
       const newSet = new Set(prev);
@@ -410,11 +445,11 @@ export default function Index() {
   const saveNote = (noteId: string) => {
     const tags = noteTags[noteId] || [];
 
-    setNotes((prev) => prev.map((note) => 
-      note.id === noteId 
-        ? { ...note, tags, updatedAt: new Date() }
-        : note
-    ));
+    setNotes((prev) =>
+      prev.map((note) =>
+        note.id === noteId ? { ...note, tags, updatedAt: new Date() } : note,
+      ),
+    );
   };
 
   // Delete note
@@ -460,10 +495,12 @@ export default function Index() {
 
   // Get preview text for sidebar
   const getPreviewText = (sections: Section[]) => {
-    const firstTextSection = sections.find(s => s.content.trim());
+    const firstTextSection = sections.find((s) => s.content.trim());
     if (!firstTextSection) return "Empty note";
-    return firstTextSection.content.slice(0, 60).replace(/\\n/g, ' ') + 
-           (firstTextSection.content.length > 60 ? '...' : '');
+    return (
+      firstTextSection.content.slice(0, 60).replace(/\\n/g, " ") +
+      (firstTextSection.content.length > 60 ? "..." : "")
+    );
   };
 
   // Render section based on type with hover controls
@@ -472,19 +509,24 @@ export default function Index() {
     const content = sectionContents[section.id] || section.content;
 
     return (
-      <div key={section.id} className="border border-border rounded-lg p-4 space-y-2 group hover:border-accent transition-colors">
+      <div
+        key={section.id}
+        className="border border-border rounded-lg p-4 space-y-2 group hover:border-accent transition-colors"
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            {section.type === 'markdown' && <Hash className="h-4 w-4" />}
-            {section.type === 'text' && <Type className="h-4 w-4" />}
-            {section.type === 'code' && <Code className="h-4 w-4" />}
-            {section.type === 'image' && <Image className="h-4 w-4" />}
+            {section.type === "markdown" && <Hash className="h-4 w-4" />}
+            {section.type === "text" && <Type className="h-4 w-4" />}
+            {section.type === "code" && <Code className="h-4 w-4" />}
+            {section.type === "image" && <Image className="h-4 w-4" />}
             <span className="capitalize">{section.type}</span>
-            {section.type === 'code' && section.language && (
-              <Badge variant="outline" className="text-xs">{section.language}</Badge>
+            {section.type === "code" && section.language && (
+              <Badge variant="outline" className="text-xs">
+                {section.language}
+              </Badge>
             )}
           </div>
-          
+
           {/* Hover controls */}
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             {isEditingSection ? (
@@ -516,20 +558,20 @@ export default function Index() {
         </div>
 
         {/* Section Content */}
-        {section.type === 'image' && section.imageData ? (
+        {section.type === "image" && section.imageData ? (
           <Dialog>
             <DialogTrigger asChild>
               <div className="cursor-pointer">
-                <img 
-                  src={section.imageData} 
+                <img
+                  src={section.imageData}
                   alt={section.content}
                   className="max-w-xs h-32 object-cover rounded border hover:opacity-80 transition-opacity"
                 />
               </div>
             </DialogTrigger>
             <DialogContent className="max-w-4xl">
-              <img 
-                src={section.imageData} 
+              <img
+                src={section.imageData}
                 alt={section.content}
                 className="w-full h-auto max-h-[80vh] object-contain"
               />
@@ -537,10 +579,12 @@ export default function Index() {
           </Dialog>
         ) : isEditingSection ? (
           <div className="space-y-2">
-            {section.type === 'code' && (
+            {section.type === "code" && (
               <Select
-                value={section.language || 'javascript'}
-                onValueChange={(value) => updateSectionLanguage(section.id, value)}
+                value={section.language || "javascript"}
+                onValueChange={(value) =>
+                  updateSectionLanguage(section.id, value)
+                }
               >
                 <SelectTrigger className="w-40">
                   <SelectValue />
@@ -567,31 +611,44 @@ export default function Index() {
             />
           </div>
         ) : (
-          <div className="prose max-w-none" onClick={() => toggleSectionEdit(section.id)}>
-            {section.type === 'code' ? (
+          <div
+            className="prose max-w-none"
+            onClick={() => toggleSectionEdit(section.id)}
+          >
+            {section.type === "code" ? (
               <SyntaxHighlighter
-                language={section.language || 'javascript'}
+                language={section.language || "javascript"}
                 style={tomorrow}
                 className="rounded border cursor-pointer"
               >
                 {section.content}
               </SyntaxHighlighter>
-            ) : section.type === 'markdown' ? (
-              <div 
+            ) : section.type === "markdown" ? (
+              <div
                 className="prose prose-sm max-w-none cursor-pointer"
                 dangerouslySetInnerHTML={{
                   __html: section.content
-                    .replace(/\\n/g, '<br>')
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                    .replace(/^## (.*)/gm, '<h2 class="text-lg font-semibold mt-4 mb-2">$1</h2>')
-                    .replace(/^### (.*)/gm, '<h3 class="text-base font-semibold mt-3 mb-2">$1</h3>')
-                    .replace(/^- (.*)/gm, '<li class="ml-4">$1</li>')
+                    .replace(/\\n/g, "<br>")
+                    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                    .replace(/\*(.*?)\*/g, "<em>$1</em>")
+                    .replace(
+                      /^## (.*)/gm,
+                      '<h2 class="text-lg font-semibold mt-4 mb-2">$1</h2>',
+                    )
+                    .replace(
+                      /^### (.*)/gm,
+                      '<h3 class="text-base font-semibold mt-3 mb-2">$1</h3>',
+                    )
+                    .replace(/^- (.*)/gm, '<li class="ml-4">$1</li>'),
                 }}
               />
             ) : (
               <div className="whitespace-pre-wrap text-sm leading-relaxed cursor-pointer">
-                {section.content || <span className="text-muted-foreground italic">Click to edit...</span>}
+                {section.content || (
+                  <span className="text-muted-foreground italic">
+                    Click to edit...
+                  </span>
+                )}
               </div>
             )}
           </div>
@@ -650,7 +707,11 @@ export default function Index() {
                     {note.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">
                         {note.tags.slice(0, 3).map((tag) => (
-                          <Badge key={tag} variant="secondary" className="text-xs">
+                          <Badge
+                            key={tag}
+                            variant="secondary"
+                            className="text-xs"
+                          >
                             {tag}
                           </Badge>
                         ))}
@@ -778,12 +839,17 @@ export default function Index() {
                             {editingTitles.has(noteId) ? (
                               <Input
                                 value={titleContents[noteId] || note.title}
-                                onChange={(e) => updateTitleContent(noteId, e.target.value)}
+                                onChange={(e) =>
+                                  updateTitleContent(noteId, e.target.value)
+                                }
                                 onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
+                                  if (e.key === "Enter") {
                                     saveTitle(noteId);
-                                  } else if (e.key === 'Escape') {
-                                    setTitleContents(prev => ({ ...prev, [noteId]: note.title }));
+                                  } else if (e.key === "Escape") {
+                                    setTitleContents((prev) => ({
+                                      ...prev,
+                                      [noteId]: note.title,
+                                    }));
                                     toggleTitleEdit(noteId);
                                   }
                                 }}
@@ -793,7 +859,7 @@ export default function Index() {
                               />
                             ) : (
                               <>
-                                <h2 
+                                <h2
                                   className="text-xl font-semibold text-foreground cursor-pointer hover:bg-accent hover:bg-opacity-50 rounded px-1 py-0.5 -mx-1 transition-colors"
                                   onClick={() => toggleTitleEdit(noteId)}
                                   title="Click to edit title"
@@ -830,7 +896,8 @@ export default function Index() {
                                   className="flex-1"
                                   onKeyDown={(e) => {
                                     if (e.key === "Enter") {
-                                      const input = e.target as HTMLInputElement;
+                                      const input =
+                                        e.target as HTMLInputElement;
                                       addTagToNote(noteId, input.value);
                                       input.value = "";
                                     }
@@ -842,7 +909,9 @@ export default function Index() {
                                   onClick={(e) => {
                                     const input = (e.target as HTMLElement)
                                       .closest(".flex")
-                                      ?.querySelector("input") as HTMLInputElement;
+                                      ?.querySelector(
+                                        "input",
+                                      ) as HTMLInputElement;
                                     if (input) {
                                       addTagToNote(noteId, input.value);
                                       input.value = "";
@@ -867,13 +936,16 @@ export default function Index() {
                                       variant="ghost"
                                       size="icon"
                                       className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
-                                      onClick={() => removeTagFromNote(noteId, tag)}
+                                      onClick={() =>
+                                        removeTagFromNote(noteId, tag)
+                                      }
                                     >
                                       <X className="h-3 w-3" />
                                     </Button>
                                   </Badge>
                                 ))}
-                                {(noteTags[noteId] || note.tags).length === 0 && (
+                                {(noteTags[noteId] || note.tags).length ===
+                                  0 && (
                                   <span className="text-muted-foreground italic text-sm">
                                     No tags yet
                                   </span>
@@ -900,11 +972,13 @@ export default function Index() {
                       {note.sections.length === 0 ? (
                         <div className="text-center text-muted-foreground py-8">
                           <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                          <p>No sections yet. Add a section below to get started.</p>
+                          <p>
+                            No sections yet. Add a section below to get started.
+                          </p>
                         </div>
                       ) : (
-                        note.sections.map((section) => 
-                          renderSection(section, noteId)
+                        note.sections.map((section) =>
+                          renderSection(section, noteId),
                         )
                       )}
 
@@ -914,7 +988,11 @@ export default function Index() {
                           <Plus className="h-4 w-4" />
                           Add New Section
                         </div>
-                        <Select onValueChange={(value) => addSection(noteId, value as Section['type'])}>
+                        <Select
+                          onValueChange={(value) =>
+                            addSection(noteId, value as Section["type"])
+                          }
+                        >
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder="Choose section type..." />
                           </SelectTrigger>
