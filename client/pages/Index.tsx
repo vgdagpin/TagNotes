@@ -31,7 +31,6 @@ export default function Index() {
   // State management
   const [notes, setNotes] = useState<Note[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filter, setFilter] = useState("");
   const [openTabs, setOpenTabs] = useState<string[]>(["1"]); // Start with first note open
   const [activeTab, setActiveTab] = useState("1");
   const [noteTags, setNoteTags] = useState<Record<string, string[]>>({});

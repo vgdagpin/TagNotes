@@ -98,13 +98,21 @@ const mockNotes: Note[] = [
 
 export const handleGetNotes: RequestHandler = (req, res) => {
     const { search, skip, take }  = req.query;
-    let summary = mockNotes;//.map(({ id, title, createdAt }) => ({ id, title, createdAt }));
-    const total = summary.length;
+    let filtered = mockNotes;
+    // Apply search to title and tags if search is provided
+    if (typeof search === 'string' && search.trim() !== '') {
+        const searchLower = search.toLowerCase();
+        filtered = filtered.filter(note =>
+            note.title.toLowerCase().includes(searchLower) ||
+            (note.tags && note.tags.some(tag => tag.toLowerCase().includes(searchLower)))
+        );
+    }
+    const total = filtered.length;
 
     // Parse skip/take as integers, default to 0/total
     const skipNum = Number(skip) || 0;
     const takeNum = Number(take) || total;
-    summary = summary.slice(skipNum, skipNum + takeNum);
+    const summary = filtered.slice(skipNum, skipNum + takeNum);
 
     res.status(200).json({
         search,
