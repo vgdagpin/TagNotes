@@ -66,14 +66,18 @@ export default function Index() {
   const [activeTab, setActiveTab] = useState("1");
   const [editingNotes, setEditingNotes] = useState<Set<string>>(new Set());
   const [noteContents, setNoteContents] = useState<Record<string, string>>({});
+  const [noteTags, setNoteTags] = useState<Record<string, string[]>>({});
 
-  // Initialize note contents for editing
+  // Initialize note contents and tags for editing
   useEffect(() => {
     const contents: Record<string, string> = {};
+    const tags: Record<string, string[]> = {};
     notes.forEach((note) => {
       contents[note.id] = note.content;
+      tags[note.id] = [...note.tags];
     });
     setNoteContents(contents);
+    setNoteTags(tags);
   }, [notes]);
 
   // Filtered notes based on search
@@ -84,7 +88,8 @@ export default function Index() {
     return notes.filter(
       (note) =>
         note.title.toLowerCase().includes(query) ||
-        note.content.toLowerCase().includes(query),
+        note.content.toLowerCase().includes(query) ||
+        note.tags.some(tag => tag.toLowerCase().includes(query)),
     );
   }, [notes, searchQuery]);
 
@@ -99,12 +104,14 @@ export default function Index() {
       id: generateId(),
       title: "New Note",
       content: "",
+      tags: [],
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
     setNotes((prev) => [newNote, ...prev]);
     setNoteContents((prev) => ({ ...prev, [newNote.id]: "" }));
+    setNoteTags((prev) => ({ ...prev, [newNote.id]: [] }));
 
     // Open the new note in a tab
     if (!openTabs.includes(newNote.id)) {
