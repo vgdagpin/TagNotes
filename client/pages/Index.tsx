@@ -169,11 +169,12 @@ export default function Index() {
   const saveNote = (noteId: string) => {
     const content = noteContents[noteId] || "";
     const title = content.split("\n")[0].slice(0, 50) || "Untitled";
+    const tags = noteTags[noteId] || [];
 
     setNotes((prev) =>
       prev.map((note) =>
         note.id === noteId
-          ? { ...note, title, content, updatedAt: new Date() }
+          ? { ...note, title, content, tags, updatedAt: new Date() }
           : note,
       ),
     );
@@ -193,6 +194,11 @@ export default function Index() {
       const newContents = { ...prev };
       delete newContents[noteId];
       return newContents;
+    });
+    setNoteTags((prev) => {
+      const newTags = { ...prev };
+      delete newTags[noteId];
+      return newTags;
     });
   };
 
