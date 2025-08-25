@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Search, Plus, X, FileText, Edit3, Save, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Search, Plus, X, FileText, Edit3, Save, Trash2, Tag, Hash } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Types for our note system
@@ -12,6 +13,7 @@ interface Note {
   id: string;
   title: string;
   content: string;
+  tags: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,6 +25,7 @@ const mockNotes: Note[] = [
     title: "Welcome to Notes",
     content:
       "This is your first note! You can edit this content by clicking the edit button or double-clicking in the content area.\n\nFeatures:\n• Create new notes with the + tab\n• Search through your notes\n• Edit and save changes\n• Open multiple notes in tabs\n• Responsive design",
+    tags: ["welcome", "tutorial", "getting-started"],
     createdAt: new Date("2024-01-15T10:00:00"),
     updatedAt: new Date("2024-01-15T10:00:00"),
   },
@@ -31,6 +34,7 @@ const mockNotes: Note[] = [
     title: "Project Ideas",
     content:
       "Some ideas for future projects:\n\n1. Personal portfolio website\n2. Recipe management app\n3. Habit tracker\n4. Book reading list\n5. Photo gallery with tags",
+    tags: ["projects", "ideas", "development"],
     createdAt: new Date("2024-01-14T14:30:00"),
     updatedAt: new Date("2024-01-14T14:30:00"),
   },
@@ -38,7 +42,8 @@ const mockNotes: Note[] = [
     id: "3",
     title: "Meeting Notes - Jan 12",
     content:
-      "Team meeting highlights:\n\n• Discussed Q1 goals\n• New feature roadmap review\n• Budget planning for next quarter\n• Team building event planning\n\nAction items:\n- Follow up with design team\n- Review budget proposal\n- Schedule 1:1s with team members",
+      "Team meeting highlights:\n\n• Discussed Q1 goals\n• New feature roadmap review\n�� Budget planning for next quarter\n• Team building event planning\n\nAction items:\n- Follow up with design team\n- Review budget proposal\n- Schedule 1:1s with team members",
+    tags: ["meeting", "work", "q1-goals", "team"],
     createdAt: new Date("2024-01-12T09:15:00"),
     updatedAt: new Date("2024-01-12T09:15:00"),
   },
@@ -47,6 +52,7 @@ const mockNotes: Note[] = [
     title: "Learning Resources",
     content:
       "Useful learning resources:\n\n**React & TypeScript:**\n• React documentation\n• TypeScript handbook\n• Advanced React patterns\n\n**Design:**\n• Radix UI components\n• Tailwind CSS documentation\n• UI/UX design principles\n\n**Tools:**\n• Vite build tool\n• ESLint configuration\n• Testing with Vitest",
+    tags: ["learning", "react", "typescript", "documentation"],
     createdAt: new Date("2024-01-10T16:45:00"),
     updatedAt: new Date("2024-01-10T16:45:00"),
   },
