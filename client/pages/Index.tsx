@@ -1,9 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
+import axios from "axios";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -12,53 +11,43 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { tomorrow } from "react-syntax-highlighter/dist/esm/styles/prism";
 import {
   Search,
   Plus,
   X,
   FileText,
   Edit3,
-  Save,
   Trash2,
   Tag,
   Hash,
   Code,
   Type,
-  Image,
-  ChevronDown,
-  Eye,
-  Maximize2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Note, Section } from "@shared/api";
-
-
-
+import TnSection from "@/components/tagnotes/tn-section";
 
 export default function Index() {
   // State management
   const [notes, setNotes] = useState<Note[]>([]);
   // Fetch notes from API on mount
   useEffect(() => {
-    fetch('/api/notes')
-      .then(res => res.json())
-      .then(data => {
-        // Convert date strings to Date objects if needed
-        setNotes(
-          data.result.map((note: any) => ({
-            ...note,
-            createdAt: new Date(note.createdAt),
-            updatedAt: new Date(note.updatedAt),
-            sections: note.sections.map((section: any) => ({
-              ...section,
-              createdAt: new Date(section.createdAt),
-            })),
-          }))
-        );
-      });
+    const fetchNotes = async () => {
+      const res = await axios.get('/api/notes');
+      const data = res.data;
+      setNotes(
+        data.result.map((note: any) => ({
+          ...note,
+          createdAt: new Date(note.createdAt),
+          updatedAt: new Date(note.updatedAt),
+          sections: note.sections ? note.sections.map((section: any) => ({
+            ...section,
+            createdAt: new Date(section.createdAt),
+          })) : [],
+        }))
+      );
+    };
+    fetchNotes();
   }, []);
   const [searchQuery, setSearchQuery] = useState("");
   const [openTabs, setOpenTabs] = useState<string[]>(["1"]); // Start with first note open
@@ -109,7 +98,7 @@ export default function Index() {
 
   // Generate new ID
   const generateId = () => {
-    return Date.now().toString() + Math.random().toString(36).substr(2, 9);
+    return Date.now().toString() + Math.random().toString(36).slice(2, 11);
   };
 
   // Create new note with default section
@@ -129,6 +118,8 @@ export default function Index() {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
+
+    axios.post('/api/notes', newNote);
 
     setNotes((prev) => [newNote, ...prev]);
     setNoteTags((prev) => ({ ...prev, [newNote.id]: [] }));
@@ -152,6 +143,8 @@ export default function Index() {
       createdAt: new Date(),
     };
 
+    axios.post(`/api/notes/${noteId}/addSection`, newSection);
+
     setNotes((prev) =>
       prev.map((note) =>
         note.id === noteId
@@ -171,6 +164,9 @@ export default function Index() {
   // Delete section
   const deleteSection = (noteId: string, sectionId: string) => {
     if (!window.confirm("Are you sure you want to delete this section? This action cannot be undone.")) return;
+
+    axios.delete(`/api/notes/${noteId}/deleteSection/${sectionId}`);
+
     setNotes((prev) =>
       prev.map((note) =>
         note.id === noteId
@@ -227,8 +223,10 @@ export default function Index() {
   };
 
   // Save section changes
-  const saveSection = (sectionId: string) => {
+  const saveSection = (noteId: string, sectionId: string) => {
     const content = sectionContents[sectionId] || "";
+
+    axios.put(`/api/notes/${noteId}/updateSection/${sectionId}/content`, { content });
 
     setNotes((prev) =>
       prev.map((note) => ({
@@ -364,6 +362,9 @@ export default function Index() {
   // Delete note
   const deleteNote = (noteId: string) => {
     if (!window.confirm("Are you sure you want to delete this note? This action cannot be undone.")) return;
+
+    axios.delete(`/api/notes/${noteId}`);
+
     setNotes((prev) => prev.filter((note) => note.id !== noteId));
     closeTab(noteId);
     setNoteTags((prev) => {
@@ -378,6 +379,8 @@ export default function Index() {
     const trimmedTag = tag.trim().toLowerCase();
     if (!trimmedTag) return;
 
+    axios.post(`/api/notes/${noteId}/tags`, { tag: trimmedTag });
+
     setNoteTags((prev) => {
       const currentTags = prev[noteId] || [];
       if (currentTags.includes(trimmedTag)) return prev;
@@ -388,6 +391,9 @@ export default function Index() {
   // Remove tag from note
   const removeTagFromNote = (noteId: string, tagToRemove: string) => {
     if (!window.confirm(`Remove tag \"${tagToRemove}\" from this note?`)) return;
+
+    axios.delete(`/api/notes/${noteId}/tags/${tagToRemove}`);
+
     setNoteTags((prev) => ({
       ...prev,
       [noteId]: (prev[noteId] || []).filter((tag) => tag !== tagToRemove),
@@ -411,160 +417,6 @@ export default function Index() {
     return (
       firstTextSection.content.slice(0, 60).replace(/\\n/g, " ") +
       (firstTextSection.content.length > 60 ? "..." : "")
-    );
-  };
-
-  // Render section based on type with hover controls
-  const renderSection = (section: Section, noteId: string) => {
-    const isEditingSection = editingSections.has(section.id);
-    const content = sectionContents[section.id] || section.content;
-
-    return (
-      <div
-        key={section.id}
-        className="border border-border rounded-lg p-4 space-y-2 group hover:border-accent transition-colors"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            {section.type === "markdown" && <Hash className="h-4 w-4" />}
-            {section.type === "text" && <Type className="h-4 w-4" />}
-            {section.type === "code" && <Code className="h-4 w-4" />}
-            {section.type === "image" && <Image className="h-4 w-4" />}
-            <span className="capitalize">{section.type}</span>
-            {section.type === "code" && section.language && (
-              <Badge variant="outline" className="text-xs">
-                {section.language}
-              </Badge>
-            )}
-          </div>
-
-          {/* Hover controls */}
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            {isEditingSection ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => saveSection(section.id)}
-              >
-                <Save className="h-3 w-3" />
-              </Button>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => toggleSectionEdit(section.id)}
-              >
-                <Edit3 className="h-3 w-3" />
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => deleteSection(noteId, section.id)}
-              className="text-destructive hover:text-destructive"
-            >
-              <Trash2 className="h-3 w-3" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Section Content */}
-        {section.type === "image" && section.imageData ? (
-          <Dialog>
-            <DialogTrigger asChild>
-              <div className="cursor-pointer">
-                <img
-                  src={section.imageData}
-                  alt={section.content}
-                  className="max-w-xs h-32 object-cover rounded border hover:opacity-80 transition-opacity"
-                />
-              </div>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl">
-              <img
-                src={section.imageData}
-                alt={section.content}
-                className="w-full h-auto max-h-[80vh] object-contain"
-              />
-            </DialogContent>
-          </Dialog>
-        ) : isEditingSection ? (
-          <div className="space-y-2">
-            {section.type === "code" && (
-              <Select
-                value={section.language || "javascript"}
-                onValueChange={(value) =>
-                  updateSectionLanguage(section.id, value)
-                }
-              >
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="javascript">JavaScript</SelectItem>
-                  <SelectItem value="typescript">TypeScript</SelectItem>
-                  <SelectItem value="python">Python</SelectItem>
-                  <SelectItem value="sql">SQL</SelectItem>
-                  <SelectItem value="csharp">C#</SelectItem>
-                  <SelectItem value="java">Java</SelectItem>
-                  <SelectItem value="css">CSS</SelectItem>
-                  <SelectItem value="html">HTML</SelectItem>
-                  <SelectItem value="json">JSON</SelectItem>
-                  <SelectItem value="bash">Bash</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-            <Textarea
-              value={content}
-              onChange={(e) => updateSectionContent(section.id, e.target.value)}
-              placeholder={`Enter ${section.type} content...`}
-              className="min-h-32 resize-vertical"
-            />
-          </div>
-        ) : (
-          <div
-            className="prose max-w-none"
-            onClick={() => toggleSectionEdit(section.id)}
-          >
-            {section.type === "code" ? (
-              <SyntaxHighlighter
-                language={section.language || "javascript"}
-                style={tomorrow}
-                className="rounded border cursor-pointer"
-              >
-                {section.content}
-              </SyntaxHighlighter>
-            ) : section.type === "markdown" ? (
-              <div
-                className="prose prose-sm max-w-none cursor-pointer"
-                dangerouslySetInnerHTML={{
-                  __html: section.content
-                    .replace(/\\n/g, "<br>")
-                    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-                    .replace(/\*(.*?)\*/g, "<em>$1</em>")
-                    .replace(
-                      /^## (.*)/gm,
-                      '<h2 class="text-lg font-semibold mt-4 mb-2">$1</h2>',
-                    )
-                    .replace(
-                      /^### (.*)/gm,
-                      '<h3 class="text-base font-semibold mt-3 mb-2">$1</h3>',
-                    )
-                    .replace(/^- (.*)/gm, '<li class="ml-4">$1</li>'),
-                }}
-              />
-            ) : (
-              <div className="whitespace-pre-wrap text-sm leading-relaxed cursor-pointer">
-                {section.content || (
-                  <span className="text-muted-foreground italic">
-                    Click to edit...
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
     );
   };
 
@@ -865,7 +717,17 @@ export default function Index() {
                         </div>
                       ) : (
                         note.sections.map((section) =>
-                          renderSection(section, noteId),
+                          <TnSection
+                            key={section.id}
+                            section={section}
+                            isEditingSection={editingSections.has(section.id)}
+                            noteId={noteId}
+                            onToggleSectionEdit={(sectionId) => toggleSectionEdit(sectionId)}
+                            onSaveSection={(sectionId) => saveSection(noteId, sectionId)}
+                            onDeleteSection={(noteId, sectionId) => deleteSection(noteId, sectionId)}
+                            onUpdateSectionLanguage={(sectionId, language) => updateSectionLanguage(sectionId, language)}
+                            onUpdateSectionContent={(sectionId, content) => updateSectionContent(sectionId, content)}
+                          />
                         )
                       )}
 

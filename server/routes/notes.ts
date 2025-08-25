@@ -1,5 +1,5 @@
 import { RequestHandler } from 'express';
-import { Note } from '@shared/api'
+import { Note, Section } from '@shared/api'
 
 const mockNotes: Note[] = [
     {
@@ -115,10 +115,124 @@ export const handleGetNotes: RequestHandler = (req, res) => {
 
 // Handler to find a note by id
 export const handleFindNote: RequestHandler = (req, res) => {
-    const { id } = req.params;
-    const note = mockNotes.find(n => n.id === id);
+    const { noteId } = req.params;
+    const note = mockNotes.find(n => n.id === noteId);
     if (!note) {
         return res.status(404).json({ error: 'Note not found' });
     }
     res.status(200).json(note);
 };
+
+export const handleDeleteNote: RequestHandler = (req, res) => {
+    const { noteId } = req.params;
+    const noteIndex = mockNotes.findIndex(n => n.id === noteId);
+    if (noteIndex === -1) {
+        return res.status(404).json({ error: 'Note not found' });
+    }
+    mockNotes.splice(noteIndex, 1);
+    res.status(204).send();
+}
+
+export const handleCreateNote: RequestHandler = (req, res) => {
+    const { id, title, sections, tags, createdAt, updatedAt } = req.body;
+
+    const newNote: Note = {
+        id,
+        title,
+        sections: sections || [],
+        tags: tags || [],
+        createdAt,
+        updatedAt,
+    };
+
+    mockNotes.push(newNote);
+    res.status(201).json(newNote);
+}
+
+export const handleAddNoteTag: RequestHandler = (req, res) => {
+    const { noteId } = req.params;
+    const { tag } = req.body;
+
+    const note = mockNotes.find(n => n.id === noteId);
+    if (!note) {
+        return res.status(404).json({ error: 'Note not found' });
+    }
+
+    if (!note.tags.includes(tag)) {
+        note.tags.push(tag);
+        note.updatedAt = new Date();
+    }
+
+    res.status(200).json(note);
+}
+
+export const handleRemoveNoteTag: RequestHandler = (req, res) => {
+    const { noteId, tag } = req.params;
+
+    const note = mockNotes.find(n => n.id === noteId);
+    if (!note) {
+        return res.status(404).json({ error: 'Note not found' });
+    }
+
+    note.tags = note.tags.filter(t => t !== tag);
+    note.updatedAt = new Date();
+
+    res.status(200).json(note);
+}
+
+export const handleAddNoteSection: RequestHandler = (req, res) => {
+    const { noteId } = req.params;
+    const { id, type, content, language, createdAt } = req.body;
+
+    const note = mockNotes.find(n => n.id === noteId);
+    if (!note) {
+        return res.status(404).json({ error: 'Note not found' });
+    }
+
+    const newSection: Section = {
+        id,
+        type,
+        content,
+        language,
+        createdAt,
+    };
+
+    note.sections.push(newSection);
+    note.updatedAt = new Date();
+
+    res.status(201).json(newSection);
+};
+
+export const handleDeleteNoteSection: RequestHandler = (req, res) => {
+    const { noteId, sectionId } = req.params;
+
+    const note = mockNotes.find(n => n.id === noteId);
+    if (!note) {
+        return res.status(404).json({ error: 'Note not found' });
+    }
+
+    note.sections = note.sections.filter(s => s.id !== sectionId);
+    note.updatedAt = new Date();
+
+    res.status(204).send();
+}
+
+export const handleUpdateSectionContent: RequestHandler = (req, res) => {
+    const { noteId, sectionId } = req.params;
+    const { content } = req.body;
+
+    const note = mockNotes.find(n => n.id === noteId);
+    if (!note) {
+        return res.status(404).json({ error: 'Note not found' });
+    }
+
+    const section = note.sections.find(s => s.id === sectionId);
+    if (!section) {
+        return res.status(404).json({ error: 'Section not found' });
+    }
+
+    section.content = content;
+    note.updatedAt = new Date();
+
+    res.status(200).json(section);
+}
