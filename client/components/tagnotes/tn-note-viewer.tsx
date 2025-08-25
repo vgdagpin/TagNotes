@@ -217,12 +217,6 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
     // Save section changes
     const saveSection = (sectionId: string, content: string, language?: string) => {
 
-        axios.put(`/api/notes/${noteId}/updateSection/${sectionId}/content`, { content });
-
-        if (language) {
-            axios.put(`/api/notes/${noteId}/updateSection/${sectionId}/language`, { language });
-        }
-
         setNote((prev) => {
             if (!prev) return null;
             return {
@@ -249,6 +243,42 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
         //     newSet.delete(sectionId);
         //     return newSet;
         //   });
+    };
+
+    // Delete section
+    const deleteSection = (sectionId: string) => {
+        setNote((prev) => {
+            if (!prev) return null;
+            return {
+                ...prev,
+                sections: prev.sections.filter((s) => s.id !== sectionId),
+                updatedAt: new Date(),
+            };
+        });
+
+        // setNotes((prev) =>
+        //   prev.map((note) =>
+        //     note.id === noteId
+        //       ? {
+        //         ...note,
+        //         sections: note.sections.filter((s) => s.id !== sectionId),
+        //         updatedAt: new Date(),
+        //       }
+        //       : note,
+        //   ),
+        // );
+
+        // setSectionContents((prev) => {
+        //   const newContents = { ...prev };
+        //   delete newContents[sectionId];
+        //   return newContents;
+        // });
+
+        // setEditingSections((prev) => {
+        //   const newSet = new Set(prev);
+        //   newSet.delete(sectionId);
+        //   return newSet;
+        // });
     };
 
     return (
@@ -411,9 +441,7 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
                             section={section}
                             noteId={noteId}
                             onSaveSection={(content, language) => saveSection(section.id, content, language)}
-                        // onDeleteSection={(noteId, sectionId) => deleteSection(noteId, sectionId)}
-                        // onUpdateSectionLanguage={(sectionId, language) => updateSectionLanguage(sectionId, language)}
-                        // onUpdateSectionContent={(sectionId, content) => updateSectionContent(sectionId, content)}
+                            onDeleteSection={(sectionId) => deleteSection(sectionId)}
                         />
                     )
                 )}

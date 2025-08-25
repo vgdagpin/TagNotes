@@ -23,13 +23,14 @@ import {
 } from "lucide-react";
 import { Section } from "@shared/api";
 import { useState } from "react";
+import axios from "axios";
 
 type TnSectionProps = {
     section: Section;
     noteId: string;
 
     onSaveSection?: (content: string, language?: string) => void;
-    onDeleteSection?: (noteId: string, sectionId: string) => void;
+    onDeleteSection?: (sectionId: string) => void;
 };
 
 const TnSection = ({ section, noteId, onSaveSection, onDeleteSection }: TnSectionProps) => {
@@ -39,8 +40,22 @@ const TnSection = ({ section, noteId, onSaveSection, onDeleteSection }: TnSectio
     const [content, setContent] = useState(section.content);
 
     const handleSave = () => {
+        axios.put(`/api/notes/${noteId}/updateSection/${section.id}/content`, { content });
+
+        if (language) {
+            axios.put(`/api/notes/${noteId}/updateSection/${section.id}/language`, { language });
+        }
+
         onSaveSection?.call(null, content, language);
         setSectionEdit(false);
+    }
+
+    const handleDelete = () => {
+        if (!window.confirm("Are you sure you want to delete this section? This action cannot be undone.")) return;
+
+        axios.delete(`/api/notes/${noteId}/deleteSection/${section.id}`);
+
+        onDeleteSection?.call(null, section.id);
     }
 
     return (
@@ -84,7 +99,7 @@ const TnSection = ({ section, noteId, onSaveSection, onDeleteSection }: TnSectio
                     <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => onDeleteSection?.call(null, noteId, section.id)}
+                        onClick={() => handleDelete()}
                         className="text-destructive hover:text-destructive"
                     >
                         <Trash2 className="h-3 w-3" />
@@ -117,7 +132,7 @@ const TnSection = ({ section, noteId, onSaveSection, onDeleteSection }: TnSectio
                     {section.type === "code" && (
                         <Select
                             value={language}
-                            onValueChange={(value) => setLanguage(value) }
+                            onValueChange={(value) => setLanguage(value)}
                         >
                             <SelectTrigger className="w-40">
                                 <SelectValue />
@@ -144,10 +159,7 @@ const TnSection = ({ section, noteId, onSaveSection, onDeleteSection }: TnSectio
                     />
                 </div>
             ) : (
-                <div
-                    className="prose max-w-none"
-                    onClick={() => setSectionEdit(true)}
-                >
+                <div className="prose max-w-none">
                     {section.type === "code" ? (
                         <SyntaxHighlighter
                             language={language || "javascript"}
@@ -179,7 +191,7 @@ const TnSection = ({ section, noteId, onSaveSection, onDeleteSection }: TnSectio
                         <div className="whitespace-pre-wrap text-sm leading-relaxed cursor-pointer">
                             {section.content || (
                                 <span className="text-muted-foreground italic">
-                                    Click to edit...
+                                    Blank..
                                 </span>
                             )}
                         </div>
