@@ -10,3 +10,22 @@
 export interface DemoResponse {
   message: string;
 }
+
+// Types for our note system
+export interface Section {
+  id: string;
+  type: "markdown" | "text" | "code" | "image";
+  content: string;
+  language?: string; // for code sections
+  imageData?: string; // for image sections (base64)
+  createdAt: Date;
+}
+
+export interface Note {
+  id: string;
+  title: string;
+  sections: Section[];
+  tags: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}

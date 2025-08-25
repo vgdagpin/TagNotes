@@ -33,125 +33,33 @@ import {
   Maximize2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Note, Section } from "@shared/api";
 
-// Types for our note system
-interface Section {
-  id: string;
-  type: "markdown" | "text" | "code" | "image";
-  content: string;
-  language?: string; // for code sections
-  imageData?: string; // for image sections (base64)
-  createdAt: Date;
-}
 
-interface Note {
-  id: string;
-  title: string;
-  sections: Section[];
-  tags: string[];
-  createdAt: Date;
-  updatedAt: Date;
-}
 
-// Mock data for initial notes
-const mockNotes: Note[] = [
-  {
-    id: "1",
-    title: "Welcome to Notes",
-    sections: [
-      {
-        id: "s1",
-        type: "text",
-        content:
-          "This is your first note! You can now add different types of sections to organize your content better.",
-        createdAt: new Date("2024-01-15T10:00:00"),
-      },
-      {
-        id: "s2",
-        type: "markdown",
-        content:
-          "## Features\\n\\n- Create new notes with the + tab\\n- Search through your notes and tags\\n- Add **markdown**, plain text, code, and image sections\\n- Edit and save changes\\n- Responsive design",
-        createdAt: new Date("2024-01-15T10:01:00"),
-      },
-    ],
-    tags: ["welcome", "tutorial", "getting-started"],
-    createdAt: new Date("2024-01-15T10:00:00"),
-    updatedAt: new Date("2024-01-15T10:00:00"),
-  },
-  {
-    id: "2",
-    title: "Project Ideas",
-    sections: [
-      {
-        id: "s3",
-        type: "text",
-        content: "Some ideas for future projects:",
-        createdAt: new Date("2024-01-14T14:30:00"),
-      },
-      {
-        id: "s4",
-        type: "markdown",
-        content:
-          "1. Personal portfolio website\\n2. Recipe management app\\n3. Habit tracker\\n4. Book reading list\\n5. Photo gallery with tags",
-        createdAt: new Date("2024-01-14T14:31:00"),
-      },
-    ],
-    tags: ["projects", "ideas", "development"],
-    createdAt: new Date("2024-01-14T14:30:00"),
-    updatedAt: new Date("2024-01-14T14:30:00"),
-  },
-  {
-    id: "3",
-    title: "Meeting Notes - Jan 12",
-    sections: [
-      {
-        id: "s5",
-        type: "markdown",
-        content:
-          "## Team meeting highlights\\n\\n- Discussed Q1 goals\\n- New feature roadmap review\\n- Budget planning for next quarter\\n- Team building event planning",
-        createdAt: new Date("2024-01-12T09:15:00"),
-      },
-      {
-        id: "s6",
-        type: "text",
-        content:
-          "Action items:\\n- Follow up with design team\\n- Review budget proposal\\n- Schedule 1:1s with team members",
-        createdAt: new Date("2024-01-12T09:16:00"),
-      },
-    ],
-    tags: ["meeting", "work", "q1-goals", "team"],
-    createdAt: new Date("2024-01-12T09:15:00"),
-    updatedAt: new Date("2024-01-12T09:15:00"),
-  },
-  {
-    id: "4",
-    title: "Learning Resources",
-    sections: [
-      {
-        id: "s7",
-        type: "markdown",
-        content:
-          "## Useful learning resources\\n\\n### React & TypeScript\\n- React documentation\\n- TypeScript handbook\\n- Advanced React patterns",
-        createdAt: new Date("2024-01-10T16:45:00"),
-      },
-      {
-        id: "s8",
-        type: "code",
-        content:
-          "// Example React component\\nconst MyComponent = () => {\\n  const [count, setCount] = useState(0);\\n  \\n  return (\\n    <button onClick={() => setCount(count + 1)}>\\n      Count: {count}\\n    </button>\\n  );\\n};",
-        language: "javascript",
-        createdAt: new Date("2024-01-10T16:46:00"),
-      },
-    ],
-    tags: ["learning", "react", "typescript", "documentation"],
-    createdAt: new Date("2024-01-10T16:45:00"),
-    updatedAt: new Date("2024-01-10T16:45:00"),
-  },
-];
 
 export default function Index() {
   // State management
-  const [notes, setNotes] = useState<Note[]>(mockNotes);
+  const [notes, setNotes] = useState<Note[]>([]);
+  // Fetch notes from API on mount
+  useEffect(() => {
+    fetch('/api/notes')
+      .then(res => res.json())
+      .then(data => {
+        // Convert date strings to Date objects if needed
+        setNotes(
+          data.result.map((note: any) => ({
+            ...note,
+            createdAt: new Date(note.createdAt),
+            updatedAt: new Date(note.updatedAt),
+            sections: note.sections.map((section: any) => ({
+              ...section,
+              createdAt: new Date(section.createdAt),
+            })),
+          }))
+        );
+      });
+  }, []);
   const [searchQuery, setSearchQuery] = useState("");
   const [openTabs, setOpenTabs] = useState<string[]>(["1"]); // Start with first note open
   const [activeTab, setActiveTab] = useState("1");
@@ -675,7 +583,7 @@ export default function Index() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search notes and tags..."
+              placeholder="Search notes or tags..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9"
