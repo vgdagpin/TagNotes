@@ -876,9 +876,44 @@ export default function Index() {
                     <div className="p-4 border-b border-border bg-card">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <h2 className="text-xl font-semibold text-foreground">
-                            {note.title}
-                          </h2>
+                          {/* Editable Title */}
+                          <div className="flex items-center gap-2 mb-1">
+                            {editingTitles.has(noteId) ? (
+                              <Input
+                                value={titleContents[noteId] || note.title}
+                                onChange={(e) => updateTitleContent(noteId, e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    saveTitle(noteId);
+                                  } else if (e.key === 'Escape') {
+                                    setTitleContents(prev => ({ ...prev, [noteId]: note.title }));
+                                    toggleTitleEdit(noteId);
+                                  }
+                                }}
+                                onBlur={() => saveTitle(noteId)}
+                                className="text-xl font-semibold bg-transparent border-none p-0 h-auto focus-visible:ring-1 focus-visible:ring-ring"
+                                autoFocus
+                              />
+                            ) : (
+                              <>
+                                <h2
+                                  className="text-xl font-semibold text-foreground cursor-pointer hover:bg-accent hover:bg-opacity-50 rounded px-1 py-0.5 -mx-1 transition-colors"
+                                  onClick={() => toggleTitleEdit(noteId)}
+                                  title="Click to edit title"
+                                >
+                                  {note.title}
+                                </h2>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  onClick={() => toggleTitleEdit(noteId)}
+                                >
+                                  <Edit3 className="h-3 w-3" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
                           <p className="text-sm text-muted-foreground mb-3">
                             Updated {formatDate(note.updatedAt)}
                           </p>
