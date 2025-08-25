@@ -912,7 +912,7 @@ export default function Index() {
                               </SelectItem>
                               <SelectItem value="markdown">
                                 <div className="flex items-center gap-2">
-                                  <Markdown className="h-4 w-4" />
+                                  <Hash className="h-4 w-4" />
                                   Markdown
                                 </div>
                               </SelectItem>
