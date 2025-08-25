@@ -5,6 +5,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import {
   Search,
   Plus,
@@ -15,14 +19,30 @@ import {
   Trash2,
   Tag,
   Hash,
+  Code,
+  Type,
+  Markdown,
+  Image,
+  ChevronDown,
+  Eye,
+  Maximize2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Types for our note system
+interface Section {
+  id: string;
+  type: 'markdown' | 'text' | 'code' | 'image';
+  content: string;
+  language?: string; // for code sections
+  imageData?: string; // for image sections (base64)
+  createdAt: Date;
+}
+
 interface Note {
   id: string;
   title: string;
-  content: string;
+  sections: Section[];
   tags: string[];
   createdAt: Date;
   updatedAt: Date;
