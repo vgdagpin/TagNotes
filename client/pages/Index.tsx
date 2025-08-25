@@ -53,9 +53,8 @@ export default function Index() {
   const [openTabs, setOpenTabs] = useState<string[]>(["1"]); // Start with first note open
   const [activeTab, setActiveTab] = useState("1");
   const [noteTags, setNoteTags] = useState<Record<string, string[]>>({});
-  const [sectionContents, setSectionContents] = useState<
-    Record<string, string>
-  >({});
+  const [sectionContents, setSectionContents] = useState<Record<string, string>>({});
+  const [sectionLanguages, setSectionLanguages] = useState<Record<string, string>>({});
   const [editingSections, setEditingSections] = useState<Set<string>>(
     new Set(),
   );
@@ -68,16 +67,21 @@ export default function Index() {
   useEffect(() => {
     const tags: Record<string, string[]> = {};
     const contents: Record<string, string> = {};
+    const languages: Record<string, string> = {};
     const titles: Record<string, string> = {};
     notes.forEach((note) => {
       tags[note.id] = [...note.tags];
       titles[note.id] = note.title;
       note.sections.forEach((section) => {
         contents[section.id] = section.content;
+        if (section.language) {
+          languages[section.id] = section.language;
+        }
       });
     });
     setNoteTags(tags);
     setSectionContents(contents);
+    setSectionLanguages(languages);
     setTitleContents(titles);
   }, [notes]);
 
@@ -199,6 +203,8 @@ export default function Index() {
 
   // Update section language (for code sections)
   const updateSectionLanguage = (sectionId: string, language: string) => {
+    setSectionLanguages((prev) => ({ ...prev, [sectionId]: language }));
+
     setNotes((prev) =>
       prev.map((note) => ({
         ...note,
@@ -228,7 +234,10 @@ export default function Index() {
     const language = sectionLanguages[sectionId] || "";
 
     axios.put(`/api/notes/${noteId}/updateSection/${sectionId}/content`, { content });
-    axios.put(`/api/notes/${noteId}/updateSection/${sectionId}/language`, { language });
+
+    if (language) {
+      axios.put(`/api/notes/${noteId}/updateSection/${sectionId}/language`, { language });
+    }
 
     setNotes((prev) =>
       prev.map((note) => ({
@@ -278,6 +287,8 @@ export default function Index() {
       imageData: imageData,
       createdAt: new Date(),
     };
+
+    axios.post(`/api/notes/${noteId}/addSection`, newSection);
 
     setNotes((prev) =>
       prev.map((note) =>
