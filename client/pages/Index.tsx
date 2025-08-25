@@ -30,10 +30,23 @@ import TnSection from "@/components/tagnotes/tn-section";
 export default function Index() {
   // State management
   const [notes, setNotes] = useState<Note[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filter, setFilter] = useState("");
+  const [openTabs, setOpenTabs] = useState<string[]>(["1"]); // Start with first note open
+  const [activeTab, setActiveTab] = useState("1");
+  const [noteTags, setNoteTags] = useState<Record<string, string[]>>({});
+  const [sectionContents, setSectionContents] = useState<Record<string, string>>({});
+  const [sectionLanguages, setSectionLanguages] = useState<Record<string, string>>({});
+  const [editingSections, setEditingSections] = useState<Set<string>>(
+    new Set(),
+  );
+  const [editingTitles, setEditingTitles] = useState<Set<string>>(new Set());
+  const [titleContents, setTitleContents] = useState<Record<string, string>>({},);
+
   // Fetch notes from API on mount
   useEffect(() => {
-    const fetchNotes = async () => {
-      const res = await axios.get('/api/notes');
+    const fetchNotes = async (search: string) => {
+      const res = await axios.get(`/api/notes?search=${encodeURIComponent(search)}`);
       const data = res.data;
       setNotes(
         data.result.map((note: any) => ({
@@ -47,21 +60,12 @@ export default function Index() {
         }))
       );
     };
-    fetchNotes();
-  }, []);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [openTabs, setOpenTabs] = useState<string[]>(["1"]); // Start with first note open
-  const [activeTab, setActiveTab] = useState("1");
-  const [noteTags, setNoteTags] = useState<Record<string, string[]>>({});
-  const [sectionContents, setSectionContents] = useState<Record<string, string>>({});
-  const [sectionLanguages, setSectionLanguages] = useState<Record<string, string>>({});
-  const [editingSections, setEditingSections] = useState<Set<string>>(
-    new Set(),
-  );
-  const [editingTitles, setEditingTitles] = useState<Set<string>>(new Set());
-  const [titleContents, setTitleContents] = useState<Record<string, string>>(
-    {},
-  );
+
+    const handler = setTimeout(() => { fetchNotes(searchQuery);}, 500);
+
+    return () => clearTimeout(handler);
+
+  }, [searchQuery]);
 
   // Initialize note tags, section contents, and title contents for editing
   useEffect(() => {
@@ -85,20 +89,20 @@ export default function Index() {
     setTitleContents(titles);
   }, [notes]);
 
-  // Filtered notes based on search
-  const filteredNotes = useMemo(() => {
-    if (!searchQuery.trim()) return notes;
+  // // Filtered notes based on search
+  // const filteredNotes = useMemo(() => {
+  //   if (!searchQuery.trim()) return notes;
 
-    const query = searchQuery.toLowerCase();
-    return notes.filter(
-      (note) =>
-        note.title.toLowerCase().includes(query) ||
-        note.sections.some((section) =>
-          section.content.toLowerCase().includes(query),
-        ) ||
-        note.tags.some((tag) => tag.toLowerCase().includes(query)),
-    );
-  }, [notes, searchQuery]);
+  //   const query = searchQuery.toLowerCase();
+  //   return notes.filter(
+  //     (note) =>
+  //       note.title.toLowerCase().includes(query) ||
+  //       note.sections.some((section) =>
+  //         section.content.toLowerCase().includes(query),
+  //       ) ||
+  //       note.tags.some((tag) => tag.toLowerCase().includes(query)),
+  //   );
+  // }, [notes, searchQuery]);
 
   // Generate new ID
   const generateId = () => {
@@ -153,10 +157,10 @@ export default function Index() {
       prev.map((note) =>
         note.id === noteId
           ? {
-              ...note,
-              sections: [...note.sections, newSection],
-              updatedAt: new Date(),
-            }
+            ...note,
+            sections: [...note.sections, newSection],
+            updatedAt: new Date(),
+          }
           : note,
       ),
     );
@@ -175,10 +179,10 @@ export default function Index() {
       prev.map((note) =>
         note.id === noteId
           ? {
-              ...note,
-              sections: note.sections.filter((s) => s.id !== sectionId),
-              updatedAt: new Date(),
-            }
+            ...note,
+            sections: note.sections.filter((s) => s.id !== sectionId),
+            updatedAt: new Date(),
+          }
           : note,
       ),
     );
@@ -294,10 +298,10 @@ export default function Index() {
       prev.map((note) =>
         note.id === noteId
           ? {
-              ...note,
-              sections: [...note.sections, newSection],
-              updatedAt: new Date(),
-            }
+            ...note,
+            sections: [...note.sections, newSection],
+            updatedAt: new Date(),
+          }
           : note,
       ),
     );
@@ -460,12 +464,12 @@ export default function Index() {
 
         {/* Notes List */}
         <div className="flex-1 overflow-y-auto">
-          {filteredNotes.length === 0 ? (
+          {notes.length === 0 ? (
             <div className="p-4 text-center text-muted-foreground">
               {searchQuery ? "No notes found" : "No notes yet"}
             </div>
           ) : (
-            filteredNotes.map((note) => (
+            notes.map((note) => (
               <div
                 key={note.id}
                 onClick={() => openNoteInTab(note.id)}
@@ -700,10 +704,10 @@ export default function Index() {
                                 ))}
                                 {(noteTags[noteId] || note.tags).length ===
                                   0 && (
-                                  <span className="text-muted-foreground italic text-sm">
-                                    No tags yet
-                                  </span>
-                                )}
+                                    <span className="text-muted-foreground italic text-sm">
+                                      No tags yet
+                                    </span>
+                                  )}
                               </div>
                             </div>
                           </div>
