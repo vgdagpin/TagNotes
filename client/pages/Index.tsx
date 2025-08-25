@@ -53,8 +53,20 @@ const mockNotes: Note[] = [
   {
     id: "1",
     title: "Welcome to Notes",
-    content:
-      "This is your first note! You can edit this content by clicking the edit button or double-clicking in the content area.\n\nFeatures:\n• Create new notes with the + tab\n• Search through your notes\n• Edit and save changes\n• Open multiple notes in tabs\n• Responsive design",
+    sections: [
+      {
+        id: "s1",
+        type: "text",
+        content: "This is your first note! You can now add different types of sections to organize your content better.",
+        createdAt: new Date("2024-01-15T10:00:00"),
+      },
+      {
+        id: "s2",
+        type: "markdown",
+        content: "## Features\\n\\n- Create new notes with the + tab\\n- Search through your notes and tags\\n- Add **markdown**, plain text, code, and image sections\\n- Edit and save changes\\n- Responsive design",
+        createdAt: new Date("2024-01-15T10:01:00"),
+      },
+    ],
     tags: ["welcome", "tutorial", "getting-started"],
     createdAt: new Date("2024-01-15T10:00:00"),
     updatedAt: new Date("2024-01-15T10:00:00"),
@@ -62,8 +74,20 @@ const mockNotes: Note[] = [
   {
     id: "2",
     title: "Project Ideas",
-    content:
-      "Some ideas for future projects:\n\n1. Personal portfolio website\n2. Recipe management app\n3. Habit tracker\n4. Book reading list\n5. Photo gallery with tags",
+    sections: [
+      {
+        id: "s3",
+        type: "text",
+        content: "Some ideas for future projects:",
+        createdAt: new Date("2024-01-14T14:30:00"),
+      },
+      {
+        id: "s4",
+        type: "markdown",
+        content: "1. Personal portfolio website\\n2. Recipe management app\\n3. Habit tracker\\n4. Book reading list\\n5. Photo gallery with tags",
+        createdAt: new Date("2024-01-14T14:31:00"),
+      },
+    ],
     tags: ["projects", "ideas", "development"],
     createdAt: new Date("2024-01-14T14:30:00"),
     updatedAt: new Date("2024-01-14T14:30:00"),
@@ -71,8 +95,20 @@ const mockNotes: Note[] = [
   {
     id: "3",
     title: "Meeting Notes - Jan 12",
-    content:
-      "Team meeting highlights:\n\n• Discussed Q1 goals\n• New feature roadmap review\n�� Budget planning for next quarter\n• Team building event planning\n\nAction items:\n- Follow up with design team\n- Review budget proposal\n- Schedule 1:1s with team members",
+    sections: [
+      {
+        id: "s5",
+        type: "markdown",
+        content: "## Team meeting highlights\\n\\n- Discussed Q1 goals\\n- New feature roadmap review\\n- Budget planning for next quarter\\n- Team building event planning",
+        createdAt: new Date("2024-01-12T09:15:00"),
+      },
+      {
+        id: "s6",
+        type: "text",
+        content: "Action items:\\n- Follow up with design team\\n- Review budget proposal\\n- Schedule 1:1s with team members",
+        createdAt: new Date("2024-01-12T09:16:00"),
+      },
+    ],
     tags: ["meeting", "work", "q1-goals", "team"],
     createdAt: new Date("2024-01-12T09:15:00"),
     updatedAt: new Date("2024-01-12T09:15:00"),
@@ -80,8 +116,21 @@ const mockNotes: Note[] = [
   {
     id: "4",
     title: "Learning Resources",
-    content:
-      "Useful learning resources:\n\n**React & TypeScript:**\n• React documentation\n• TypeScript handbook\n• Advanced React patterns\n\n**Design:**\n• Radix UI components\n• Tailwind CSS documentation\n• UI/UX design principles\n\n**Tools:**\n• Vite build tool\n• ESLint configuration\n• Testing with Vitest",
+    sections: [
+      {
+        id: "s7",
+        type: "markdown",
+        content: "## Useful learning resources\\n\\n### React & TypeScript\\n- React documentation\\n- TypeScript handbook\\n- Advanced React patterns",
+        createdAt: new Date("2024-01-10T16:45:00"),
+      },
+      {
+        id: "s8",
+        type: "code",
+        content: "// Example React component\\nconst MyComponent = () => {\\n  const [count, setCount] = useState(0);\\n  \\n  return (\\n    <button onClick={() => setCount(count + 1)}>\\n      Count: {count}\\n    </button>\\n  );\\n};",
+        language: "javascript",
+        createdAt: new Date("2024-01-10T16:46:00"),
+      },
+    ],
     tags: ["learning", "react", "typescript", "documentation"],
     createdAt: new Date("2024-01-10T16:45:00"),
     updatedAt: new Date("2024-01-10T16:45:00"),
@@ -95,19 +144,22 @@ export default function Index() {
   const [openTabs, setOpenTabs] = useState<string[]>(["1"]); // Start with first note open
   const [activeTab, setActiveTab] = useState("1");
   const [editingNotes, setEditingNotes] = useState<Set<string>>(new Set());
-  const [noteContents, setNoteContents] = useState<Record<string, string>>({});
   const [noteTags, setNoteTags] = useState<Record<string, string[]>>({});
+  const [sectionContents, setSectionContents] = useState<Record<string, string>>({});
+  const [editingSections, setEditingSections] = useState<Set<string>>(new Set());
 
-  // Initialize note contents and tags for editing
+  // Initialize note tags and section contents for editing
   useEffect(() => {
-    const contents: Record<string, string> = {};
     const tags: Record<string, string[]> = {};
+    const contents: Record<string, string> = {};
     notes.forEach((note) => {
-      contents[note.id] = note.content;
       tags[note.id] = [...note.tags];
+      note.sections.forEach((section) => {
+        contents[section.id] = section.content;
+      });
     });
-    setNoteContents(contents);
     setNoteTags(tags);
+    setSectionContents(contents);
   }, [notes]);
 
   // Filtered notes based on search
@@ -118,30 +170,39 @@ export default function Index() {
     return notes.filter(
       (note) =>
         note.title.toLowerCase().includes(query) ||
-        note.content.toLowerCase().includes(query) ||
+        note.sections.some(section => 
+          section.content.toLowerCase().includes(query)
+        ) ||
         note.tags.some((tag) => tag.toLowerCase().includes(query)),
     );
   }, [notes, searchQuery]);
 
-  // Generate new note ID
+  // Generate new ID
   const generateId = () => {
     return Date.now().toString() + Math.random().toString(36).substr(2, 9);
   };
 
-  // Create new note
+  // Create new note with default section
   const createNote = () => {
     const newNote: Note = {
       id: generateId(),
       title: "New Note",
-      content: "",
+      sections: [
+        {
+          id: generateId(),
+          type: "text",
+          content: "",
+          createdAt: new Date(),
+        }
+      ],
       tags: [],
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
     setNotes((prev) => [newNote, ...prev]);
-    setNoteContents((prev) => ({ ...prev, [newNote.id]: "" }));
     setNoteTags((prev) => ({ ...prev, [newNote.id]: [] }));
+    setSectionContents((prev) => ({ ...prev, [newNote.sections[0].id]: "" }));
 
     // Open the new note in a tab
     if (!openTabs.includes(newNote.id)) {
@@ -149,6 +210,139 @@ export default function Index() {
     }
     setActiveTab(newNote.id);
     setEditingNotes((prev) => new Set([...prev, newNote.id]));
+  };
+
+  // Add new section to note
+  const addSection = (noteId: string, sectionType: Section['type']) => {
+    const newSection: Section = {
+      id: generateId(),
+      type: sectionType,
+      content: "",
+      language: sectionType === 'code' ? 'javascript' : undefined,
+      createdAt: new Date(),
+    };
+
+    setNotes((prev) => prev.map((note) => 
+      note.id === noteId 
+        ? { ...note, sections: [...note.sections, newSection], updatedAt: new Date() }
+        : note
+    ));
+
+    setSectionContents((prev) => ({ ...prev, [newSection.id]: "" }));
+    setEditingSections((prev) => new Set([...prev, newSection.id]));
+  };
+
+  // Delete section
+  const deleteSection = (noteId: string, sectionId: string) => {
+    setNotes((prev) => prev.map((note) => 
+      note.id === noteId 
+        ? { 
+            ...note, 
+            sections: note.sections.filter(s => s.id !== sectionId),
+            updatedAt: new Date()
+          }
+        : note
+    ));
+
+    setSectionContents((prev) => {
+      const newContents = { ...prev };
+      delete newContents[sectionId];
+      return newContents;
+    });
+
+    setEditingSections((prev) => {
+      const newSet = new Set(prev);
+      newSet.delete(sectionId);
+      return newSet;
+    });
+  };
+
+  // Update section content
+  const updateSectionContent = (sectionId: string, content: string) => {
+    setSectionContents((prev) => ({ ...prev, [sectionId]: content }));
+  };
+
+  // Update section language (for code sections)
+  const updateSectionLanguage = (sectionId: string, language: string) => {
+    setNotes((prev) => prev.map((note) => ({
+      ...note,
+      sections: note.sections.map((section) =>
+        section.id === sectionId ? { ...section, language } : section
+      ),
+    })));
+  };
+
+  // Toggle section edit mode
+  const toggleSectionEdit = (sectionId: string) => {
+    setEditingSections((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(sectionId)) {
+        newSet.delete(sectionId);
+      } else {
+        newSet.add(sectionId);
+      }
+      return newSet;
+    });
+  };
+
+  // Save section changes
+  const saveSection = (sectionId: string) => {
+    const content = sectionContents[sectionId] || "";
+    
+    setNotes((prev) => prev.map((note) => ({
+      ...note,
+      sections: note.sections.map((section) =>
+        section.id === sectionId 
+          ? { ...section, content }
+          : section
+      ),
+      updatedAt: new Date(),
+    })));
+
+    setEditingSections((prev) => {
+      const newSet = new Set(prev);
+      newSet.delete(sectionId);
+      return newSet;
+    });
+  };
+
+  // Handle image paste
+  const handleImagePaste = (noteId: string, event: ClipboardEvent) => {
+    const items = event.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.indexOf('image') !== -1) {
+        const file = item.getAsFile();
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const imageData = e.target?.result as string;
+            addImageSection(noteId, imageData);
+          };
+          reader.readAsDataURL(file);
+        }
+        break;
+      }
+    }
+  };
+
+  // Add image section
+  const addImageSection = (noteId: string, imageData: string) => {
+    const newSection: Section = {
+      id: generateId(),
+      type: "image",
+      content: "Image",
+      imageData: imageData,
+      createdAt: new Date(),
+    };
+
+    setNotes((prev) => prev.map((note) => 
+      note.id === noteId 
+        ? { ...note, sections: [...note.sections, newSection], updatedAt: new Date() }
+        : note
+    ));
   };
 
   // Open note in tab
@@ -165,7 +359,6 @@ export default function Index() {
     setOpenTabs(newOpenTabs);
 
     if (activeTab === noteId) {
-      // Switch to the previous tab or the first available tab
       const currentIndex = openTabs.indexOf(noteId);
       const nextTab =
         newOpenTabs[Math.max(0, currentIndex - 1)] || newOpenTabs[0];
@@ -174,7 +367,6 @@ export default function Index() {
       }
     }
 
-    // Stop editing if we were editing this note
     setEditingNotes((prev) => {
       const newSet = new Set(prev);
       newSet.delete(noteId);
@@ -182,7 +374,7 @@ export default function Index() {
     });
   };
 
-  // Toggle edit mode
+  // Toggle edit mode for note
   const toggleEdit = (noteId: string) => {
     setEditingNotes((prev) => {
       const newSet = new Set(prev);
@@ -197,17 +389,19 @@ export default function Index() {
 
   // Save note changes
   const saveNote = (noteId: string) => {
-    const content = noteContents[noteId] || "";
-    const title = content.split("\n")[0].slice(0, 50) || "Untitled";
+    const note = notes.find(n => n.id === noteId);
+    if (!note) return;
+
+    // Update title from first section if it's text
+    const firstSection = note.sections[0];
+    const title = firstSection?.content.split('\\n')[0].slice(0, 50) || "Untitled";
     const tags = noteTags[noteId] || [];
 
-    setNotes((prev) =>
-      prev.map((note) =>
-        note.id === noteId
-          ? { ...note, title, content, tags, updatedAt: new Date() }
-          : note,
-      ),
-    );
+    setNotes((prev) => prev.map((note) => 
+      note.id === noteId 
+        ? { ...note, title, tags, updatedAt: new Date() }
+        : note
+    ));
 
     setEditingNotes((prev) => {
       const newSet = new Set(prev);
@@ -220,21 +414,11 @@ export default function Index() {
   const deleteNote = (noteId: string) => {
     setNotes((prev) => prev.filter((note) => note.id !== noteId));
     closeTab(noteId);
-    setNoteContents((prev) => {
-      const newContents = { ...prev };
-      delete newContents[noteId];
-      return newContents;
-    });
     setNoteTags((prev) => {
       const newTags = { ...prev };
       delete newTags[noteId];
       return newTags;
     });
-  };
-
-  // Update note content in state
-  const updateNoteContent = (noteId: string, content: string) => {
-    setNoteContents((prev) => ({ ...prev, [noteId]: content }));
   };
 
   // Add tag to note
@@ -268,10 +452,145 @@ export default function Index() {
   };
 
   // Get preview text for sidebar
-  const getPreviewText = (content: string) => {
+  const getPreviewText = (sections: Section[]) => {
+    const firstTextSection = sections.find(s => s.content.trim());
+    if (!firstTextSection) return "Empty note";
+    return firstTextSection.content.slice(0, 60).replace(/\\n/g, ' ') + 
+           (firstTextSection.content.length > 60 ? '...' : '');
+  };
+
+  // Render section based on type
+  const renderSection = (section: Section, noteId: string, isEditing: boolean) => {
+    const isEditingSection = editingSections.has(section.id);
+    const content = sectionContents[section.id] || section.content;
+
     return (
-      content.slice(0, 60).replace(/\n/g, " ") +
-      (content.length > 60 ? "..." : "")
+      <div key={section.id} className="border border-border rounded-lg p-4 space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            {section.type === 'markdown' && <Markdown className="h-4 w-4" />}
+            {section.type === 'text' && <Type className="h-4 w-4" />}
+            {section.type === 'code' && <Code className="h-4 w-4" />}
+            {section.type === 'image' && <Image className="h-4 w-4" />}
+            <span className="capitalize">{section.type}</span>
+            {section.type === 'code' && section.language && (
+              <Badge variant="outline" className="text-xs">{section.language}</Badge>
+            )}
+          </div>
+          
+          {isEditing && (
+            <div className="flex items-center gap-1">
+              {isEditingSection ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => saveSection(section.id)}
+                >
+                  <Save className="h-3 w-3" />
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => toggleSectionEdit(section.id)}
+                >
+                  <Edit3 className="h-3 w-3" />
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => deleteSection(noteId, section.id)}
+                className="text-destructive hover:text-destructive"
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Section Content */}
+        {section.type === 'image' && section.imageData ? (
+          <Dialog>
+            <DialogTrigger asChild>
+              <div className="cursor-pointer">
+                <img 
+                  src={section.imageData} 
+                  alt={section.content}
+                  className="max-w-xs h-32 object-cover rounded border hover:opacity-80 transition-opacity"
+                />
+              </div>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl">
+              <img 
+                src={section.imageData} 
+                alt={section.content}
+                className="w-full h-auto max-h-[80vh] object-contain"
+              />
+            </DialogContent>
+          </Dialog>
+        ) : isEditingSection ? (
+          <div className="space-y-2">
+            {section.type === 'code' && (
+              <Select
+                value={section.language || 'javascript'}
+                onValueChange={(value) => updateSectionLanguage(section.id, value)}
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="javascript">JavaScript</SelectItem>
+                  <SelectItem value="typescript">TypeScript</SelectItem>
+                  <SelectItem value="python">Python</SelectItem>
+                  <SelectItem value="sql">SQL</SelectItem>
+                  <SelectItem value="csharp">C#</SelectItem>
+                  <SelectItem value="java">Java</SelectItem>
+                  <SelectItem value="css">CSS</SelectItem>
+                  <SelectItem value="html">HTML</SelectItem>
+                  <SelectItem value="json">JSON</SelectItem>
+                  <SelectItem value="bash">Bash</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+            <Textarea
+              value={content}
+              onChange={(e) => updateSectionContent(section.id, e.target.value)}
+              placeholder={`Enter ${section.type} content...`}
+              className="min-h-32 resize-vertical"
+            />
+          </div>
+        ) : (
+          <div className="prose max-w-none">
+            {section.type === 'code' ? (
+              <SyntaxHighlighter
+                language={section.language || 'javascript'}
+                style={tomorrow}
+                className="rounded border"
+              >
+                {section.content}
+              </SyntaxHighlighter>
+            ) : section.type === 'markdown' ? (
+              <div 
+                className="prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{
+                  __html: section.content
+                    .replace(/\\n/g, '<br>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/^## (.*)/gm, '<h2 class="text-lg font-semibold mt-4 mb-2">$1</h2>')
+                    .replace(/^### (.*)/gm, '<h3 class="text-base font-semibold mt-3 mb-2">$1</h3>')
+                    .replace(/^- (.*)/gm, '<li class="ml-4">$1</li>')
+                }}
+              />
+            ) : (
+              <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                {section.content || <span className="text-muted-foreground italic">Empty section</span>}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -310,7 +629,7 @@ export default function Index() {
                 key={note.id}
                 onClick={() => openNoteInTab(note.id)}
                 className={cn(
-                  "p-4 border-b border-border cursor-pointer hover:bg-accent transition-colors",
+                  "p-4 border-b border-border cursor-pointer hover:bg-accent transition-colors group",
                   activeTab === note.id && "bg-accent",
                 )}
               >
@@ -320,16 +639,12 @@ export default function Index() {
                       {note.title}
                     </h3>
                     <p className="text-sm text-muted-foreground mt-1">
-                      {getPreviewText(note.content)}
+                      {getPreviewText(note.sections)}
                     </p>
                     {note.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">
                         {note.tags.slice(0, 3).map((tag) => (
-                          <Badge
-                            key={tag}
-                            variant="secondary"
-                            className="text-xs"
-                          >
+                          <Badge key={tag} variant="secondary" className="text-xs">
                             {tag}
                           </Badge>
                         ))}
@@ -449,6 +764,11 @@ export default function Index() {
                     key={noteId}
                     value={noteId}
                     className="h-full mt-0 data-[state=active]:flex flex-col"
+                    onPaste={(e) => {
+                      if (isEditing) {
+                        handleImagePaste(noteId, e.nativeEvent);
+                      }
+                    }}
                   >
                     {/* Note Header */}
                     <div className="p-4 border-b border-border bg-card">
@@ -477,8 +797,7 @@ export default function Index() {
                                     className="flex-1"
                                     onKeyDown={(e) => {
                                       if (e.key === "Enter") {
-                                        const input =
-                                          e.target as HTMLInputElement;
+                                        const input = e.target as HTMLInputElement;
                                         addTagToNote(noteId, input.value);
                                         input.value = "";
                                       }
@@ -490,9 +809,7 @@ export default function Index() {
                                     onClick={(e) => {
                                       const input = (e.target as HTMLElement)
                                         .closest(".flex")
-                                        ?.querySelector(
-                                          "input",
-                                        ) as HTMLInputElement;
+                                        ?.querySelector("input") as HTMLInputElement;
                                       if (input) {
                                         addTagToNote(noteId, input.value);
                                         input.value = "";
@@ -517,9 +834,7 @@ export default function Index() {
                                         variant="ghost"
                                         size="icon"
                                         className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
-                                        onClick={() =>
-                                          removeTagFromNote(noteId, tag)
-                                        }
+                                        onClick={() => removeTagFromNote(noteId, tag)}
                                       >
                                         <X className="h-3 w-3" />
                                       </Button>
@@ -581,30 +896,53 @@ export default function Index() {
                           </Button>
                         </div>
                       </div>
+
+                      {/* Add Section Dropdown */}
+                      {isEditing && (
+                        <div className="mt-4 pt-4 border-t border-border">
+                          <Select onValueChange={(value) => addSection(noteId, value as Section['type'])}>
+                            <SelectTrigger className="w-48">
+                              <SelectValue placeholder="Add section..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="text">
+                                <div className="flex items-center gap-2">
+                                  <Type className="h-4 w-4" />
+                                  Plain Text
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="markdown">
+                                <div className="flex items-center gap-2">
+                                  <Markdown className="h-4 w-4" />
+                                  Markdown
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="code">
+                                <div className="flex items-center gap-2">
+                                  <Code className="h-4 w-4" />
+                                  Code
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Paste images from clipboard to add image sections
+                          </p>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Note Content */}
-                    <div className="flex-1 p-4 overflow-y-auto">
-                      {isEditing ? (
-                        <Textarea
-                          value={noteContents[noteId] || ""}
-                          onChange={(e) =>
-                            updateNoteContent(noteId, e.target.value)
-                          }
-                          placeholder="Start writing your note..."
-                          className="w-full h-full min-h-96 resize-none border-0 focus-visible:ring-0 p-0 text-base leading-relaxed"
-                        />
-                      ) : (
-                        <div
-                          className="w-full h-full min-h-96 text-base leading-relaxed whitespace-pre-wrap cursor-text"
-                          onDoubleClick={() => toggleEdit(noteId)}
-                        >
-                          {note.content || (
-                            <span className="text-muted-foreground italic">
-                              Double-click to start writing...
-                            </span>
-                          )}
+                    {/* Note Sections */}
+                    <div className="flex-1 p-4 overflow-y-auto space-y-4">
+                      {note.sections.length === 0 ? (
+                        <div className="text-center text-muted-foreground py-8">
+                          <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                          <p>No sections yet. Add a section to get started.</p>
                         </div>
+                      ) : (
+                        note.sections.map((section) => 
+                          renderSection(section, noteId, isEditing)
+                        )
                       )}
                     </div>
                   </TabsContent>
