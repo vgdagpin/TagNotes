@@ -5,7 +5,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, X, FileText, Edit3, Save, Trash2, Tag, Hash } from "lucide-react";
+import {
+  Search,
+  Plus,
+  X,
+  FileText,
+  Edit3,
+  Save,
+  Trash2,
+  Tag,
+  Hash,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Types for our note system
@@ -89,7 +99,7 @@ export default function Index() {
       (note) =>
         note.title.toLowerCase().includes(query) ||
         note.content.toLowerCase().includes(query) ||
-        note.tags.some(tag => tag.toLowerCase().includes(query)),
+        note.tags.some((tag) => tag.toLowerCase().includes(query)),
     );
   }, [notes, searchQuery]);
 
@@ -295,7 +305,11 @@ export default function Index() {
                     {note.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">
                         {note.tags.slice(0, 3).map((tag) => (
-                          <Badge key={tag} variant="secondary" className="text-xs">
+                          <Badge
+                            key={tag}
+                            variant="secondary"
+                            className="text-xs"
+                          >
                             {tag}
                           </Badge>
                         ))}
@@ -442,10 +456,11 @@ export default function Index() {
                                     placeholder="Add tag..."
                                     className="flex-1"
                                     onKeyDown={(e) => {
-                                      if (e.key === 'Enter') {
-                                        const input = e.target as HTMLInputElement;
+                                      if (e.key === "Enter") {
+                                        const input =
+                                          e.target as HTMLInputElement;
                                         addTagToNote(noteId, input.value);
-                                        input.value = '';
+                                        input.value = "";
                                       }
                                     }}
                                   />
@@ -453,10 +468,14 @@ export default function Index() {
                                     variant="outline"
                                     size="sm"
                                     onClick={(e) => {
-                                      const input = (e.target as HTMLElement).closest('.flex')?.querySelector('input') as HTMLInputElement;
+                                      const input = (e.target as HTMLElement)
+                                        .closest(".flex")
+                                        ?.querySelector(
+                                          "input",
+                                        ) as HTMLInputElement;
                                       if (input) {
                                         addTagToNote(noteId, input.value);
-                                        input.value = '';
+                                        input.value = "";
                                       }
                                     }}
                                   >
@@ -467,21 +486,29 @@ export default function Index() {
                                 {/* Editable Tags */}
                                 <div className="flex flex-wrap gap-2">
                                   {(noteTags[noteId] || []).map((tag) => (
-                                    <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+                                    <Badge
+                                      key={tag}
+                                      variant="secondary"
+                                      className="flex items-center gap-1"
+                                    >
                                       <Hash className="h-3 w-3" />
                                       {tag}
                                       <Button
                                         variant="ghost"
                                         size="icon"
                                         className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
-                                        onClick={() => removeTagFromNote(noteId, tag)}
+                                        onClick={() =>
+                                          removeTagFromNote(noteId, tag)
+                                        }
                                       >
                                         <X className="h-3 w-3" />
                                       </Button>
                                     </Badge>
                                   ))}
                                   {(noteTags[noteId] || []).length === 0 && (
-                                    <span className="text-muted-foreground italic text-sm">No tags yet</span>
+                                    <span className="text-muted-foreground italic text-sm">
+                                      No tags yet
+                                    </span>
                                   )}
                                 </div>
                               </div>
@@ -490,13 +517,19 @@ export default function Index() {
                               <div className="flex flex-wrap gap-2">
                                 {note.tags.length > 0 ? (
                                   note.tags.map((tag) => (
-                                    <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+                                    <Badge
+                                      key={tag}
+                                      variant="secondary"
+                                      className="flex items-center gap-1"
+                                    >
                                       <Hash className="h-3 w-3" />
                                       {tag}
                                     </Badge>
                                   ))
                                 ) : (
-                                  <span className="text-muted-foreground italic text-sm">No tags</span>
+                                  <span className="text-muted-foreground italic text-sm">
+                                    No tags
+                                  </span>
                                 )}
                               </div>
                             )}
