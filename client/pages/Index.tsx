@@ -21,7 +21,6 @@ import {
   Hash,
   Code,
   Type,
-  Markdown,
   Image,
   ChevronDown,
   Eye,
