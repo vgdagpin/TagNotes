@@ -166,18 +166,21 @@ export default function Index() {
   const [editingTitles, setEditingTitles] = useState<Set<string>>(new Set());
   const [titleContents, setTitleContents] = useState<Record<string, string>>({});
 
-  // Initialize note tags and section contents for editing
+  // Initialize note tags, section contents, and title contents for editing
   useEffect(() => {
     const tags: Record<string, string[]> = {};
     const contents: Record<string, string> = {};
+    const titles: Record<string, string> = {};
     notes.forEach((note) => {
       tags[note.id] = [...note.tags];
+      titles[note.id] = note.title;
       note.sections.forEach((section) => {
         contents[section.id] = section.content;
       });
     });
     setNoteTags(tags);
     setSectionContents(contents);
+    setTitleContents(titles);
   }, [notes]);
 
   // Filtered notes based on search
