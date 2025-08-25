@@ -873,7 +873,7 @@ export default function Index() {
                     }}
                   >
                     {/* Note Header */}
-                    <div className="p-4 border-b border-border bg-card">
+                    <div className="p-4 border-b border-border bg-card group">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           {/* Editable Title */}
