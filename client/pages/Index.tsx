@@ -262,6 +262,7 @@ export default function Index() {
 
   // Delete section
   const deleteSection = (noteId: string, sectionId: string) => {
+    if (!window.confirm("Are you sure you want to delete this section? This action cannot be undone.")) return;
     setNotes((prev) =>
       prev.map((note) =>
         note.id === noteId
@@ -454,6 +455,7 @@ export default function Index() {
 
   // Delete note
   const deleteNote = (noteId: string) => {
+    if (!window.confirm("Are you sure you want to delete this note? This action cannot be undone.")) return;
     setNotes((prev) => prev.filter((note) => note.id !== noteId));
     closeTab(noteId);
     setNoteTags((prev) => {
@@ -477,6 +479,7 @@ export default function Index() {
 
   // Remove tag from note
   const removeTagFromNote = (noteId: string, tagToRemove: string) => {
+    if (!window.confirm(`Remove tag \"${tagToRemove}\" from this note?`)) return;
     setNoteTags((prev) => ({
       ...prev,
       [noteId]: (prev[noteId] || []).filter((tag) => tag !== tagToRemove),
@@ -692,50 +695,26 @@ export default function Index() {
                 key={note.id}
                 onClick={() => openNoteInTab(note.id)}
                 className={cn(
-                  "p-4 border-b border-border cursor-pointer hover:bg-accent transition-colors group",
+                  "px-2 py-1 border-b border-border cursor-pointer hover:bg-accent transition-colors group",
                   activeTab === note.id && "bg-accent",
                 )}
               >
-                <div className="flex items-start justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-foreground truncate">
+                    <h3 className="font-normal text-sm text-foreground truncate">
                       {note.title}
                     </h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {getPreviewText(note.sections)}
-                    </p>
-                    {note.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {note.tags.slice(0, 3).map((tag) => (
-                          <Badge
-                            key={tag}
-                            variant="secondary"
-                            className="text-xs"
-                          >
-                            {tag}
-                          </Badge>
-                        ))}
-                        {note.tags.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{note.tags.length - 3}
-                          </Badge>
-                        )}
-                      </div>
-                    )}
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {formatDate(note.updatedAt)}
-                    </p>
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 opacity-0 group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground"
+                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground"
                     onClick={(e) => {
                       e.stopPropagation();
                       deleteNote(note.id);
                     }}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3 w-3" />
                   </Button>
                 </div>
               </div>
