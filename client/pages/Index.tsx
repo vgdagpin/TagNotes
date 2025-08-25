@@ -21,28 +21,32 @@ const mockNotes: Note[] = [
   {
     id: "1",
     title: "Welcome to Notes",
-    content: "This is your first note! You can edit this content by clicking the edit button or double-clicking in the content area.\n\nFeatures:\n• Create new notes with the + tab\n• Search through your notes\n• Edit and save changes\n• Open multiple notes in tabs\n• Responsive design",
+    content:
+      "This is your first note! You can edit this content by clicking the edit button or double-clicking in the content area.\n\nFeatures:\n• Create new notes with the + tab\n• Search through your notes\n• Edit and save changes\n• Open multiple notes in tabs\n• Responsive design",
     createdAt: new Date("2024-01-15T10:00:00"),
     updatedAt: new Date("2024-01-15T10:00:00"),
   },
   {
-    id: "2", 
+    id: "2",
     title: "Project Ideas",
-    content: "Some ideas for future projects:\n\n1. Personal portfolio website\n2. Recipe management app\n3. Habit tracker\n4. Book reading list\n5. Photo gallery with tags",
+    content:
+      "Some ideas for future projects:\n\n1. Personal portfolio website\n2. Recipe management app\n3. Habit tracker\n4. Book reading list\n5. Photo gallery with tags",
     createdAt: new Date("2024-01-14T14:30:00"),
     updatedAt: new Date("2024-01-14T14:30:00"),
   },
   {
     id: "3",
     title: "Meeting Notes - Jan 12",
-    content: "Team meeting highlights:\n\n• Discussed Q1 goals\n• New feature roadmap review\n• Budget planning for next quarter\n• Team building event planning\n\nAction items:\n- Follow up with design team\n- Review budget proposal\n- Schedule 1:1s with team members",
+    content:
+      "Team meeting highlights:\n\n• Discussed Q1 goals\n• New feature roadmap review\n• Budget planning for next quarter\n• Team building event planning\n\nAction items:\n- Follow up with design team\n- Review budget proposal\n- Schedule 1:1s with team members",
     createdAt: new Date("2024-01-12T09:15:00"),
     updatedAt: new Date("2024-01-12T09:15:00"),
   },
   {
     id: "4",
     title: "Learning Resources",
-    content: "Useful learning resources:\n\n**React & TypeScript:**\n• React documentation\n• TypeScript handbook\n• Advanced React patterns\n\n**Design:**\n• Radix UI components\n• Tailwind CSS documentation\n• UI/UX design principles\n\n**Tools:**\n• Vite build tool\n• ESLint configuration\n• Testing with Vitest",
+    content:
+      "Useful learning resources:\n\n**React & TypeScript:**\n• React documentation\n• TypeScript handbook\n• Advanced React patterns\n\n**Design:**\n• Radix UI components\n• Tailwind CSS documentation\n• UI/UX design principles\n\n**Tools:**\n• Vite build tool\n• ESLint configuration\n• Testing with Vitest",
     createdAt: new Date("2024-01-10T16:45:00"),
     updatedAt: new Date("2024-01-10T16:45:00"),
   },
@@ -60,7 +64,7 @@ export default function Index() {
   // Initialize note contents for editing
   useEffect(() => {
     const contents: Record<string, string> = {};
-    notes.forEach(note => {
+    notes.forEach((note) => {
       contents[note.id] = note.content;
     });
     setNoteContents(contents);
@@ -69,11 +73,12 @@ export default function Index() {
   // Filtered notes based on search
   const filteredNotes = useMemo(() => {
     if (!searchQuery.trim()) return notes;
-    
+
     const query = searchQuery.toLowerCase();
-    return notes.filter(note => 
-      note.title.toLowerCase().includes(query) || 
-      note.content.toLowerCase().includes(query)
+    return notes.filter(
+      (note) =>
+        note.title.toLowerCase().includes(query) ||
+        note.content.toLowerCase().includes(query),
     );
   }, [notes, searchQuery]);
 
@@ -91,42 +96,43 @@ export default function Index() {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    
-    setNotes(prev => [newNote, ...prev]);
-    setNoteContents(prev => ({ ...prev, [newNote.id]: "" }));
-    
+
+    setNotes((prev) => [newNote, ...prev]);
+    setNoteContents((prev) => ({ ...prev, [newNote.id]: "" }));
+
     // Open the new note in a tab
     if (!openTabs.includes(newNote.id)) {
-      setOpenTabs(prev => [...prev, newNote.id]);
+      setOpenTabs((prev) => [...prev, newNote.id]);
     }
     setActiveTab(newNote.id);
-    setEditingNotes(prev => new Set([...prev, newNote.id]));
+    setEditingNotes((prev) => new Set([...prev, newNote.id]));
   };
 
   // Open note in tab
   const openNoteInTab = (noteId: string) => {
     if (!openTabs.includes(noteId)) {
-      setOpenTabs(prev => [...prev, noteId]);
+      setOpenTabs((prev) => [...prev, noteId]);
     }
     setActiveTab(noteId);
   };
 
   // Close tab
   const closeTab = (noteId: string) => {
-    const newOpenTabs = openTabs.filter(id => id !== noteId);
+    const newOpenTabs = openTabs.filter((id) => id !== noteId);
     setOpenTabs(newOpenTabs);
-    
+
     if (activeTab === noteId) {
       // Switch to the previous tab or the first available tab
       const currentIndex = openTabs.indexOf(noteId);
-      const nextTab = newOpenTabs[Math.max(0, currentIndex - 1)] || newOpenTabs[0];
+      const nextTab =
+        newOpenTabs[Math.max(0, currentIndex - 1)] || newOpenTabs[0];
       if (nextTab) {
         setActiveTab(nextTab);
       }
     }
-    
+
     // Stop editing if we were editing this note
-    setEditingNotes(prev => {
+    setEditingNotes((prev) => {
       const newSet = new Set(prev);
       newSet.delete(noteId);
       return newSet;
@@ -135,7 +141,7 @@ export default function Index() {
 
   // Toggle edit mode
   const toggleEdit = (noteId: string) => {
-    setEditingNotes(prev => {
+    setEditingNotes((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(noteId)) {
         newSet.delete(noteId);
@@ -149,15 +155,17 @@ export default function Index() {
   // Save note changes
   const saveNote = (noteId: string) => {
     const content = noteContents[noteId] || "";
-    const title = content.split('\n')[0].slice(0, 50) || "Untitled";
-    
-    setNotes(prev => prev.map(note => 
-      note.id === noteId 
-        ? { ...note, title, content, updatedAt: new Date() }
-        : note
-    ));
-    
-    setEditingNotes(prev => {
+    const title = content.split("\n")[0].slice(0, 50) || "Untitled";
+
+    setNotes((prev) =>
+      prev.map((note) =>
+        note.id === noteId
+          ? { ...note, title, content, updatedAt: new Date() }
+          : note,
+      ),
+    );
+
+    setEditingNotes((prev) => {
       const newSet = new Set(prev);
       newSet.delete(noteId);
       return newSet;
@@ -166,9 +174,9 @@ export default function Index() {
 
   // Delete note
   const deleteNote = (noteId: string) => {
-    setNotes(prev => prev.filter(note => note.id !== noteId));
+    setNotes((prev) => prev.filter((note) => note.id !== noteId));
     closeTab(noteId);
-    setNoteContents(prev => {
+    setNoteContents((prev) => {
       const newContents = { ...prev };
       delete newContents[noteId];
       return newContents;
@@ -177,22 +185,25 @@ export default function Index() {
 
   // Update note content in state
   const updateNoteContent = (noteId: string, content: string) => {
-    setNoteContents(prev => ({ ...prev, [noteId]: content }));
+    setNoteContents((prev) => ({ ...prev, [noteId]: content }));
   };
 
   // Format date for display
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     }).format(date);
   };
 
   // Get preview text for sidebar
   const getPreviewText = (content: string) => {
-    return content.slice(0, 60).replace(/\n/g, ' ') + (content.length > 60 ? '...' : '');
+    return (
+      content.slice(0, 60).replace(/\n/g, " ") +
+      (content.length > 60 ? "..." : "")
+    );
   };
 
   return (
@@ -205,7 +216,7 @@ export default function Index() {
             <FileText className="h-5 w-5" />
             Notes
           </h1>
-          
+
           {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -231,7 +242,7 @@ export default function Index() {
                 onClick={() => openNoteInTab(note.id)}
                 className={cn(
                   "p-4 border-b border-border cursor-pointer hover:bg-accent transition-colors",
-                  activeTab === note.id && "bg-accent"
+                  activeTab === note.id && "bg-accent",
                 )}
               >
                 <div className="flex items-start justify-between">
@@ -278,8 +289,12 @@ export default function Index() {
           <div className="flex-1 flex items-center justify-center text-center">
             <div>
               <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h2 className="text-lg font-medium text-foreground mb-2">No notes open</h2>
-              <p className="text-muted-foreground mb-4">Select a note from the sidebar to get started</p>
+              <h2 className="text-lg font-medium text-foreground mb-2">
+                No notes open
+              </h2>
+              <p className="text-muted-foreground mb-4">
+                Select a note from the sidebar to get started
+              </p>
               <Button onClick={createNote}>
                 <Plus className="h-4 w-4 mr-2" />
                 Create your first note
@@ -287,17 +302,21 @@ export default function Index() {
             </div>
           </div>
         ) : (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="flex-1 flex flex-col"
+          >
             {/* Tabs List */}
             <div className="border-b border-border bg-card px-4">
               <TabsList className="h-12 p-0 bg-transparent">
                 {openTabs.map((noteId) => {
-                  const note = notes.find(n => n.id === noteId);
+                  const note = notes.find((n) => n.id === noteId);
                   if (!note) return null;
-                  
+
                   return (
                     <div key={noteId} className="flex items-center">
-                      <TabsTrigger 
+                      <TabsTrigger
                         value={noteId}
                         className="relative pr-8 max-w-48"
                       >
@@ -317,7 +336,7 @@ export default function Index() {
                     </div>
                   );
                 })}
-                
+
                 {/* Add new note tab */}
                 <Button
                   variant="ghost"
@@ -333,38 +352,37 @@ export default function Index() {
             {/* Tab Contents */}
             <div className="flex-1 overflow-hidden">
               {openTabs.map((noteId) => {
-                const note = notes.find(n => n.id === noteId);
+                const note = notes.find((n) => n.id === noteId);
                 if (!note) return null;
-                
+
                 const isEditing = editingNotes.has(noteId);
-                
+
                 return (
-                  <TabsContent 
-                    key={noteId} 
-                    value={noteId} 
+                  <TabsContent
+                    key={noteId}
+                    value={noteId}
                     className="h-full mt-0 data-[state=active]:flex flex-col"
                   >
                     {/* Note Header */}
                     <div className="p-4 border-b border-border bg-card">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h2 className="text-xl font-semibold text-foreground">{note.title}</h2>
+                          <h2 className="text-xl font-semibold text-foreground">
+                            {note.title}
+                          </h2>
                           <p className="text-sm text-muted-foreground">
                             Updated {formatDate(note.updatedAt)}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
                           {isEditing ? (
-                            <Button 
-                              onClick={() => saveNote(noteId)}
-                              size="sm"
-                            >
+                            <Button onClick={() => saveNote(noteId)} size="sm">
                               <Save className="h-4 w-4 mr-2" />
                               Save
                             </Button>
                           ) : (
-                            <Button 
-                              variant="outline" 
+                            <Button
+                              variant="outline"
                               onClick={() => toggleEdit(noteId)}
                               size="sm"
                             >
@@ -388,12 +406,14 @@ export default function Index() {
                       {isEditing ? (
                         <Textarea
                           value={noteContents[noteId] || ""}
-                          onChange={(e) => updateNoteContent(noteId, e.target.value)}
+                          onChange={(e) =>
+                            updateNoteContent(noteId, e.target.value)
+                          }
                           placeholder="Start writing your note..."
                           className="w-full h-full min-h-96 resize-none border-0 focus-visible:ring-0 p-0 text-base leading-relaxed"
                         />
                       ) : (
-                        <div 
+                        <div
                           className="w-full h-full min-h-96 text-base leading-relaxed whitespace-pre-wrap cursor-text"
                           onDoubleClick={() => toggleEdit(noteId)}
                         >
