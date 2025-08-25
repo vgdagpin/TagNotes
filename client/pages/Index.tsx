@@ -424,6 +424,41 @@ export default function Index() {
     });
   };
 
+  // Toggle title edit mode
+  const toggleTitleEdit = (noteId: string) => {
+    setEditingTitles((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(noteId)) {
+        newSet.delete(noteId);
+      } else {
+        newSet.add(noteId);
+      }
+      return newSet;
+    });
+  };
+
+  // Update title content
+  const updateTitleContent = (noteId: string, title: string) => {
+    setTitleContents((prev) => ({ ...prev, [noteId]: title }));
+  };
+
+  // Save title changes
+  const saveTitle = (noteId: string) => {
+    const title = titleContents[noteId]?.trim() || "Untitled";
+
+    setNotes((prev) => prev.map((note) =>
+      note.id === noteId
+        ? { ...note, title, updatedAt: new Date() }
+        : note
+    ));
+
+    setEditingTitles((prev) => {
+      const newSet = new Set(prev);
+      newSet.delete(noteId);
+      return newSet;
+    });
+  };
+
   // Save note changes
   const saveNote = (noteId: string) => {
     const note = notes.find((n) => n.id === noteId);
