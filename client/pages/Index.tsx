@@ -418,16 +418,92 @@ export default function Index() {
                   >
                     {/* Note Header */}
                     <div className="p-4 border-b border-border bg-card">
-                      <div className="flex items-center justify-between">
-                        <div>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
                           <h2 className="text-xl font-semibold text-foreground">
                             {note.title}
                           </h2>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-sm text-muted-foreground mb-3">
                             Updated {formatDate(note.updatedAt)}
                           </p>
+
+                          {/* Tags Section */}
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Tag className="h-4 w-4" />
+                              Tags
+                            </div>
+
+                            {isEditing ? (
+                              <div className="space-y-2">
+                                {/* Tag Input */}
+                                <div className="flex gap-2">
+                                  <Input
+                                    placeholder="Add tag..."
+                                    className="flex-1"
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        const input = e.target as HTMLInputElement;
+                                        addTagToNote(noteId, input.value);
+                                        input.value = '';
+                                      }
+                                    }}
+                                  />
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      const input = (e.target as HTMLElement).closest('.flex')?.querySelector('input') as HTMLInputElement;
+                                      if (input) {
+                                        addTagToNote(noteId, input.value);
+                                        input.value = '';
+                                      }
+                                    }}
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </Button>
+                                </div>
+
+                                {/* Editable Tags */}
+                                <div className="flex flex-wrap gap-2">
+                                  {(noteTags[noteId] || []).map((tag) => (
+                                    <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+                                      <Hash className="h-3 w-3" />
+                                      {tag}
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                                        onClick={() => removeTagFromNote(noteId, tag)}
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </Button>
+                                    </Badge>
+                                  ))}
+                                  {(noteTags[noteId] || []).length === 0 && (
+                                    <span className="text-muted-foreground italic text-sm">No tags yet</span>
+                                  )}
+                                </div>
+                              </div>
+                            ) : (
+                              /* Display Tags */
+                              <div className="flex flex-wrap gap-2">
+                                {note.tags.length > 0 ? (
+                                  note.tags.map((tag) => (
+                                    <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+                                      <Hash className="h-3 w-3" />
+                                      {tag}
+                                    </Badge>
+                                  ))
+                                ) : (
+                                  <span className="text-muted-foreground italic text-sm">No tags</span>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
+
+                        <div className="flex items-center gap-2 ml-4">
                           {isEditing ? (
                             <Button onClick={() => saveNote(noteId)} size="sm">
                               <Save className="h-4 w-4 mr-2" />
