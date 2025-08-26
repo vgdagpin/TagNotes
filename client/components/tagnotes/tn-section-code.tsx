@@ -79,6 +79,21 @@ const TnSectionCode = ({
     onDeleteSection?.call(null, section.id);
   };
 
+  // Add keyboard shortcut for section editing
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 's' && sectionEdit) {
+        e.preventDefault();
+        handleSave();
+      }
+    };
+
+    if (sectionEdit) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [sectionEdit, content, language]);
+
   return (
     <div className="border border-border rounded-md pb-2 pl-2 pr-2 group hover:border-accent transition-colors min-w-0 w-full">
       <div className="flex items-center justify-between">
