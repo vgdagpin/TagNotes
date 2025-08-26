@@ -574,7 +574,7 @@ export default function Index() {
             </div>
 
             {/* Tab Contents */}
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden min-w-0">
               {openTabs.map((noteId) => {
                 const note = notes.find((n) => n.id === noteId);
                 if (!note) return null;
