@@ -600,7 +600,7 @@ export default function Index() {
             </div>
 
             {/* Tab Contents */}
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 h-0">
               {openTabs.map((noteId) => {
                 const note = notes.find((n) => n.id === noteId);
                 if (!note) return null;
