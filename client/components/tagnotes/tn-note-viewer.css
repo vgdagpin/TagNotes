@@ -2,3 +2,7 @@
     overflow-y: scroll;
     height: calc(100vh - 50px);
 }
+
+.note-section {
+    background: rgb(241, 241, 241);
+}

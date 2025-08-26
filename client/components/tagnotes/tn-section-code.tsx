@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { tomorrow } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -95,7 +95,7 @@ const TnSectionCode = ({
   }, [sectionEdit, content, language]);
 
   return (
-    <div className="border border-border rounded-md pb-2 pl-2 pr-2 group hover:border-accent transition-colors min-w-0 w-full">
+    <div className="note-section border border-border rounded-md pb-2 pl-2 pr-2 group hover:border-accent transition-colors min-w-0 w-full">
       <div className="flex items-center justify-between">
         <div className="flex items-center text-muted-foreground">
           <Code className="w-3" />
@@ -169,7 +169,7 @@ const TnSectionCode = ({
             <div className="min-w-0 w-full overflow-hidden">
               <SyntaxHighlighter
                 language={language || "javascript"}
-                style={tomorrow}
+                style={oneLight}
                 className="rounded border min-w-0 w-full"
                 wrapLongLines={true}
               >
