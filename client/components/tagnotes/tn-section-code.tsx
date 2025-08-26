@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { Edit3, Save, Trash2, Code } from "lucide-react";
+import { Edit3, Save, Trash2, Code, ChevronDown, ChevronUp } from "lucide-react";
 import { Section } from "@shared/api";
 import { useState } from "react";
 import axios from "axios";
