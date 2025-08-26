@@ -11,7 +11,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { Edit3, Save, Trash2, Code, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Edit3,
+  Save,
+  Trash2,
+  Code,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { Section } from "@shared/api";
 import { useState } from "react";
 import axios from "axios";
@@ -37,11 +44,12 @@ const TnSectionCode = ({
   const [content, setContent] = useState(section.content);
 
   // Count lines and determine if folding is needed
-  const codeLines = section.content.split('\n');
+  const codeLines = section.content.split("\n");
   const shouldShowFoldButton = codeLines.length > 5;
-  const displayContent = !isExpanded && shouldShowFoldButton
-    ? codeLines.slice(0, 5).join('\n')
-    : section.content;
+  const displayContent =
+    !isExpanded && shouldShowFoldButton
+      ? codeLines.slice(0, 5).join("\n")
+      : section.content;
 
   const handleSave = () => {
     axios.put(`/api/notes/${noteId}/updateSection/${section.id}/content`, {
@@ -143,7 +151,10 @@ const TnSectionCode = ({
       ) : (
         <div className="prose max-w-none min-w-0 w-full">
           <div className="relative min-w-0 w-full">
-            <div onClick={() => setSectionEdit(true)} className="cursor-pointer min-w-0 w-full overflow-hidden">
+            <div
+              onClick={() => setSectionEdit(true)}
+              className="cursor-pointer min-w-0 w-full overflow-hidden"
+            >
               <SyntaxHighlighter
                 language={language || "javascript"}
                 style={tomorrow}

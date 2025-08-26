@@ -35,36 +35,47 @@ export default function Index() {
   const [openTabs, setOpenTabs] = useState<string[]>(["1"]); // Start with first note open
   const [activeTab, setActiveTab] = useState("1");
   const [noteTags, setNoteTags] = useState<Record<string, string[]>>({});
-  const [sectionContents, setSectionContents] = useState<Record<string, string>>({});
-  const [sectionLanguages, setSectionLanguages] = useState<Record<string, string>>({});
+  const [sectionContents, setSectionContents] = useState<
+    Record<string, string>
+  >({});
+  const [sectionLanguages, setSectionLanguages] = useState<
+    Record<string, string>
+  >({});
   const [editingSections, setEditingSections] = useState<Set<string>>(
     new Set(),
   );
   const [editingTitles, setEditingTitles] = useState<Set<string>>(new Set());
-  const [titleContents, setTitleContents] = useState<Record<string, string>>({},);
+  const [titleContents, setTitleContents] = useState<Record<string, string>>(
+    {},
+  );
 
   // Fetch notes from API on mount
   useEffect(() => {
     const fetchNotes = async (search: string) => {
-      const res = await axios.get(`/api/notes?search=${encodeURIComponent(search)}`);
+      const res = await axios.get(
+        `/api/notes?search=${encodeURIComponent(search)}`,
+      );
       const data = res.data;
       setNotes(
         data.result.map((note: any) => ({
           ...note,
           createdAt: new Date(note.createdAt),
           updatedAt: new Date(note.updatedAt),
-          sections: note.sections ? note.sections.map((section: any) => ({
-            ...section,
-            createdAt: new Date(section.createdAt),
-          })) : [],
-        }))
+          sections: note.sections
+            ? note.sections.map((section: any) => ({
+                ...section,
+                createdAt: new Date(section.createdAt),
+              }))
+            : [],
+        })),
       );
     };
 
-    const handler = setTimeout(() => { fetchNotes(searchQuery);}, 500);
+    const handler = setTimeout(() => {
+      fetchNotes(searchQuery);
+    }, 500);
 
     return () => clearTimeout(handler);
-
   }, [searchQuery]);
 
   // Initialize note tags, section contents, and title contents for editing
@@ -127,7 +138,7 @@ export default function Index() {
       updatedAt: new Date(),
     };
 
-    axios.post('/api/notes', newNote);
+    axios.post("/api/notes", newNote);
 
     setNotes((prev) => [newNote, ...prev]);
     setNoteTags((prev) => ({ ...prev, [newNote.id]: [] }));
@@ -157,10 +168,10 @@ export default function Index() {
       prev.map((note) =>
         note.id === noteId
           ? {
-            ...note,
-            sections: [...note.sections, newSection],
-            updatedAt: new Date(),
-          }
+              ...note,
+              sections: [...note.sections, newSection],
+              updatedAt: new Date(),
+            }
           : note,
       ),
     );
@@ -171,7 +182,12 @@ export default function Index() {
 
   // Delete section
   const deleteSection = (noteId: string, sectionId: string) => {
-    if (!window.confirm("Are you sure you want to delete this section? This action cannot be undone.")) return;
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this section? This action cannot be undone.",
+      )
+    )
+      return;
 
     axios.delete(`/api/notes/${noteId}/deleteSection/${sectionId}`);
 
@@ -179,10 +195,10 @@ export default function Index() {
       prev.map((note) =>
         note.id === noteId
           ? {
-            ...note,
-            sections: note.sections.filter((s) => s.id !== sectionId),
-            updatedAt: new Date(),
-          }
+              ...note,
+              sections: note.sections.filter((s) => s.id !== sectionId),
+              updatedAt: new Date(),
+            }
           : note,
       ),
     );
@@ -237,10 +253,14 @@ export default function Index() {
     const content = sectionContents[sectionId] || "";
     const language = sectionLanguages[sectionId] || "";
 
-    axios.put(`/api/notes/${noteId}/updateSection/${sectionId}/content`, { content });
+    axios.put(`/api/notes/${noteId}/updateSection/${sectionId}/content`, {
+      content,
+    });
 
     if (language) {
-      axios.put(`/api/notes/${noteId}/updateSection/${sectionId}/language`, { language });
+      axios.put(`/api/notes/${noteId}/updateSection/${sectionId}/language`, {
+        language,
+      });
     }
 
     setNotes((prev) =>
@@ -298,10 +318,10 @@ export default function Index() {
       prev.map((note) =>
         note.id === noteId
           ? {
-            ...note,
-            sections: [...note.sections, newSection],
-            updatedAt: new Date(),
-          }
+              ...note,
+              sections: [...note.sections, newSection],
+              updatedAt: new Date(),
+            }
           : note,
       ),
     );
@@ -380,7 +400,12 @@ export default function Index() {
 
   // Delete note
   const deleteNote = (noteId: string) => {
-    if (!window.confirm("Are you sure you want to delete this note? This action cannot be undone.")) return;
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this note? This action cannot be undone.",
+      )
+    )
+      return;
 
     axios.delete(`/api/notes/${noteId}`);
 
@@ -409,7 +434,8 @@ export default function Index() {
 
   // Remove tag from note
   const removeTagFromNote = (noteId: string, tagToRemove: string) => {
-    if (!window.confirm(`Remove tag \"${tagToRemove}\" from this note?`)) return;
+    if (!window.confirm(`Remove tag \"${tagToRemove}\" from this note?`))
+      return;
 
     axios.delete(`/api/notes/${noteId}/tags/${tagToRemove}`);
 
@@ -579,8 +605,13 @@ export default function Index() {
                 const note = notes.find((n) => n.id === noteId);
                 if (!note) return null;
 
-                return (<TnNoteViewer key={noteId} noteId={noteId} onDeleteNote={deleteNote} />)
-              
+                return (
+                  <TnNoteViewer
+                    key={noteId}
+                    noteId={noteId}
+                    onDeleteNote={deleteNote}
+                  />
+                );
               })}
             </div>
           </Tabs>
