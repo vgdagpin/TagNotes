@@ -1,17 +1,27 @@
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { tomorrow } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { Textarea } from "@/components/ui/textarea";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 import {
     Edit3,
     Save,
     Trash2,
-    Type,
+    Code,
 } from "lucide-react";
 import { Section } from "@shared/api";
 import { useState } from "react";
 import axios from "axios";
 
-type TnSectionProps = {
+type TnSectionCodeProps = {
     section: Section;
     noteId: string;
 
@@ -19,15 +29,20 @@ type TnSectionProps = {
     onDeleteSection?: (sectionId: string) => void;
 };
 
-const TnSection = ({ section, noteId, onSaveSection, onDeleteSection }: TnSectionProps) => {
+const TnSectionCode = ({ section, noteId, onSaveSection, onDeleteSection }: TnSectionCodeProps) => {
     const [sectionEdit, setSectionEdit] = useState(false);
 
+    const [language, setLanguage] = useState(section.language);
     const [content, setContent] = useState(section.content);
 
     const handleSave = () => {
         axios.put(`/api/notes/${noteId}/updateSection/${section.id}/content`, { content });
 
-        onSaveSection?.call(null, content, null);
+        if (language) {
+            axios.put(`/api/notes/${noteId}/updateSection/${section.id}/language`, { language });
+        }
+
+        onSaveSection?.call(null, content, language);
         setSectionEdit(false);
     }
 
@@ -46,8 +61,13 @@ const TnSection = ({ section, noteId, onSaveSection, onDeleteSection }: TnSectio
         >
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Type className="h-4 w-4" />
+                    <Code className="h-4 w-4" />
                     <span className="capitalize">{section.type}</span>
+                    {section.language && (
+                        <Badge variant="outline" className="text-xs">
+                            {section.language}
+                        </Badge>
+                    )}
                 </div>
 
                 {/* Hover controls */}
@@ -83,6 +103,26 @@ const TnSection = ({ section, noteId, onSaveSection, onDeleteSection }: TnSectio
             {/* Section Content */}
             {sectionEdit ? (
                 <div className="space-y-2">
+                    <Select
+                        value={language}
+                        onValueChange={(value) => setLanguage(value)}
+                    >
+                        <SelectTrigger className="w-40">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="javascript">JavaScript</SelectItem>
+                            <SelectItem value="typescript">TypeScript</SelectItem>
+                            <SelectItem value="python">Python</SelectItem>
+                            <SelectItem value="sql">SQL</SelectItem>
+                            <SelectItem value="csharp">C#</SelectItem>
+                            <SelectItem value="java">Java</SelectItem>
+                            <SelectItem value="css">CSS</SelectItem>
+                            <SelectItem value="html">HTML</SelectItem>
+                            <SelectItem value="json">JSON</SelectItem>
+                            <SelectItem value="bash">Bash</SelectItem>
+                        </SelectContent>
+                    </Select>
                     <Textarea
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
@@ -91,16 +131,18 @@ const TnSection = ({ section, noteId, onSaveSection, onDeleteSection }: TnSectio
                     />
                 </div>
             ) : (
-                <div className="whitespace-pre-wrap text-sm leading-relaxed cursor-pointer">
-                    {section.content || (
-                        <span className="text-muted-foreground italic">
-                            Blank..
-                        </span>
-                    )}
+                <div className="prose max-w-none">
+                    <SyntaxHighlighter
+                        language={language || "javascript"}
+                        style={tomorrow}
+                        className="rounded border cursor-pointer"
+                    >
+                        {section.content}
+                    </SyntaxHighlighter>
                 </div>
             )}
         </div>
     );
 };
 
-export default TnSection;
+export default TnSectionCode;

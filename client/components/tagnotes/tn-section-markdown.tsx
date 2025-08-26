@@ -5,13 +5,13 @@ import {
     Edit3,
     Save,
     Trash2,
-    Type,
+    Hash,
 } from "lucide-react";
 import { Section } from "@shared/api";
 import { useState } from "react";
 import axios from "axios";
 
-type TnSectionProps = {
+type TnSectionMarkdownProps = {
     section: Section;
     noteId: string;
 
@@ -19,7 +19,7 @@ type TnSectionProps = {
     onDeleteSection?: (sectionId: string) => void;
 };
 
-const TnSection = ({ section, noteId, onSaveSection, onDeleteSection }: TnSectionProps) => {
+const TnSectionMarkdown = ({ section, noteId, onSaveSection, onDeleteSection }: TnSectionMarkdownProps) => {
     const [sectionEdit, setSectionEdit] = useState(false);
 
     const [content, setContent] = useState(section.content);
@@ -46,7 +46,7 @@ const TnSection = ({ section, noteId, onSaveSection, onDeleteSection }: TnSectio
         >
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Type className="h-4 w-4" />
+                    <Hash className="h-4 w-4" />
                     <span className="capitalize">{section.type}</span>
                 </div>
 
@@ -91,16 +91,29 @@ const TnSection = ({ section, noteId, onSaveSection, onDeleteSection }: TnSectio
                     />
                 </div>
             ) : (
-                <div className="whitespace-pre-wrap text-sm leading-relaxed cursor-pointer">
-                    {section.content || (
-                        <span className="text-muted-foreground italic">
-                            Blank..
-                        </span>
-                    )}
+                <div className="prose max-w-none">
+                    <div
+                        className="prose prose-sm max-w-none cursor-pointer"
+                        dangerouslySetInnerHTML={{
+                            __html: section.content
+                                .replace(/\\n/g, "<br>")
+                                .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                                .replace(/\*(.*?)\*/g, "<em>$1</em>")
+                                .replace(
+                                    /^## (.*)/gm,
+                                    '<h2 class="text-lg font-semibold mt-4 mb-2">$1</h2>',
+                                )
+                                .replace(
+                                    /^### (.*)/gm,
+                                    '<h3 class="text-base font-semibold mt-3 mb-2">$1</h3>',
+                                )
+                                .replace(/^- (.*)/gm, '<li class="ml-4">$1</li>'),
+                        }}
+                    />
                 </div>
             )}
         </div>
     );
 };
 
-export default TnSection;
+export default TnSectionMarkdown;

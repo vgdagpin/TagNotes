@@ -28,6 +28,9 @@ import {
 } from "lucide-react";
 import TnSection from "./tn-section";
 import { Note, Section } from "@shared/api";
+import TnSectionCode from "./tn-section-code";
+import TnSectionMarkdown from "./tn-section-markdown";
+import TnSectionImage from "./tn-section-image";
 
 
 type TnNoteViewerProps = {
@@ -435,15 +438,48 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
                         </p>
                     </div>
                 ) : (
-                    note.sections.map((section) =>
-                        <TnSection
-                            key={section.id}
-                            section={section}
-                            noteId={noteId}
-                            onSaveSection={(content, language) => saveSection(section.id, content, language)}
-                            onDeleteSection={(sectionId) => deleteSection(sectionId)}
-                        />
-                    )
+                    note.sections.map((section) => {
+                        if (section.type === 'code') {
+                            return (
+                                <TnSectionCode
+                                    key={section.id}
+                                    section={section}
+                                    noteId={noteId}
+                                    onSaveSection={(content, language) => saveSection(section.id, content, language)}
+                                    onDeleteSection={(sectionId) => deleteSection(sectionId)}
+                                />
+                            );
+                        } else if (section.type === 'markdown') {
+                            return (
+                                <TnSectionMarkdown
+                                    key={section.id}
+                                    section={section}
+                                    noteId={noteId}
+                                    onSaveSection={(content, language) => saveSection(section.id, content, language)}
+                                    onDeleteSection={(sectionId) => deleteSection(sectionId)}
+                                />
+                            );
+                        } else if (section.type === 'image') {
+                            return (
+                                <TnSectionImage
+                                    key={section.id}
+                                    section={section}
+                                    noteId={noteId}
+                                    onDeleteSection={(sectionId) => deleteSection(sectionId)}
+                                />
+                            );
+                        } else {
+                            return (
+                                <TnSection
+                                    key={section.id}
+                                    section={section}
+                                    noteId={noteId}
+                                    onSaveSection={(content, language) => saveSection(section.id, content, language)}
+                                    onDeleteSection={(sectionId) => deleteSection(sectionId)}
+                                />
+                            );
+                        }
+                    })
                 )}
 
                 {/* Add Section Dropdown - At Bottom */}
