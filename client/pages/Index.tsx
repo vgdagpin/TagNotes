@@ -511,7 +511,7 @@ export default function Index() {
       </div>
 
       {/* Right Main Content - Tabbed Interface */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         {openTabs.length === 0 ? (
           <div className="flex-1 flex items-center justify-center text-center">
             <div>
