@@ -72,7 +72,7 @@ const TnSectionCode = ({
   };
 
   return (
-    <div className="border border-border rounded-md pb-2 pl-2 pr-2 group hover:border-accent transition-colors">
+    <div className="border border-border rounded-md pb-2 pl-2 pr-2 group hover:border-accent transition-colors min-w-0 w-full">
       <div className="flex items-center justify-between">
         <div className="flex items-center text-muted-foreground">
           <Code className="w-3" />
