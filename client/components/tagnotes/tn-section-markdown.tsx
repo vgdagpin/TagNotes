@@ -5,8 +5,6 @@ import { Edit3, Save, Trash2, Hash } from "lucide-react";
 import { Section } from "@shared/api";
 import { useState, useEffect } from "react";
 import axios from "axios";
-import Markdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
 
 type TnSectionMarkdownProps = {
   section: Section;
@@ -64,7 +62,7 @@ const TnSectionMarkdown = ({
   }, [sectionEdit, content]);
 
   return (
-    <div className="note-section border border-border rounded-md pb-2 pl-2 pr-2 group hover:border-accent transition-colors min-w-0 w-full">
+    <div className="border border-border rounded-md pb-2 pl-2 pr-2 group hover:border-accent transition-colors min-w-0 w-full">
       <div className="flex items-center justify-between">
         <div className="flex items-center text-muted-foreground">
           <Hash className="w-3" />
@@ -109,7 +107,24 @@ const TnSectionMarkdown = ({
         </div>
       ) : (
         <div className="prose max-w-none min-w-0 w-full overflow-hidden">
-          <Markdown remarkPlugins={[remarkGfm]}>{content}</Markdown>
+          <div
+            className="prose prose-sm max-w-none"
+            dangerouslySetInnerHTML={{
+              __html: section.content
+                .replace(/\\n/g, "<br>")
+                .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                .replace(/\*(.*?)\*/g, "<em>$1</em>")
+                .replace(
+                  /^## (.*)/gm,
+                  '<h2 class="text-lg font-semibold mt-4 mb-2">$1</h2>',
+                )
+                .replace(
+                  /^### (.*)/gm,
+                  '<h3 class="text-base font-semibold mt-3 mb-2">$1</h3>',
+                )
+                .replace(/^- (.*)/gm, '<li class="ml-4">$1</li>'),
+            }}
+          />
         </div>
       )}
     </div>
