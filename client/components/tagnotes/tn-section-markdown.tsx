@@ -92,7 +92,7 @@ const TnSectionMarkdown = ({
         </div>
       ) : (
         <div
-          className="prose max-w-none cursor-pointer"
+          className="prose max-w-none cursor-pointer min-w-0 w-full overflow-hidden"
           onClick={() => setSectionEdit(true)}
         >
           <div
