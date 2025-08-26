@@ -32,7 +32,7 @@ import TnSectionCode from "./tn-section-code";
 import TnSectionMarkdown from "./tn-section-markdown";
 import TnSectionImage from "./tn-section-image";
 
-import './tn-note-viewer.css';
+import "./tn-note-viewer.css";
 
 type TnNoteViewerProps = {
   noteId: string;
@@ -196,15 +196,15 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
   // Add keyboard shortcut for title editing
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === 's' && editingTitle) {
+      if (e.ctrlKey && e.key === "s" && editingTitle) {
         e.preventDefault();
         saveTitle();
       }
     };
 
     if (editingTitle) {
-      document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
+      document.addEventListener("keydown", handleKeyDown);
+      return () => document.removeEventListener("keydown", handleKeyDown);
     }
   }, [editingTitle]);
 
@@ -555,7 +555,6 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
           </div>
         </div>
       </div>
-
     </TabsContent>
   );
 };

@@ -82,15 +82,15 @@ const TnSectionCode = ({
   // Add keyboard shortcut for section editing
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === 's' && sectionEdit) {
+      if (e.ctrlKey && e.key === "s" && sectionEdit) {
         e.preventDefault();
         handleSave();
       }
     };
 
     if (sectionEdit) {
-      document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
+      document.addEventListener("keydown", handleKeyDown);
+      return () => document.removeEventListener("keydown", handleKeyDown);
     }
   }, [sectionEdit, content, language]);
 
