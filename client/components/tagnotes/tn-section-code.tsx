@@ -31,9 +31,17 @@ const TnSectionCode = ({
   onDeleteSection,
 }: TnSectionCodeProps) => {
   const [sectionEdit, setSectionEdit] = useState(!section.content.trim());
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const [language, setLanguage] = useState(section.language);
   const [content, setContent] = useState(section.content);
+
+  // Count lines and determine if folding is needed
+  const codeLines = section.content.split('\n');
+  const shouldShowFoldButton = codeLines.length > 5;
+  const displayContent = !isExpanded && shouldShowFoldButton
+    ? codeLines.slice(0, 5).join('\n')
+    : section.content;
 
   const handleSave = () => {
     axios.put(`/api/notes/${noteId}/updateSection/${section.id}/content`, {
