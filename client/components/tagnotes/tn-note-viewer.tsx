@@ -429,7 +429,7 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
             </div>
 
             {/* Note Sections */}
-            <div className="flex-1 p-4 overflow-y-auto space-y-4">
+            <div className="flex-1 p-4 overflow-y-auto space-y-4 min-w-0 w-full">
                 {note.sections.length === 0 ? (
                     <div className="text-center text-muted-foreground py-8">
                         <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
