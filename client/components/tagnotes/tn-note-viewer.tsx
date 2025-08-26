@@ -193,6 +193,21 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
     setEditingTitle(false);
   };
 
+  // Add keyboard shortcut for title editing
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 's' && editingTitle) {
+        e.preventDefault();
+        saveTitle();
+      }
+    };
+
+    if (editingTitle) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [editingTitle]);
+
   // Add new section to note
   const addSection = (noteId: string, sectionType: Section["type"]) => {
     const newSection: Section = {
