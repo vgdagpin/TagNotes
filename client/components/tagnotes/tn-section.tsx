@@ -20,7 +20,7 @@ type TnSectionProps = {
 };
 
 const TnSection = ({ section, noteId, onSaveSection, onDeleteSection }: TnSectionProps) => {
-    const [sectionEdit, setSectionEdit] = useState(false);
+    const [sectionEdit, setSectionEdit] = useState(!section.content.trim());
 
     const [content, setContent] = useState(section.content);
 
@@ -88,10 +88,11 @@ const TnSection = ({ section, noteId, onSaveSection, onDeleteSection }: TnSectio
                         onChange={(e) => setContent(e.target.value)}
                         placeholder={`Enter ${section.type} content...`}
                         className="min-h-32 resize-vertical"
+                        autoFocus={!section.content.trim()}
                     />
                 </div>
             ) : (
-                <div className="whitespace-pre-wrap text-sm leading-relaxed cursor-pointer">
+                <div className="whitespace-pre-wrap text-sm leading-relaxed cursor-pointer" onClick={() => setSectionEdit(true)}>
                     {section.content || (
                         <span className="text-muted-foreground italic">
                             Blank..

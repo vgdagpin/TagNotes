@@ -20,7 +20,7 @@ type TnSectionMarkdownProps = {
 };
 
 const TnSectionMarkdown = ({ section, noteId, onSaveSection, onDeleteSection }: TnSectionMarkdownProps) => {
-    const [sectionEdit, setSectionEdit] = useState(false);
+    const [sectionEdit, setSectionEdit] = useState(!section.content.trim());
 
     const [content, setContent] = useState(section.content);
 
@@ -88,10 +88,11 @@ const TnSectionMarkdown = ({ section, noteId, onSaveSection, onDeleteSection }: 
                         onChange={(e) => setContent(e.target.value)}
                         placeholder={`Enter ${section.type} content...`}
                         className="min-h-32 resize-vertical"
+                        autoFocus={!section.content.trim()}
                     />
                 </div>
             ) : (
-                <div className="prose max-w-none">
+                <div className="prose max-w-none cursor-pointer" onClick={() => setSectionEdit(true)}>
                     <div
                         className="prose prose-sm max-w-none cursor-pointer"
                         dangerouslySetInnerHTML={{
