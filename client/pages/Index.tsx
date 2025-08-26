@@ -466,7 +466,7 @@ export default function Index() {
   };
 
   return (
-    <div className="h-screen bg-background flex">
+    <div className="h-screen bg-background flex overflow-hidden">
       {/* Left Sidebar - Navigation */}
       <div className="w-80 border-r border-border bg-card flex flex-col">
         {/* Header */}
