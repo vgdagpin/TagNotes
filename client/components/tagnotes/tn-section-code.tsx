@@ -166,14 +166,11 @@ const TnSectionCode = ({
       ) : (
         <div className="prose max-w-none min-w-0 w-full">
           <div className="relative min-w-0 w-full">
-            <div
-              onClick={() => setSectionEdit(true)}
-              className="cursor-pointer min-w-0 w-full overflow-hidden"
-            >
+            <div className="min-w-0 w-full overflow-hidden">
               <SyntaxHighlighter
                 language={language || "javascript"}
                 style={tomorrow}
-                className="rounded border cursor-pointer min-w-0 w-full"
+                className="rounded border min-w-0 w-full"
                 wrapLongLines={true}
               >
                 {displayContent}

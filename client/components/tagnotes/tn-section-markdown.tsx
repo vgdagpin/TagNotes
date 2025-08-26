@@ -106,12 +106,9 @@ const TnSectionMarkdown = ({
           />
         </div>
       ) : (
-        <div
-          className="prose max-w-none cursor-pointer min-w-0 w-full overflow-hidden"
-          onClick={() => setSectionEdit(true)}
-        >
+        <div className="prose max-w-none min-w-0 w-full overflow-hidden">
           <div
-            className="prose prose-sm max-w-none cursor-pointer"
+            className="prose prose-sm max-w-none"
             dangerouslySetInnerHTML={{
               __html: section.content
                 .replace(/\\n/g, "<br>")

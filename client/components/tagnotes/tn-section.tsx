@@ -106,10 +106,7 @@ const TnSection = ({
           />
         </div>
       ) : (
-        <div
-          className="whitespace-pre-wrap text-sm leading-relaxed cursor-pointer"
-          onClick={() => setSectionEdit(true)}
-        >
+        <div className="whitespace-pre-wrap text-sm leading-relaxed">
           {section.content || (
             <span className="text-muted-foreground italic">Blank..</span>
           )}
