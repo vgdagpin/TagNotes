@@ -27,7 +27,7 @@ const TnSectionImage = ({ section, noteId, onDeleteSection }: TnSectionImageProp
     return (
         <div
             key={section.id}
-            className="border border-border rounded-lg p-4 space-y-2 group hover:border-accent transition-colors"
+            className="border border-border rounded-lg p-4 space-y-2 group hover:border-accent transition-colors min-w-0 w-full"
         >
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
