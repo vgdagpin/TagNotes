@@ -304,7 +304,7 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
     <TabsContent
       key={noteId}
       value={noteId}
-      className="h-full mt-0 data-[state=active]:flex flex-col min-w-0 w-full"
+      className="h-full mt-0 data-[state=active]:flex flex-col min-w-0 w-full overflow-hidden"
       onPaste={(e) => {
         handleImagePaste(noteId, e.nativeEvent);
       }}
