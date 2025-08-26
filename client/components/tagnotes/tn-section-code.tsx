@@ -141,17 +141,47 @@ const TnSectionCode = ({
           />
         </div>
       ) : (
-        <div
-          className="prose max-w-none cursor-pointer"
-          onClick={() => setSectionEdit(true)}
-        >
-          <SyntaxHighlighter
-            language={language || "javascript"}
-            style={tomorrow}
-            className="rounded border cursor-pointer"
-          >
-            {section.content}
-          </SyntaxHighlighter>
+        <div className="prose max-w-none">
+          <div className="relative">
+            <div onClick={() => setSectionEdit(true)} className="cursor-pointer">
+              <SyntaxHighlighter
+                language={language || "javascript"}
+                style={tomorrow}
+                className="rounded border cursor-pointer"
+              >
+                {displayContent}
+              </SyntaxHighlighter>
+            </div>
+
+            {/* Fade effect when collapsed */}
+            {shouldShowFoldButton && !isExpanded && (
+              <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[rgb(45,45,45)] to-transparent pointer-events-none rounded-b border-l border-r border-b" />
+            )}
+
+            {/* Expand/Collapse button */}
+            {shouldShowFoldButton && (
+              <div className="flex justify-center mt-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                  {isExpanded ? (
+                    <>
+                      <ChevronUp className="h-3 w-3 mr-1" />
+                      Show less
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="h-3 w-3 mr-1" />
+                      Show more ({codeLines.length - 5} more lines)
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
