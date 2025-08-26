@@ -55,16 +55,12 @@ const TnSectionCode = ({ section, noteId, onSaveSection, onDeleteSection }: TnSe
     }
 
     return (
-        <div
-            key={section.id}
-            className="border border-border rounded-lg p-4 space-y-2 group hover:border-accent transition-colors"
-        >
+         <div className="border border-border rounded-md pb-2 pl-2 pr-2 group hover:border-accent transition-colors">
             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Code className="h-4 w-4" />
-                    <span className="capitalize">{section.type}</span>
+                <div className="flex items-center text-muted-foreground">
+                    <Code className="w-3" />
                     {section.language && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs ml-2">
                             {section.language}
                         </Badge>
                     )}

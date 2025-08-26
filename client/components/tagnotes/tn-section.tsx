@@ -40,41 +40,24 @@ const TnSection = ({ section, noteId, onSaveSection, onDeleteSection }: TnSectio
     }
 
     return (
-        <div
-            key={section.id}
-            className="border border-border rounded-lg p-4 space-y-2 group hover:border-accent transition-colors"
-        >
+        <div className="border border-border rounded-md pb-2 pl-2 pr-2 group hover:border-accent transition-colors">
             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Type className="h-4 w-4" />
-                    <span className="capitalize">{section.type}</span>
+                <div className="flex items-center text-muted-foreground">
+                    <Type className="w-3" />
                 </div>
 
                 {/* Hover controls */}
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     {sectionEdit ? (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleSave()}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleSave()}>
                             <Save className="h-3 w-3" />
                         </Button>
                     ) : (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSectionEdit(true)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => setSectionEdit(true)}>
                             <Edit3 className="h-3 w-3" />
                         </Button>
                     )}
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete()}
-                        className="text-destructive hover:text-destructive"
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => handleDelete()} className="text-destructive hover:text-destructive">
                         <Trash2 className="h-3 w-3" />
                     </Button>
                 </div>
