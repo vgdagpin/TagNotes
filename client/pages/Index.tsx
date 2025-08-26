@@ -561,8 +561,8 @@ export default function Index() {
             className="flex-1 flex flex-col"
           >
             {/* Tabs List */}
-            <div className="border-b border-border bg-card px-4">
-              <TabsList className="h-12 p-0 bg-transparent">
+            <div className="border-b border-border bg-card px-4 overflow-x-auto">
+              <TabsList className="h-12 p-0 bg-transparent w-max min-w-full">
                 {openTabs.map((noteId) => {
                   const note = notes.find((n) => n.id === noteId);
                   if (!note) return null;
@@ -600,7 +600,7 @@ export default function Index() {
             </div>
 
             {/* Tab Contents */}
-            <div className="flex-1 min-w-0 h-0">
+            <div className="flex-1 min-w-0 overflow-hidden">
               {openTabs.map((noteId) => {
                 const note = notes.find((n) => n.id === noteId);
                 if (!note) return null;
