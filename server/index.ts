@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import { handleDemo } from "./routes/demo";
 import { handleGetNotes, handleFindNote, handleAddNoteSection, handleDeleteNoteSection, handleUpdateSectionContent, handleCreateNote, handleAddNoteTag, handleRemoveNoteTag, handleDeleteNote, handleUpdateNoteTitle, handleUpdateSectionLanguage } from "./routes/notes";
+import { handleGetSettings, handleSaveSettings } from "./routes/settings";
 
 export function createServer() {
   const app = express();
@@ -19,6 +20,10 @@ export function createServer() {
   });
 
   app.get("/api/demo", handleDemo);
+
+  // Settings API routes
+  app.get('/api/settings', handleGetSettings);
+  app.post('/api/settings', handleSaveSettings);
 
   app.get('/api/notes', handleGetNotes);
   app.get('/api/notes/:noteId', handleFindNote);
