@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TabsContent } from "@/components/ui/tabs";
 import { Settings, Save, FileText } from "../tn-icons";
-import { getSettings, saveSettings } from "@/lib/settingsHelper";
+import { getSettings, saveSettings } from "@shared/settingsHelper";
 
 type TnSettingsProps = {
   onClose?: () => void;
