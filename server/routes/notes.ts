@@ -2,7 +2,7 @@ import { RequestHandler } from "express";
 import { Note, Section } from "@shared/api";
 import * as fs from "fs";
 import * as path from "path";
-import { getSettings } from "@shared/settingsHelper";
+import { getSettings } from "../../shared/settingsHelper";
 
 // Persistence setup - get directory from settings or use default
 function getDataDirectory(): string {
