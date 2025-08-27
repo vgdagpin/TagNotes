@@ -578,14 +578,40 @@ export default function Index() {
             {/* Tabs List */}
             <div className="border-b border-border bg-card px-4 overflow-x-auto">
               <TabsList className="h-12 p-0 bg-transparent w-max min-w-full">
-                {openTabs.map((noteId) => {
-                  const note = notes.find((n) => n.id === noteId);
+                {openTabs.map((tabId) => {
+                  // Handle settings tab
+                  if (tabId === "settings") {
+                    return (
+                      <div key="settings" className="flex items-center">
+                        <TabsTrigger
+                          value="settings"
+                          className="relative pr-8 max-w-48"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Settings className="h-3 w-3" />
+                            <span className="truncate">Settings</span>
+                          </div>
+                        </TabsTrigger>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 -ml-6 z-10"
+                          onClick={closeSettings}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    );
+                  }
+
+                  // Handle note tabs
+                  const note = notes.find((n) => n.id === tabId);
                   if (!note) return null;
 
                   return (
-                    <div key={noteId} className="flex items-center">
+                    <div key={tabId} className="flex items-center">
                       <TabsTrigger
-                        value={noteId}
+                        value={tabId}
                         className="relative pr-8 max-w-48"
                       >
                         <span className="truncate">{note.title}</span>
@@ -594,7 +620,7 @@ export default function Index() {
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6 -ml-6 z-10"
-                        onClick={() => closeTab(noteId)}
+                        onClick={() => closeTab(tabId)}
                       >
                         <X className="h-3 w-3" />
                       </Button>
