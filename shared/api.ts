@@ -29,3 +29,7 @@ export interface Note {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface NotesSettings {
+  notesDirectory: string;
+}

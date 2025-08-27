@@ -2,34 +2,13 @@ import { RequestHandler } from "express";
 import { Note, Section } from "@shared/api";
 import * as fs from "fs";
 import * as path from "path";
-import { getSettings } from "../../shared/settingsHelper";
+import { getCurrentSettings } from "./settings";
+
 
 // Persistence setup - get directory from settings or use default
 function getDataDirectory(): string {
-  console.log("🔧 [SERVER] getDataDirectory() called");
-  try {
-    const settings = getSettings();
-    console.log("🔧 [SERVER] Retrieved settings:", settings);
-    if (settings.notesDirectory && settings.notesDirectory.trim() !== "") {
-      console.log(
-        "✅ [SERVER] Using directory from settings:",
-        settings.notesDirectory,
-      );
-      return settings.notesDirectory;
-    } else {
-      console.log("⚠️ [SERVER] No directory in settings, using fallback");
-    }
-  } catch (error) {
-    console.warn(
-      "❌ [SERVER] Failed to load settings, using fallback directory:",
-      error,
-    );
-  }
-
-  // Fallback to relative data directory if settings fail
-  const fallbackDir = path.join(__dirname, "..", "data");
-  console.log("🔄 [SERVER] Using fallback directory:", fallbackDir);
-  return fallbackDir;
+  const settings = getCurrentSettings();
+  return settings.notesDirectory;
 }
 
 const DATA_DIR = getDataDirectory();

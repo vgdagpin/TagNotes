@@ -2,7 +2,7 @@ import { RequestHandler } from "express";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
-import { NotesSettings } from "../../shared/settingsHelper";
+import { NotesSettings } from "@shared/api";
 
 // Settings file path
 const SETTINGS_DIR = path.join(__dirname, "..", "data");
@@ -47,15 +47,20 @@ function ensureSettingsFile() {
  * Load settings from file
  */
 function loadSettingsFromFile(): NotesSettings {
+
   ensureSettingsFile();
+
   try {
     const raw = fs.readFileSync(SETTINGS_FILE, "utf-8");
-    const settings = JSON.parse(raw);
-    console.log("📁 [SERVER API] Loaded settings from file:", settings);
+    const settings: NotesSettings = JSON.parse(raw);
+
+    if (!settings.notesDirectory || settings.notesDirectory.trim() === "") {
+      settings.notesDirectory = getDefaultNotesDirectory();
+    }
+
     return settings;
+
   } catch (error) {
-    console.error("❌ [SERVER API] Failed to load settings from file:", error);
-    // Return default settings if file is corrupted
     return {
       notesDirectory: getDefaultNotesDirectory(),
     };
@@ -69,9 +74,7 @@ function saveSettingsToFile(settings: NotesSettings): void {
   ensureSettingsFile();
   try {
     fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
-    console.log("💾 [SERVER API] Saved settings to file:", settings);
   } catch (error) {
-    console.error("❌ [SERVER API] Failed to save settings to file:", error);
     throw error;
   }
 }
@@ -80,12 +83,10 @@ function saveSettingsToFile(settings: NotesSettings): void {
  * GET /api/settings - Get current settings
  */
 export const handleGetSettings: RequestHandler = (req, res) => {
-  console.log("🔍 [SERVER API] GET /api/settings called");
   try {
     const settings = loadSettingsFromFile();
     res.status(200).json(settings);
   } catch (error) {
-    console.error("❌ [SERVER API] Failed to get settings:", error);
     res.status(500).json({ error: "Failed to retrieve settings" });
   }
 };
@@ -94,22 +95,16 @@ export const handleGetSettings: RequestHandler = (req, res) => {
  * POST /api/settings - Save settings
  */
 export const handleSaveSettings: RequestHandler = (req, res) => {
-  console.log("💾 [SERVER API] POST /api/settings called with body:", req.body);
   try {
     const { notesDirectory } = req.body;
 
-    if (typeof notesDirectory !== "string") {
-      return res.status(400).json({ error: "notesDirectory must be a string" });
-    }
+    const settings = loadSettingsFromFile();
 
-    const settings: NotesSettings = {
-      notesDirectory: notesDirectory.trim() || getDefaultNotesDirectory(),
-    };
+    settings.notesDirectory = notesDirectory.trim();
 
     saveSettingsToFile(settings);
     res.status(200).json(settings);
   } catch (error) {
-    console.error("❌ [SERVER API] Failed to save settings:", error);
     res.status(500).json({ error: "Failed to save settings" });
   }
 };
