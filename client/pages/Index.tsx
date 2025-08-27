@@ -10,11 +10,13 @@ import {
   X,
   FileText,
   Trash,
+  Settings,
 } from '../components/tn-icons';
 
 import { cn } from "@/lib/utils";
 import { Note, Section } from "@shared/api";
 import TnNoteViewer from "@/components/tagnotes/tn-note-viewer";
+import TnSettings from "@/components/tagnotes/tn-settings";
 
 export default function Index() {
   // State management
