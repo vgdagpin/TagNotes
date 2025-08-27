@@ -642,14 +642,22 @@ export default function Index() {
 
             {/* Tab Contents */}
             <div className="flex-1 min-w-0 overflow-hidden">
-              {openTabs.map((noteId) => {
-                const note = notes.find((n) => n.id === noteId);
+              {openTabs.map((tabId) => {
+                // Handle settings tab
+                if (tabId === "settings") {
+                  return (
+                    <TnSettings key="settings" onClose={closeSettings} />
+                  );
+                }
+
+                // Handle note tabs
+                const note = notes.find((n) => n.id === tabId);
                 if (!note) return null;
 
                 return (
                   <TnNoteViewer
-                    key={noteId}
-                    noteId={noteId}
+                    key={tabId}
+                    noteId={tabId}
                     onDeleteNote={deleteNote}
                   />
                 );
