@@ -340,6 +340,20 @@ export default function Index() {
     }
   };
 
+  // Open settings in tab
+  const openSettings = () => {
+    const settingsId = "settings";
+    if (!openTabs.includes(settingsId)) {
+      setOpenTabs((prev) => [...prev, settingsId]);
+    }
+    setActiveTab(settingsId);
+  };
+
+  // Close settings tab
+  const closeSettings = () => {
+    closeTab("settings");
+  };
+
   // Toggle title edit mode
   const toggleTitleEdit = (noteId: string) => {
     setEditingTitles((prev) => {
