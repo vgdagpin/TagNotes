@@ -77,7 +77,8 @@ const TnSettings = ({ onClose }: TnSettingsProps) => {
               placeholder="Enter directory path (e.g., /home/user/notes or C:\Users\username\Documents\Notes)"
             />
             <p className="text-xs text-muted-foreground">
-              Specify the directory where your notes will be saved. Leave empty to use the default location.
+              Specify the directory where your notes will be saved. Leave empty
+              to use the default location.
             </p>
           </div>
         </div>
