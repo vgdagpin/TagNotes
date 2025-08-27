@@ -15,11 +15,14 @@ const TnSettings = ({ onClose }: TnSettingsProps) => {
 
   // Load settings on component mount
   useEffect(() => {
+    console.log("🎨 [CLIENT] tn-settings.tsx: Loading settings...");
     try {
       const settings = getSettings();
+      console.log("🎨 [CLIENT] tn-settings.tsx: Retrieved settings:", settings);
+      console.log("🎨 [CLIENT] tn-settings.tsx: Setting notesDirectory to:", settings.notesDirectory || "");
       setNotesDirectory(settings.notesDirectory || "");
     } catch (error) {
-      console.error("Failed to load settings:", error);
+      console.error("❌ [CLIENT] tn-settings.tsx: Failed to load settings:", error);
     }
   }, []);
 
