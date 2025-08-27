@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,21 @@ const TnSettings = ({ onClose }: TnSettingsProps) => {
   const [appName, setAppName] = useState("Notes App");
   const [theme, setTheme] = useState("system");
   const [autoSave, setAutoSave] = useState(true);
+
+  // Load settings on component mount
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('notesSettings');
+    if (savedSettings) {
+      try {
+        const settings = JSON.parse(savedSettings);
+        setAppName(settings.appName || "Notes App");
+        setTheme(settings.theme || "system");
+        setAutoSave(settings.autoSave !== undefined ? settings.autoSave : true);
+      } catch (error) {
+        console.error('Failed to load settings:', error);
+      }
+    }
+  }, []);
 
   const handleSave = () => {
     // Save settings to localStorage or backend
