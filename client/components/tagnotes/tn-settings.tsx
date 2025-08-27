@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TabsContent } from "@/components/ui/tabs";
 import { Settings, Save, FileText } from "../tn-icons";
+import { getSettings, saveSettings } from "@/lib/settingsHelper";
 
 type TnSettingsProps = {
   onClose?: () => void;
@@ -14,29 +15,28 @@ const TnSettings = ({ onClose }: TnSettingsProps) => {
 
   // Load settings on component mount
   useEffect(() => {
-    const savedSettings = localStorage.getItem("notesSettings");
-    if (savedSettings) {
-      try {
-        const settings = JSON.parse(savedSettings);
-        setNotesDirectory(settings.notesDirectory || "");
-      } catch (error) {
-        console.error("Failed to load settings:", error);
-      }
+    try {
+      const settings = getSettings();
+      setNotesDirectory(settings.notesDirectory || "");
+    } catch (error) {
+      console.error("Failed to load settings:", error);
     }
   }, []);
 
   const handleSave = () => {
-    // Save settings to localStorage
-    localStorage.setItem(
-      "notesSettings",
-      JSON.stringify({
+    try {
+      // Save settings using helper
+      saveSettings({
         notesDirectory,
-      }),
-    );
+      });
 
-    // Show success message
-    console.log("Settings saved - Notes Directory:", notesDirectory);
-    alert("Settings saved successfully!");
+      // Show success message
+      console.log("Settings saved - Notes Directory:", notesDirectory);
+      alert("Settings saved successfully!");
+    } catch (error) {
+      console.error("Failed to save settings:", error);
+      alert("Failed to save settings. Please try again.");
+    }
   };
 
   return (

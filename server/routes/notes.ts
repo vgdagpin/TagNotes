@@ -2,9 +2,24 @@ import { RequestHandler } from 'express';
 import { Note, Section } from '@shared/api'
 import * as fs from 'fs';
 import * as path from 'path';
+import { getSettings } from '../../client/lib/settingsHelper';
 
-// Persistence setup
-const DATA_DIR = path.join(__dirname, '..', 'data');
+// Persistence setup - get directory from settings or use default
+function getDataDirectory(): string {
+  try {
+    const settings = getSettings();
+    if (settings.notesDirectory && settings.notesDirectory.trim() !== '') {
+      return settings.notesDirectory;
+    }
+  } catch (error) {
+    console.warn('Failed to load settings, using fallback directory:', error);
+  }
+
+  // Fallback to relative data directory if settings fail
+  return path.join(__dirname, '..', 'data');
+}
+
+const DATA_DIR = getDataDirectory();
 const DATA_FILE = path.join(DATA_DIR, 'notes.json');
 
 function ensureDataFile() {
