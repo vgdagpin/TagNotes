@@ -10,9 +10,7 @@ type TnSettingsProps = {
 };
 
 const TnSettings = ({ onClose }: TnSettingsProps) => {
-  const [appName, setAppName] = useState("Notes App");
-  const [theme, setTheme] = useState("system");
-  const [autoSave, setAutoSave] = useState(true);
+  const [notesDirectory, setNotesDirectory] = useState("");
 
   // Load settings on component mount
   useEffect(() => {
@@ -20,9 +18,7 @@ const TnSettings = ({ onClose }: TnSettingsProps) => {
     if (savedSettings) {
       try {
         const settings = JSON.parse(savedSettings);
-        setAppName(settings.appName || "Notes App");
-        setTheme(settings.theme || "system");
-        setAutoSave(settings.autoSave !== undefined ? settings.autoSave : true);
+        setNotesDirectory(settings.notesDirectory || "");
       } catch (error) {
         console.error("Failed to load settings:", error);
       }
@@ -30,18 +26,17 @@ const TnSettings = ({ onClose }: TnSettingsProps) => {
   }, []);
 
   const handleSave = () => {
-    // Save settings to localStorage or backend
+    // Save settings to localStorage
     localStorage.setItem(
       "notesSettings",
       JSON.stringify({
-        appName,
-        theme,
-        autoSave,
+        notesDirectory,
       }),
     );
 
-    // Show success message or close
-    console.log("Settings saved");
+    // Show success message
+    console.log("Settings saved - Notes Directory:", notesDirectory);
+    alert("Settings saved successfully!");
   };
 
   return (
@@ -66,82 +61,23 @@ const TnSettings = ({ onClose }: TnSettingsProps) => {
 
       {/* Settings Content */}
       <div className="flex-1 p-4 overflow-y-auto space-y-6 min-w-0 w-full">
-        {/* General Settings */}
+        {/* Directory Settings */}
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
-            <h3 className="text-lg font-medium">General</h3>
+            <h3 className="text-lg font-medium">Notes Storage</h3>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="app-name">Application Name</Label>
+            <Label htmlFor="notes-directory">Notes Directory Path</Label>
             <Input
-              id="app-name"
-              value={appName}
-              onChange={(e) => setAppName(e.target.value)}
-              placeholder="Enter app name..."
+              id="notes-directory"
+              value={notesDirectory}
+              onChange={(e) => setNotesDirectory(e.target.value)}
+              placeholder="Enter directory path (e.g., /home/user/notes or C:\Users\username\Documents\Notes)"
             />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="auto-save">Auto Save</Label>
-            <div className="flex items-center space-x-2">
-              <input
-                id="auto-save"
-                type="checkbox"
-                checked={autoSave}
-                onChange={(e) => setAutoSave(e.target.checked)}
-                className="rounded border-border"
-              />
-              <span className="text-sm text-muted-foreground">
-                Automatically save changes
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <Separator />
-
-        {/* Appearance Settings */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Hash className="h-4 w-4" />
-            <h3 className="text-lg font-medium">Appearance</h3>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="theme">Theme</Label>
-            <select
-              id="theme"
-              value={theme}
-              onChange={(e) => setTheme(e.target.value)}
-              className="w-full px-3 py-2 rounded-md border border-border bg-background text-foreground"
-            >
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-              <option value="system">System</option>
-            </select>
-          </div>
-        </div>
-
-        <Separator />
-
-        {/* About Section */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Check className="h-4 w-4" />
-            <h3 className="text-lg font-medium">About</h3>
-          </div>
-
-          <div className="text-sm text-muted-foreground space-y-2">
-            <p>
-              <strong>Version:</strong> 1.0.0
-            </p>
-            <p>
-              <strong>Build:</strong> 2024.01.15
-            </p>
-            <p>
-              <strong>Notes:</strong> Sectional note-taking application
+            <p className="text-xs text-muted-foreground">
+              Specify the directory where your notes will be saved. Leave empty to use the default location.
             </p>
           </div>
         </div>
