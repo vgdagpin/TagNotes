@@ -2,9 +2,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { TabsContent } from "@/components/ui/tabs";
-import { Settings, Save, Hash, FileText, Check } from "../tn-icons";
+import { Settings, Save, FileText } from "../tn-icons";
 
 type TnSettingsProps = {
   onClose?: () => void;
