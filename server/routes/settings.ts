@@ -73,6 +73,8 @@ function loadSettingsFromFile(): NotesSettings {
 function saveSettingsToFile(settings: NotesSettings): void {
   ensureSettingsFile();
   try {
+    console.log('save settings', SETTINGS_FILE);
+
     fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
   } catch (error) {
     throw error;

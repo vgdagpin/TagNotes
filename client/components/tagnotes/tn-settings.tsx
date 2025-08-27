@@ -1,49 +1,46 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TabsContent } from "@/components/ui/tabs";
 import { Settings, Save, FileText } from "../tn-icons";
+import axios from "axios";
+import { NotesSettings } from "@shared/api";
 
 type TnSettingsProps = {
   onClose?: () => void;
 };
 
 const TnSettings = ({ onClose }: TnSettingsProps) => {
-  const [notesDirectory, setNotesDirectory] = useState("");
+  const [settings, setSettings] = useState<NotesSettings | null>(null);
 
   // Load settings on component mount
   useEffect(() => {
-    console.log("🎨 [CLIENT] tn-settings.tsx: Loading settings...");
-    try {
-      const settings = getSettings();
-      console.log("🎨 [CLIENT] tn-settings.tsx: Retrieved settings:", settings);
-      console.log(
-        "🎨 [CLIENT] tn-settings.tsx: Setting notesDirectory to:",
-        settings.notesDirectory || "",
-      );
-      setNotesDirectory(settings.notesDirectory || "");
-    } catch (error) {
-      console.error(
-        "❌ [CLIENT] tn-settings.tsx: Failed to load settings:",
-        error,
-      );
+    const fetchSettings = async () => {
+      const res = await axios.get('/api/settings');
+      const data : NotesSettings = res.data;
+
+      setSettings(data);
     }
+
+    fetchSettings();
   }, []);
 
-  const handleSave = () => {
-    try {
-      // Save settings using helper
-      saveSettings({
-        notesDirectory,
-      });
+  const handleSave = useCallback(async () => {
+    if (settings) {
+      try {
+        await axios.post('/api/settings', settings);
+        alert("Settings saved successfully!");
+      } catch (error) {
+        console.error("Failed to save settings:", error);
+        alert("Failed to save settings. Please try again.");
+      }
+    }
+  }, [settings]);
 
-      // Show success message
-      console.log("Settings saved - Notes Directory:", notesDirectory);
-      alert("Settings saved successfully!");
-    } catch (error) {
-      console.error("Failed to save settings:", error);
-      alert("Failed to save settings. Please try again.");
+  const handleSetNotesDirectory = (value: string) => {
+    if (settings) {
+      setSettings((prev) => ({ ...prev, notesDirectory: value }));
     }
   };
 
@@ -80,8 +77,8 @@ const TnSettings = ({ onClose }: TnSettingsProps) => {
             <Label htmlFor="notes-directory">Notes Directory Path</Label>
             <Input
               id="notes-directory"
-              value={notesDirectory}
-              onChange={(e) => setNotesDirectory(e.target.value)}
+              value={settings?.notesDirectory || ''}
+              onChange={(e) => handleSetNotesDirectory(e.target.value)}
               placeholder="Enter directory path (e.g., /home/user/notes or C:\Users\username\Documents\Notes)"
             />
             <p className="text-xs text-muted-foreground">
