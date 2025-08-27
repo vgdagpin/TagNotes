@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 
-import { Trash2, Image } from "lucide-react";
+import { Trash, Image } from '../tn-icons';
 import { Section } from "@shared/api";
 import axios from "axios";
 
@@ -45,7 +45,7 @@ const TnSectionImage = ({
             onClick={() => handleDelete()}
             className="text-destructive hover:text-destructive"
           >
-            <Trash2 className="h-3 w-3" />
+            <Trash className="h-3 w-3" />
           </Button>
         </div>
       </div>

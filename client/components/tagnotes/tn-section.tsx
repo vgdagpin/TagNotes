@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
-import { Edit3, Save, Trash2, Type } from "lucide-react";
+import { Edit, Save, Trash, Type } from '../tn-icons'; 
 import { Section } from "@shared/api";
 import { useState, useEffect } from "react";
 import axios from "axios";
@@ -80,7 +80,7 @@ const TnSection = ({
               size="sm"
               onClick={() => setSectionEdit(true)}
             >
-              <Edit3 className="h-3 w-3" />
+              <Edit className="h-3 w-3" />
             </Button>
           )}
           <Button
@@ -89,7 +89,7 @@ const TnSection = ({
             onClick={() => handleDelete()}
             className="text-destructive hover:text-destructive"
           >
-            <Trash2 className="h-3 w-3" />
+            <Trash className="h-3 w-3" />
           </Button>
         </div>
       </div>

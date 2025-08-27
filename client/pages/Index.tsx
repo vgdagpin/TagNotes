@@ -3,29 +3,17 @@ import axios from "axios";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import {
   Search,
   Plus,
   X,
   FileText,
-  Edit3,
-  Trash2,
-  Tag,
-  Hash,
-  Code,
-  Type,
-} from "lucide-react";
+  Trash,
+} from '../components/tn-icons';
+
 import { cn } from "@/lib/utils";
 import { Note, Section } from "@shared/api";
-import TnSection from "@/components/tagnotes/tn-section";
 import TnNoteViewer from "@/components/tagnotes/tn-note-viewer";
 
 export default function Index() {
@@ -519,7 +507,7 @@ export default function Index() {
                       deleteNote(note.id);
                     }}
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <Trash className="h-3 w-3" />
                   </Button>
                 </div>
               </div>

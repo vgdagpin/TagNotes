@@ -15,17 +15,17 @@ import {
 } from "@/components/ui/select";
 
 import {
-  Search,
+  Edit,
   Plus,
   X,
   FileText,
-  Edit3,
-  Trash2,
   Tag,
   Hash,
-  Code,
   Type,
-} from "lucide-react";
+  Trash,
+  Code,
+} from '../tn-icons';
+
 import TnSection from "./tn-section";
 import { Note, Section } from "@shared/api";
 import TnSectionCode from "./tn-section-code";
@@ -367,7 +367,7 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
                       className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={() => setEditingTitle(true)}
                     >
-                      <Edit3 className="h-3 w-3" />
+                      <Edit className="h-3 w-3" />
                     </Button>
                   </>
                 )}
@@ -450,7 +450,7 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
                 size="sm"
                 onClick={() => deleteNote(noteId)}
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash className="h-4 w-4" />
               </Button>
             </div>
           </div>
