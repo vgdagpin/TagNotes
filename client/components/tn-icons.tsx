@@ -1,17 +1,19 @@
-export { CiEdit as Edit } from "react-icons/ci";
-export { CiFloppyDisk as Save } from "react-icons/ci";
-export { CiTrash as Trash } from "react-icons/ci";
-export { CiHashtag as Hash } from "react-icons/ci";
+// https://react-icons.github.io/react-icons/icons/bi/
 
-export { CiHashtag as Search } from "react-icons/ci";
-export { CiHashtag as Plus } from "react-icons/ci";
-export { CiHashtag as X } from "react-icons/ci";
-export { CiHashtag as FileText } from "react-icons/ci";
-export { CiHashtag as Tag } from "react-icons/ci";
-export { CiHashtag as Type } from "react-icons/ci";
-export { CiHashtag as ChevronDown } from "react-icons/ci";
-export { CiHashtag as ChevronUp } from "react-icons/ci";
-export { CiHashtag as Code } from "react-icons/ci";
-export { CiHashtag as Image } from "react-icons/ci";
-export { CiHashtag as Check } from "react-icons/ci";
+export { BiEditAlt as Edit } from "react-icons/bi";
+export { BiSave as Save } from "react-icons/bi";
+export { BiTrash as Trash } from "react-icons/bi";
+export { BiHash as Hash } from "react-icons/bi";
+
+export { BiSearch as Search } from "react-icons/bi";
+export { BiPlus as Plus } from "react-icons/bi";
+export { BiX as X } from "react-icons/bi";
+export { BiText as FileText } from "react-icons/bi";
+export { BiPurchaseTag as Tag } from "react-icons/bi";
+export { BiText as Type } from "react-icons/bi";
+export { BiChevronsDown as ChevronDown } from "react-icons/bi";
+export { BiChevronsUp as ChevronUp } from "react-icons/bi";
+export { BiCodeAlt  as Code } from "react-icons/bi";
+export { BiImage as Image } from "react-icons/bi";
+export { BiCheck as Check } from "react-icons/bi";
 

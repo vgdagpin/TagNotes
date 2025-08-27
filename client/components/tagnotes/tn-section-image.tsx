@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Trash, Image } from '../tn-icons';
 import { Section } from "@shared/api";
 import axios from "axios";
+import { DialogTitle } from "@radix-ui/react-dialog";
 
 type TnSectionImageProps = {
   section: Section;
@@ -63,6 +64,7 @@ const TnSectionImage = ({
             </div>
           </DialogTrigger>
           <DialogContent className="max-w-4xl">
+            <DialogTitle>Image</DialogTitle>
             <img
               src={section.imageData}
               alt={section.content}

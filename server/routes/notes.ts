@@ -139,11 +139,11 @@ export const handleRemoveNoteTag: RequestHandler = (req, res) => {
 
 export const handleAddNoteSection: RequestHandler = (req, res) => {
     const { noteId } = req.params;
-    const { id, type, content, language, createdAt } = req.body;
+    const { id, type, content, language, createdAt, imageData } = req.body;
     const notes = loadNotes();
     const note = notes.find(n => n.id === noteId);
     if (!note) return res.status(404).json({ error: 'Note not found' });
-    const newSection: Section = { id, type, content, language, createdAt: createdAt ? new Date(createdAt) : new Date() };
+    const newSection: Section = { id, type, content, language, imageData, createdAt: createdAt ? new Date(createdAt) : new Date() };
     note.sections.push(newSection);
     note.updatedAt = new Date();
     saveNotes(notes);
