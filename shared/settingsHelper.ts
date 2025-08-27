@@ -77,20 +77,28 @@ async function saveSettingsToAPI(settings: NotesSettings): Promise<boolean> {
 }
 
 /**
- * Gets settings from localStorage or returns default settings.
+ * Gets settings from API/localStorage or returns default settings.
+ * For server-side: Returns default settings (API calls not available in server context)
+ * For client-side: Uses localStorage with sync option available
  */
 export function getSettings(): NotesSettings {
   const isServer = typeof window === "undefined";
-  console.log(
-    `📦 [SHARED] getSettings() called from ${isServer ? "SERVER" : "CLIENT"} environment`,
-  );
-
+  console.log(`📦 [SHARED] getSettings() called from ${isServer ? 'SERVER' : 'CLIENT'} environment`);
+  
   try {
-    // Only access localStorage in browser environment
+    // Server environment - return defaults (API-based settings will be handled by server routes)
+    if (isServer) {
+      console.log("🖥️ [SHARED] Server environment - returning default settings");
+      const defaultDir = getDefaultNotesDirectory();
+      console.log("🔄 [SHARED] Server default directory:", defaultDir);
+      return {
+        notesDirectory: defaultDir,
+      };
+    }
+
+    // Client environment - check localStorage
     if (typeof window !== "undefined" && window.localStorage) {
-      console.log(
-        "🌐 [SHARED] Browser environment detected, checking localStorage...",
-      );
+      console.log("🌐 [SHARED] Browser environment detected, checking localStorage...");
       const savedSettings = localStorage.getItem("notesSettings");
       console.log("🌐 [SHARED] localStorage contents:", savedSettings);
       if (savedSettings) {
@@ -102,18 +110,11 @@ export function getSettings(): NotesSettings {
       } else {
         console.log("⚠️ [SHARED] No settings found in localStorage");
       }
-    } else {
-      console.log(
-        "🖥️ [SHARED] Server environment detected, localStorage not available",
-      );
     }
 
     // Return default settings if no saved settings found
     const defaultDir = getDefaultNotesDirectory();
-    console.log(
-      "🔄 [SHARED] Returning default settings with directory:",
-      defaultDir,
-    );
+    console.log("🔄 [SHARED] Returning default settings with directory:", defaultDir);
     return {
       notesDirectory: defaultDir,
     };
@@ -126,25 +127,87 @@ export function getSettings(): NotesSettings {
 }
 
 /**
- * Saves settings to localStorage.
+ * Gets settings asynchronously from API with localStorage fallback (client-side only)
+ */
+export async function getSettingsAsync(): Promise<NotesSettings> {
+  const isServer = typeof window === "undefined";
+  console.log(`📦 [SHARED] getSettingsAsync() called from ${isServer ? 'SERVER' : 'CLIENT'} environment`);
+  
+  if (isServer) {
+    console.log("🖥️ [SHARED] Server environment - using synchronous getSettings()");
+    return getSettings();
+  }
+
+  try {
+    // Try to get settings from API first
+    const apiSettings = await getSettingsFromAPI();
+    if (apiSettings) {
+      // Sync with localStorage for offline use
+      try {
+        localStorage.setItem("notesSettings", JSON.stringify(apiSettings));
+        console.log("🔄 [SHARED] Synced API settings to localStorage");
+      } catch (error) {
+        console.warn("⚠️ [SHARED] Failed to sync to localStorage:", error);
+      }
+      return apiSettings;
+    }
+
+    // Fallback to existing localStorage-based logic
+    console.log("🔄 [SHARED] API failed, falling back to localStorage");
+    return getSettings();
+  } catch (error) {
+    console.error("❌ [SHARED] getSettingsAsync failed:", error);
+    return getSettings();
+  }
+}
+
+/**
+ * Saves settings to localStorage (synchronous version).
  */
 export function saveSettings(settings: NotesSettings): void {
   console.log("💾 [SHARED] saveSettings() called with:", settings);
   try {
     // Only access localStorage in browser environment
     if (typeof window !== "undefined" && window.localStorage) {
-      console.log(
-        "🌐 [SHARED] Browser environment detected, saving to localStorage...",
-      );
+      console.log("🌐 [SHARED] Browser environment detected, saving to localStorage...");
       localStorage.setItem("notesSettings", JSON.stringify(settings));
       console.log("✅ [SHARED] Settings saved to localStorage successfully");
     } else {
-      console.log(
-        "🖥️ [SHARED] Server environment detected, cannot save to localStorage",
-      );
+      console.log("🖥️ [SHARED] Server environment detected, cannot save to localStorage");
     }
   } catch (error) {
     console.error("❌ [SHARED] Failed to save settings:", error);
+    throw error;
+  }
+}
+
+/**
+ * Saves settings to both API and localStorage (asynchronous version, client-side only).
+ */
+export async function saveSettingsAsync(settings: NotesSettings): Promise<void> {
+  console.log("💾 [SHARED] saveSettingsAsync() called with:", settings);
+  
+  const isServer = typeof window === "undefined";
+  if (isServer) {
+    console.log("🖥️ [SHARED] Server environment detected, using synchronous saveSettings");
+    saveSettings(settings);
+    return;
+  }
+
+  try {
+    // Save to localStorage first (immediate feedback)
+    saveSettings(settings);
+
+    // Then try to sync with API
+    const apiSuccess = await saveSettingsToAPI(settings);
+    if (apiSuccess) {
+      console.log("✅ [SHARED] Settings successfully synced to API");
+    } else {
+      console.warn("⚠️ [SHARED] Failed to sync to API, but localStorage saved");
+      // Settings are still saved locally, so this is not a critical failure
+    }
+  } catch (error) {
+    console.error("❌ [SHARED] saveSettingsAsync failed:", error);
     throw error;
   }
 }
