@@ -475,10 +475,21 @@ export default function Index() {
       <div className="w-80 border-r border-border bg-card flex flex-col">
         {/* Header */}
         <div className="p-4 border-b border-border">
-          <h1 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Notes
-          </h1>
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-xl font-semibold text-foreground flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Notes
+            </h1>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={openSettings}
+              title="Open Settings"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          </div>
 
           {/* Search */}
           <div className="relative">
