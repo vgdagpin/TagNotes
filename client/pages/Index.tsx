@@ -11,7 +11,7 @@ import {
   FileText,
   Trash,
   Settings,
-} from '../components/tn-icons';
+} from "../components/tn-icons";
 
 import { cn } from "@/lib/utils";
 import { Note, Section } from "@shared/api";
@@ -645,9 +645,7 @@ export default function Index() {
               {openTabs.map((tabId) => {
                 // Handle settings tab
                 if (tabId === "settings") {
-                  return (
-                    <TnSettings key="settings" onClose={closeSettings} />
-                  );
+                  return <TnSettings key="settings" onClose={closeSettings} />;
                 }
 
                 // Handle note tabs

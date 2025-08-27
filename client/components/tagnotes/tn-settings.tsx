@@ -17,7 +17,7 @@ const TnSettings = ({ onClose }: TnSettingsProps) => {
 
   // Load settings on component mount
   useEffect(() => {
-    const savedSettings = localStorage.getItem('notesSettings');
+    const savedSettings = localStorage.getItem("notesSettings");
     if (savedSettings) {
       try {
         const settings = JSON.parse(savedSettings);
@@ -25,21 +25,24 @@ const TnSettings = ({ onClose }: TnSettingsProps) => {
         setTheme(settings.theme || "system");
         setAutoSave(settings.autoSave !== undefined ? settings.autoSave : true);
       } catch (error) {
-        console.error('Failed to load settings:', error);
+        console.error("Failed to load settings:", error);
       }
     }
   }, []);
 
   const handleSave = () => {
     // Save settings to localStorage or backend
-    localStorage.setItem('notesSettings', JSON.stringify({
-      appName,
-      theme,
-      autoSave
-    }));
-    
+    localStorage.setItem(
+      "notesSettings",
+      JSON.stringify({
+        appName,
+        theme,
+        autoSave,
+      }),
+    );
+
     // Show success message or close
-    console.log('Settings saved');
+    console.log("Settings saved");
   };
 
   return (
@@ -70,7 +73,7 @@ const TnSettings = ({ onClose }: TnSettingsProps) => {
             <FileText className="h-4 w-4" />
             <h3 className="text-lg font-medium">General</h3>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="app-name">Application Name</Label>
             <Input
@@ -106,7 +109,7 @@ const TnSettings = ({ onClose }: TnSettingsProps) => {
             <Hash className="h-4 w-4" />
             <h3 className="text-lg font-medium">Appearance</h3>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="theme">Theme</Label>
             <select
@@ -130,11 +133,17 @@ const TnSettings = ({ onClose }: TnSettingsProps) => {
             <Check className="h-4 w-4" />
             <h3 className="text-lg font-medium">About</h3>
           </div>
-          
+
           <div className="text-sm text-muted-foreground space-y-2">
-            <p><strong>Version:</strong> 1.0.0</p>
-            <p><strong>Build:</strong> 2024.01.15</p>
-            <p><strong>Notes:</strong> Sectional note-taking application</p>
+            <p>
+              <strong>Version:</strong> 1.0.0
+            </p>
+            <p>
+              <strong>Build:</strong> 2024.01.15
+            </p>
+            <p>
+              <strong>Notes:</strong> Sectional note-taking application
+            </p>
           </div>
         </div>
 

@@ -13,7 +13,7 @@ export { BiPurchaseTag as Tag } from "react-icons/bi";
 export { BiText as Type } from "react-icons/bi";
 export { BiChevronsDown as ChevronDown } from "react-icons/bi";
 export { BiChevronsUp as ChevronUp } from "react-icons/bi";
-export { BiCodeAlt  as Code } from "react-icons/bi";
+export { BiCodeAlt as Code } from "react-icons/bi";
 export { BiImage as Image } from "react-icons/bi";
 export { BiCheck as Check } from "react-icons/bi";
 export { BiCog as Settings } from "react-icons/bi";
