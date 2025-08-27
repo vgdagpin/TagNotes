@@ -16,4 +16,4 @@ export { BiChevronsUp as ChevronUp } from "react-icons/bi";
 export { BiCodeAlt  as Code } from "react-icons/bi";
 export { BiImage as Image } from "react-icons/bi";
 export { BiCheck as Check } from "react-icons/bi";
-
+export { BiCog as Settings } from "react-icons/bi";

@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { TabsContent } from "@/components/ui/tabs";
-import { IoSettings, IoSave, IoColorPalette, IoDocument, IoInformationCircle } from "react-icons/io5";
+import { Settings, Save, Hash, FileText, Check } from "../tn-icons";
 
 type TnSettingsProps = {
   onClose?: () => void;
@@ -36,7 +36,7 @@ const TnSettings = ({ onClose }: TnSettingsProps) => {
       <div className="p-4 border-b border-border bg-card">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <IoSettings className="h-5 w-5" />
+            <Settings className="h-5 w-5" />
             <h2 className="text-xl font-semibold text-foreground">Settings</h2>
           </div>
           {onClose && (
@@ -52,7 +52,7 @@ const TnSettings = ({ onClose }: TnSettingsProps) => {
         {/* General Settings */}
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <IoDocument className="h-4 w-4" />
+            <FileText className="h-4 w-4" />
             <h3 className="text-lg font-medium">General</h3>
           </div>
           
@@ -88,7 +88,7 @@ const TnSettings = ({ onClose }: TnSettingsProps) => {
         {/* Appearance Settings */}
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <IoColorPalette className="h-4 w-4" />
+            <Hash className="h-4 w-4" />
             <h3 className="text-lg font-medium">Appearance</h3>
           </div>
           
@@ -112,7 +112,7 @@ const TnSettings = ({ onClose }: TnSettingsProps) => {
         {/* About Section */}
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <IoInformationCircle className="h-4 w-4" />
+            <Check className="h-4 w-4" />
             <h3 className="text-lg font-medium">About</h3>
           </div>
           
@@ -126,7 +126,7 @@ const TnSettings = ({ onClose }: TnSettingsProps) => {
         {/* Save Button */}
         <div className="pt-4">
           <Button onClick={handleSave} className="w-full">
-            <IoSave className="h-4 w-4 mr-2" />
+            <Save className="h-4 w-4 mr-2" />
             Save Settings
           </Button>
         </div>
