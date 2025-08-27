@@ -19,10 +19,16 @@ const TnSettings = ({ onClose }: TnSettingsProps) => {
     try {
       const settings = getSettings();
       console.log("🎨 [CLIENT] tn-settings.tsx: Retrieved settings:", settings);
-      console.log("🎨 [CLIENT] tn-settings.tsx: Setting notesDirectory to:", settings.notesDirectory || "");
+      console.log(
+        "🎨 [CLIENT] tn-settings.tsx: Setting notesDirectory to:",
+        settings.notesDirectory || "",
+      );
       setNotesDirectory(settings.notesDirectory || "");
     } catch (error) {
-      console.error("❌ [CLIENT] tn-settings.tsx: Failed to load settings:", error);
+      console.error(
+        "❌ [CLIENT] tn-settings.tsx: Failed to load settings:",
+        error,
+      );
     }
   }, []);
 

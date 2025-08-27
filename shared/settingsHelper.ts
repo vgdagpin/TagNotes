@@ -32,12 +32,16 @@ export function getDefaultNotesDirectory(): string {
  */
 export function getSettings(): NotesSettings {
   const isServer = typeof window === "undefined";
-  console.log(`📦 [SHARED] getSettings() called from ${isServer ? 'SERVER' : 'CLIENT'} environment`);
+  console.log(
+    `📦 [SHARED] getSettings() called from ${isServer ? "SERVER" : "CLIENT"} environment`,
+  );
 
   try {
     // Only access localStorage in browser environment
     if (typeof window !== "undefined" && window.localStorage) {
-      console.log("🌐 [SHARED] Browser environment detected, checking localStorage...");
+      console.log(
+        "🌐 [SHARED] Browser environment detected, checking localStorage...",
+      );
       const savedSettings = localStorage.getItem("notesSettings");
       console.log("🌐 [SHARED] localStorage contents:", savedSettings);
       if (savedSettings) {
@@ -50,12 +54,17 @@ export function getSettings(): NotesSettings {
         console.log("⚠️ [SHARED] No settings found in localStorage");
       }
     } else {
-      console.log("🖥️ [SHARED] Server environment detected, localStorage not available");
+      console.log(
+        "🖥️ [SHARED] Server environment detected, localStorage not available",
+      );
     }
 
     // Return default settings if no saved settings found
     const defaultDir = getDefaultNotesDirectory();
-    console.log("🔄 [SHARED] Returning default settings with directory:", defaultDir);
+    console.log(
+      "🔄 [SHARED] Returning default settings with directory:",
+      defaultDir,
+    );
     return {
       notesDirectory: defaultDir,
     };
@@ -75,11 +84,15 @@ export function saveSettings(settings: NotesSettings): void {
   try {
     // Only access localStorage in browser environment
     if (typeof window !== "undefined" && window.localStorage) {
-      console.log("🌐 [SHARED] Browser environment detected, saving to localStorage...");
+      console.log(
+        "🌐 [SHARED] Browser environment detected, saving to localStorage...",
+      );
       localStorage.setItem("notesSettings", JSON.stringify(settings));
       console.log("✅ [SHARED] Settings saved to localStorage successfully");
     } else {
-      console.log("🖥️ [SHARED] Server environment detected, cannot save to localStorage");
+      console.log(
+        "🖥️ [SHARED] Server environment detected, cannot save to localStorage",
+      );
     }
   } catch (error) {
     console.error("❌ [SHARED] Failed to save settings:", error);

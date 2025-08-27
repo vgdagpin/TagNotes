@@ -11,13 +11,19 @@ function getDataDirectory(): string {
     const settings = getSettings();
     console.log("🔧 [SERVER] Retrieved settings:", settings);
     if (settings.notesDirectory && settings.notesDirectory.trim() !== "") {
-      console.log("✅ [SERVER] Using directory from settings:", settings.notesDirectory);
+      console.log(
+        "✅ [SERVER] Using directory from settings:",
+        settings.notesDirectory,
+      );
       return settings.notesDirectory;
     } else {
       console.log("⚠️ [SERVER] No directory in settings, using fallback");
     }
   } catch (error) {
-    console.warn("❌ [SERVER] Failed to load settings, using fallback directory:", error);
+    console.warn(
+      "❌ [SERVER] Failed to load settings, using fallback directory:",
+      error,
+    );
   }
 
   // Fallback to relative data directory if settings fail
