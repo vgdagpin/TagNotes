@@ -2,7 +2,19 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { handleDemo } from "./routes/demo";
-import { handleGetNotes, handleFindNote, handleAddNoteSection, handleDeleteNoteSection, handleUpdateSectionContent, handleCreateNote, handleAddNoteTag, handleRemoveNoteTag, handleDeleteNote, handleUpdateNoteTitle, handleUpdateSectionLanguage } from "./routes/notes";
+import {
+  handleGetNotes,
+  handleFindNote,
+  handleAddNoteSection,
+  handleDeleteNoteSection,
+  handleUpdateSectionContent,
+  handleCreateNote,
+  handleAddNoteTag,
+  handleRemoveNoteTag,
+  handleDeleteNote,
+  handleUpdateNoteTitle,
+  handleUpdateSectionLanguage,
+} from "./routes/notes";
 import { handleGetSettings, handleSaveSettings } from "./routes/settings";
 
 export function createServer() {
@@ -22,24 +34,33 @@ export function createServer() {
   app.get("/api/demo", handleDemo);
 
   // Settings API routes
-  app.get('/api/settings', handleGetSettings);
-  app.post('/api/settings', handleSaveSettings);
+  app.get("/api/settings", handleGetSettings);
+  app.post("/api/settings", handleSaveSettings);
 
-  app.get('/api/notes', handleGetNotes);
-  app.get('/api/notes/:noteId', handleFindNote);
-  app.delete('/api/notes/:noteId', handleDeleteNote);
-  app.put('/api/notes/:noteId/setTitle', handleUpdateNoteTitle);
+  app.get("/api/notes", handleGetNotes);
+  app.get("/api/notes/:noteId", handleFindNote);
+  app.delete("/api/notes/:noteId", handleDeleteNote);
+  app.put("/api/notes/:noteId/setTitle", handleUpdateNoteTitle);
 
-  app.post('/api/notes', handleCreateNote);
+  app.post("/api/notes", handleCreateNote);
 
-  app.post('/api/notes/:noteId/addSection', handleAddNoteSection);
-  app.post('/api/notes/:noteId/tags', handleAddNoteTag);
-  app.delete('/api/notes/:noteId/tags/:tag', handleRemoveNoteTag);
+  app.post("/api/notes/:noteId/addSection", handleAddNoteSection);
+  app.post("/api/notes/:noteId/tags", handleAddNoteTag);
+  app.delete("/api/notes/:noteId/tags/:tag", handleRemoveNoteTag);
 
-  app.delete('/api/notes/:noteId/deleteSection/:sectionId', handleDeleteNoteSection);
+  app.delete(
+    "/api/notes/:noteId/deleteSection/:sectionId",
+    handleDeleteNoteSection,
+  );
 
-  app.put('/api/notes/:noteId/updateSection/:sectionId/content', handleUpdateSectionContent);
-  app.put('/api/notes/:noteId/updateSection/:sectionId/language', handleUpdateSectionLanguage);
+  app.put(
+    "/api/notes/:noteId/updateSection/:sectionId/content",
+    handleUpdateSectionContent,
+  );
+  app.put(
+    "/api/notes/:noteId/updateSection/:sectionId/language",
+    handleUpdateSectionLanguage,
+  );
 
   return app;
 }

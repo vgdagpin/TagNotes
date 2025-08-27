@@ -1,12 +1,12 @@
-import { RequestHandler } from 'express';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as os from 'os';
-import { NotesSettings } from '../../shared/settingsHelper';
+import { RequestHandler } from "express";
+import * as fs from "fs";
+import * as path from "path";
+import * as os from "os";
+import { NotesSettings } from "../../shared/settingsHelper";
 
 // Settings file path
-const SETTINGS_DIR = path.join(__dirname, '..', 'data');
-const SETTINGS_FILE = path.join(SETTINGS_DIR, 'settings.json');
+const SETTINGS_DIR = path.join(__dirname, "..", "data");
+const SETTINGS_FILE = path.join(SETTINGS_DIR, "settings.json");
 
 /**
  * Gets the default notes directory path for server environment
@@ -14,12 +14,12 @@ const SETTINGS_FILE = path.join(SETTINGS_DIR, 'settings.json');
 function getDefaultNotesDirectory(): string {
   try {
     const homeDir = os.homedir();
-    const documentsDir = path.join(homeDir, 'Documents');
-    return path.join(documentsDir, 'TagNotes');
+    const documentsDir = path.join(homeDir, "Documents");
+    return path.join(documentsDir, "TagNotes");
   } catch (error) {
-    console.error('Failed to get default directory:', error);
+    console.error("Failed to get default directory:", error);
     // Fallback to server data directory
-    return path.join(__dirname, '..', 'data');
+    return path.join(__dirname, "..", "data");
   }
 }
 
@@ -30,13 +30,16 @@ function ensureSettingsFile() {
   if (!fs.existsSync(SETTINGS_DIR)) {
     fs.mkdirSync(SETTINGS_DIR, { recursive: true });
   }
-  
+
   if (!fs.existsSync(SETTINGS_FILE)) {
     const defaultSettings: NotesSettings = {
-      notesDirectory: getDefaultNotesDirectory()
+      notesDirectory: getDefaultNotesDirectory(),
     };
     fs.writeFileSync(SETTINGS_FILE, JSON.stringify(defaultSettings, null, 2));
-    console.log('🔧 [SERVER API] Created default settings file:', defaultSettings);
+    console.log(
+      "🔧 [SERVER API] Created default settings file:",
+      defaultSettings,
+    );
   }
 }
 
@@ -46,15 +49,15 @@ function ensureSettingsFile() {
 function loadSettingsFromFile(): NotesSettings {
   ensureSettingsFile();
   try {
-    const raw = fs.readFileSync(SETTINGS_FILE, 'utf-8');
+    const raw = fs.readFileSync(SETTINGS_FILE, "utf-8");
     const settings = JSON.parse(raw);
-    console.log('📁 [SERVER API] Loaded settings from file:', settings);
+    console.log("📁 [SERVER API] Loaded settings from file:", settings);
     return settings;
   } catch (error) {
-    console.error('❌ [SERVER API] Failed to load settings from file:', error);
+    console.error("❌ [SERVER API] Failed to load settings from file:", error);
     // Return default settings if file is corrupted
     return {
-      notesDirectory: getDefaultNotesDirectory()
+      notesDirectory: getDefaultNotesDirectory(),
     };
   }
 }
@@ -66,9 +69,9 @@ function saveSettingsToFile(settings: NotesSettings): void {
   ensureSettingsFile();
   try {
     fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
-    console.log('💾 [SERVER API] Saved settings to file:', settings);
+    console.log("💾 [SERVER API] Saved settings to file:", settings);
   } catch (error) {
-    console.error('❌ [SERVER API] Failed to save settings to file:', error);
+    console.error("❌ [SERVER API] Failed to save settings to file:", error);
     throw error;
   }
 }
@@ -77,13 +80,13 @@ function saveSettingsToFile(settings: NotesSettings): void {
  * GET /api/settings - Get current settings
  */
 export const handleGetSettings: RequestHandler = (req, res) => {
-  console.log('🔍 [SERVER API] GET /api/settings called');
+  console.log("🔍 [SERVER API] GET /api/settings called");
   try {
     const settings = loadSettingsFromFile();
     res.status(200).json(settings);
   } catch (error) {
-    console.error('❌ [SERVER API] Failed to get settings:', error);
-    res.status(500).json({ error: 'Failed to retrieve settings' });
+    console.error("❌ [SERVER API] Failed to get settings:", error);
+    res.status(500).json({ error: "Failed to retrieve settings" });
   }
 };
 
@@ -91,23 +94,23 @@ export const handleGetSettings: RequestHandler = (req, res) => {
  * POST /api/settings - Save settings
  */
 export const handleSaveSettings: RequestHandler = (req, res) => {
-  console.log('💾 [SERVER API] POST /api/settings called with body:', req.body);
+  console.log("💾 [SERVER API] POST /api/settings called with body:", req.body);
   try {
     const { notesDirectory } = req.body;
-    
-    if (typeof notesDirectory !== 'string') {
-      return res.status(400).json({ error: 'notesDirectory must be a string' });
+
+    if (typeof notesDirectory !== "string") {
+      return res.status(400).json({ error: "notesDirectory must be a string" });
     }
 
     const settings: NotesSettings = {
-      notesDirectory: notesDirectory.trim() || getDefaultNotesDirectory()
+      notesDirectory: notesDirectory.trim() || getDefaultNotesDirectory(),
     };
 
     saveSettingsToFile(settings);
     res.status(200).json(settings);
   } catch (error) {
-    console.error('❌ [SERVER API] Failed to save settings:', error);
-    res.status(500).json({ error: 'Failed to save settings' });
+    console.error("❌ [SERVER API] Failed to save settings:", error);
+    res.status(500).json({ error: "Failed to save settings" });
   }
 };
 

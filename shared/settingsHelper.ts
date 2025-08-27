@@ -33,10 +33,13 @@ export function getDefaultNotesDirectory(): string {
 async function getSettingsFromAPI(): Promise<NotesSettings | null> {
   try {
     console.log("🌐 [SHARED] Attempting to fetch settings from API...");
-    const response = await fetch('/api/settings');
+    const response = await fetch("/api/settings");
     if (response.ok) {
       const settings = await response.json();
-      console.log("✅ [SHARED] Successfully fetched settings from API:", settings);
+      console.log(
+        "✅ [SHARED] Successfully fetched settings from API:",
+        settings,
+      );
       return settings;
     } else {
       console.warn("⚠️ [SHARED] API returned non-OK status:", response.status);
@@ -54,20 +57,26 @@ async function getSettingsFromAPI(): Promise<NotesSettings | null> {
 async function saveSettingsToAPI(settings: NotesSettings): Promise<boolean> {
   try {
     console.log("🌐 [SHARED] Attempting to save settings to API:", settings);
-    const response = await fetch('/api/settings', {
-      method: 'POST',
+    const response = await fetch("/api/settings", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(settings),
     });
 
     if (response.ok) {
       const savedSettings = await response.json();
-      console.log("✅ [SHARED] Successfully saved settings to API:", savedSettings);
+      console.log(
+        "✅ [SHARED] Successfully saved settings to API:",
+        savedSettings,
+      );
       return true;
     } else {
-      console.warn("⚠️ [SHARED] API save returned non-OK status:", response.status);
+      console.warn(
+        "⚠️ [SHARED] API save returned non-OK status:",
+        response.status,
+      );
       return false;
     }
   } catch (error) {
@@ -83,12 +92,16 @@ async function saveSettingsToAPI(settings: NotesSettings): Promise<boolean> {
  */
 export function getSettings(): NotesSettings {
   const isServer = typeof window === "undefined";
-  console.log(`📦 [SHARED] getSettings() called from ${isServer ? 'SERVER' : 'CLIENT'} environment`);
-  
+  console.log(
+    `📦 [SHARED] getSettings() called from ${isServer ? "SERVER" : "CLIENT"} environment`,
+  );
+
   try {
     // Server environment - return defaults (API-based settings will be handled by server routes)
     if (isServer) {
-      console.log("🖥️ [SHARED] Server environment - returning default settings");
+      console.log(
+        "🖥️ [SHARED] Server environment - returning default settings",
+      );
       const defaultDir = getDefaultNotesDirectory();
       console.log("🔄 [SHARED] Server default directory:", defaultDir);
       return {
@@ -98,7 +111,9 @@ export function getSettings(): NotesSettings {
 
     // Client environment - check localStorage
     if (typeof window !== "undefined" && window.localStorage) {
-      console.log("🌐 [SHARED] Browser environment detected, checking localStorage...");
+      console.log(
+        "🌐 [SHARED] Browser environment detected, checking localStorage...",
+      );
       const savedSettings = localStorage.getItem("notesSettings");
       console.log("🌐 [SHARED] localStorage contents:", savedSettings);
       if (savedSettings) {
@@ -114,7 +129,10 @@ export function getSettings(): NotesSettings {
 
     // Return default settings if no saved settings found
     const defaultDir = getDefaultNotesDirectory();
-    console.log("🔄 [SHARED] Returning default settings with directory:", defaultDir);
+    console.log(
+      "🔄 [SHARED] Returning default settings with directory:",
+      defaultDir,
+    );
     return {
       notesDirectory: defaultDir,
     };
@@ -131,10 +149,14 @@ export function getSettings(): NotesSettings {
  */
 export async function getSettingsAsync(): Promise<NotesSettings> {
   const isServer = typeof window === "undefined";
-  console.log(`📦 [SHARED] getSettingsAsync() called from ${isServer ? 'SERVER' : 'CLIENT'} environment`);
-  
+  console.log(
+    `📦 [SHARED] getSettingsAsync() called from ${isServer ? "SERVER" : "CLIENT"} environment`,
+  );
+
   if (isServer) {
-    console.log("🖥️ [SHARED] Server environment - using synchronous getSettings()");
+    console.log(
+      "🖥️ [SHARED] Server environment - using synchronous getSettings()",
+    );
     return getSettings();
   }
 
@@ -169,11 +191,15 @@ export function saveSettings(settings: NotesSettings): void {
   try {
     // Only access localStorage in browser environment
     if (typeof window !== "undefined" && window.localStorage) {
-      console.log("🌐 [SHARED] Browser environment detected, saving to localStorage...");
+      console.log(
+        "🌐 [SHARED] Browser environment detected, saving to localStorage...",
+      );
       localStorage.setItem("notesSettings", JSON.stringify(settings));
       console.log("✅ [SHARED] Settings saved to localStorage successfully");
     } else {
-      console.log("🖥️ [SHARED] Server environment detected, cannot save to localStorage");
+      console.log(
+        "🖥️ [SHARED] Server environment detected, cannot save to localStorage",
+      );
     }
   } catch (error) {
     console.error("❌ [SHARED] Failed to save settings:", error);
@@ -184,12 +210,16 @@ export function saveSettings(settings: NotesSettings): void {
 /**
  * Saves settings to both API and localStorage (asynchronous version, client-side only).
  */
-export async function saveSettingsAsync(settings: NotesSettings): Promise<void> {
+export async function saveSettingsAsync(
+  settings: NotesSettings,
+): Promise<void> {
   console.log("💾 [SHARED] saveSettingsAsync() called with:", settings);
-  
+
   const isServer = typeof window === "undefined";
   if (isServer) {
-    console.log("🖥️ [SHARED] Server environment detected, using synchronous saveSettings");
+    console.log(
+      "🖥️ [SHARED] Server environment detected, using synchronous saveSettings",
+    );
     saveSettings(settings);
     return;
   }
