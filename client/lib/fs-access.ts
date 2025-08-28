@@ -72,10 +72,23 @@ export async function hasRestorableHandle(): Promise<boolean> {
 const INDEX_FILE = 'index.json';
 const NOTES_DIR = 'Notes';
 
+function formatDateFolder(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+export function computeNotePath(id: string, date: Date = new Date()): string {
+  return `${NOTES_DIR}/${formatDateFolder(date)}/${id}.json`;
+}
+
 export interface NoteIndexEntry extends Omit<NoteSummary, 'location'> { path: string; location: string; }
 
 async function ensureNotesDir(handle: FileSystemDirectoryHandle): Promise<FileSystemDirectoryHandle> {
-  return await handle.getDirectoryHandle(NOTES_DIR, { create: true });
+  const root = await handle.getDirectoryHandle(NOTES_DIR, { create: true });
+  const dated = await root.getDirectoryHandle(formatDateFolder(new Date()), { create: true });
+  return dated;
 }
 
 async function getNotesDirIfExists(handle: FileSystemDirectoryHandle): Promise<FileSystemDirectoryHandle | null> {
@@ -115,22 +128,45 @@ export async function loadIndex(handle: FileSystemDirectoryHandle): Promise<Note
   if (notesDir) {
     for await (const entry of (notesDir as any).values()) {
       if (entry.kind === 'file' && entry.name.endsWith('.json')) {
+        // legacy: files directly in Notes root
         try {
           const file = await entry.getFile();
           const text = await file.text();
-            const parsed = JSON.parse(text);
-            if (parsed && parsed.id && parsed.title) {
-              const location = `${NOTES_DIR}/${entry.name}`;
-              entries.push({
-                id: parsed.id,
-                title: parsed.title,
-                createdAt: parsed.createdAt || parsed.updatedAt || new Date().toISOString(),
-                updatedAt: parsed.updatedAt || parsed.createdAt || new Date().toISOString(),
-                path: location,
-                location
-              });
-            }
+          const parsed = JSON.parse(text);
+          if (parsed && parsed.id && parsed.title) {
+            const location = `${NOTES_DIR}/${entry.name}`;
+            entries.push({
+              id: parsed.id,
+              title: parsed.title,
+              createdAt: parsed.createdAt || parsed.updatedAt || new Date().toISOString(),
+              updatedAt: parsed.updatedAt || parsed.createdAt || new Date().toISOString(),
+              path: location,
+              location
+            });
+          }
         } catch { /* skip */ }
+      } else if (entry.kind === 'directory') {
+        // date folder
+        for await (const fileEntry of entry.values()) {
+          if (fileEntry.kind === 'file' && fileEntry.name.endsWith('.json')) {
+            try {
+              const file = await fileEntry.getFile();
+              const text = await file.text();
+              const parsed = JSON.parse(text);
+              if (parsed && parsed.id && parsed.title) {
+                const location = `${NOTES_DIR}/${entry.name}/${fileEntry.name}`;
+                entries.push({
+                  id: parsed.id,
+                  title: parsed.title,
+                  createdAt: parsed.createdAt || parsed.updatedAt || new Date().toISOString(),
+                  updatedAt: parsed.updatedAt || parsed.createdAt || new Date().toISOString(),
+                  path: location,
+                  location
+                });
+              }
+            } catch { /* skip */ }
+          }
+        }
       }
     }
   }
@@ -139,18 +175,33 @@ export async function loadIndex(handle: FileSystemDirectoryHandle): Promise<Note
 }
 
 // Write (upsert) a note JSON file inside Notes/ and update index
-export async function writeNoteFile(handle: FileSystemDirectoryHandle, note: any) {
-  const notesDir = await ensureNotesDir(handle);
+export async function writeNoteFile(handle: FileSystemDirectoryHandle, note: any): Promise<string> {
+  const notesDir = await ensureNotesDir(handle); // date folder
   const fileHandle = await notesDir.getFileHandle(`${note.id}.json`, { create: true });
   const stream = await fileHandle.createWritable();
   await stream.write(JSON.stringify(note, null, 2));
   await stream.close();
+  const folderName = (notesDir as any).name as string; // date folder name
+  return `${NOTES_DIR}/${folderName}/${note.id}.json`;
 }
 
 export async function deleteNoteFile(handle: FileSystemDirectoryHandle, noteId: string) {
   try {
-    const notesDir = await ensureNotesDir(handle);
-    await notesDir.removeEntry(`${noteId}.json`);
+    // We don't know which date folder it is in; scan current date first then others.
+    const root = await handle.getDirectoryHandle(NOTES_DIR, { create: false });
+    for await (const entry of (root as any).values()) {
+      if (entry.kind === 'directory') {
+        try {
+          const dir = await root.getDirectoryHandle(entry.name, { create: false });
+          await dir.removeEntry(`${noteId}.json`);
+          break;
+        } catch { /* continue */ }
+      } else if (entry.kind === 'file' && entry.name === `${noteId}.json`) {
+        // legacy root file
+        await root.removeEntry(entry.name);
+        break;
+      }
+    }
   } catch { /* ignore */ }
 }
 

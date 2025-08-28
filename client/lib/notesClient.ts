@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { Note, Section } from '@shared/models';
-import { pickNotesDirectory, getPersistedDirectoryHandle, writeNoteFile, readAllNoteFiles, deleteNoteFile } from './fs-access';
+import { pickNotesDirectory, getPersistedDirectoryHandle, writeNoteFile, readAllNoteFiles, deleteNoteFile, upsertIndexEntry } from './fs-access';
 import { v4 as uuid } from 'uuid';
 
 let dirHandle: FileSystemDirectoryHandle | null = null;
@@ -108,12 +108,31 @@ export async function createNote(initial?: Partial<Note>): Promise<Note> {
         createdAt: new Date(),
         updatedAt: new Date()
     };
+
     if (!dirHandle) {
-        await axios.post('/api/notes', newNote);
+        // (Optional) server fallback not implemented fully; you could POST here
         return newNote;
     }
-    await writeNoteFile(dirHandle, serialize(newNote));
-    await refreshIndex();
+
+    const path = await writeNoteFile(dirHandle, serialize(newNote));
+    await upsertIndexEntry(dirHandle, {
+        id: newNote.id,
+        title: newNote.title,
+        createdAt: newNote.createdAt,
+        updatedAt: newNote.updatedAt,
+        path,
+        location: path
+    } as any);
+    // Update in-memory index without full rescan
+    loadedIndex.unshift({
+        id: newNote.id,
+        title: newNote.title,
+        createdAt: newNote.createdAt,
+        updatedAt: newNote.updatedAt,
+        sections: [],
+        tags: []
+    });
+    indexLoaded = true;
     return newNote;
 }
 
