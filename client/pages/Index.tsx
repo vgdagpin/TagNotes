@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
-import axios from "axios";
+import { useState, useEffect } from "react";
+import axios from "axios"; // server fallback
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -15,12 +15,19 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Note, Section } from "@shared/api";
+import {
+  listNotes as listNotesLocal,
+  createNote as createLocalNote,
+  getNote as getLocalNote,
+  enableLocalMode,
+  isLocalMode,
+} from "@/lib/notesClient";
 import TnNoteViewer from "@/components/tagnotes/tn-note-viewer";
 import TnSettings from "@/components/tagnotes/tn-settings";
 
 export default function Index() {
-  // State management
-  const [notes, setNotes] = useState<Note[]>([]);
+  // Notes list (id/title only). Full note loaded in viewer.
+  const [notes, setNotes] = useState<{ id: string; title: string }[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [openTabs, setOpenTabs] = useState<string[]>(["1"]); // Start with first note open
   const [activeTab, setActiveTab] = useState("1");
@@ -41,53 +48,32 @@ export default function Index() {
 
   // Fetch notes from API on mount
   useEffect(() => {
-    const fetchNotes = async (search: string) => {
-      const res = await axios.get(
-        `/api/notes?search=${encodeURIComponent(search)}`,
-      );
-      const data = res.data;
-      setNotes(
-        data.result.map((note: any) => ({
-          ...note,
-          createdAt: new Date(note.createdAt),
-          updatedAt: new Date(note.updatedAt),
-          sections: note.sections
-            ? note.sections.map((section: any) => ({
-                ...section,
-                createdAt: new Date(section.createdAt),
-              }))
-            : [],
-        })),
-      );
+    let active = true;
+    const fetchList = async () => {
+      try {
+        if (isLocalMode()) {
+          const list = await listNotesLocal(searchQuery);
+          if (active) setNotes(list);
+        } else {
+          const res = await axios.get(`/api/notes?search=${encodeURIComponent(searchQuery)}`);
+          const data = res.data;
+            // server returns id/title only (performance)
+          if (active) setNotes(data.result.map((n: any)=>({ id: n.id, title: n.title })));
+        }
+      } catch (e) {
+        // ignore
+      }
     };
-
-    const handler = setTimeout(() => {
-      fetchNotes(searchQuery);
-    }, 500);
-
-    return () => clearTimeout(handler);
+    const h = setTimeout(fetchList, 400);
+    return () => { active = false; clearTimeout(h); };
   }, [searchQuery]);
 
   // Initialize note tags, section contents, and title contents for editing
   useEffect(() => {
-    const tags: Record<string, string[]> = {};
-    const contents: Record<string, string> = {};
-    const languages: Record<string, string> = {};
-    const titles: Record<string, string> = {};
-    // notes.forEach((note) => {
-    //   tags[note.id] = [...note.tags];
-    //   titles[note.id] = note.title;
-    //   note.sections.forEach((section) => {
-    //     contents[section.id] = section.content;
-    //     if (section.language) {
-    //       languages[section.id] = section.language;
-    //     }
-    //   });
-    // });
-    setNoteTags(tags);
-    setSectionContents(contents);
-    setSectionLanguages(languages);
-    setTitleContents(titles);
+    setNoteTags({});
+    setSectionContents({});
+    setSectionLanguages({});
+    setTitleContents({});
   }, [notes]);
 
   // // Filtered notes based on search
@@ -111,119 +97,41 @@ export default function Index() {
   };
 
   // Create new note with default section
-  const createNote = () => {
+  const createNote = async () => {
+    if (isLocalMode()) {
+      const note = await createLocalNote({});
+      setNotes(prev => [{ id: note.id, title: note.title }, ...prev]);
+      if (!openTabs.includes(note.id)) setOpenTabs(prev => [...prev, note.id]);
+      setActiveTab(note.id);
+      return;
+    }
     const newNote: Note = {
       id: generateId(),
       title: "New Note",
-      sections: [
-        {
-          id: generateId(),
-          type: "text",
-          content: "",
-          createdAt: new Date(),
-        },
-      ],
+      sections: [ { id: generateId(), type: "text", content: "", createdAt: new Date() } ],
       tags: [],
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-
-    axios.post("/api/notes", newNote);
-
-    setNotes((prev) => [newNote, ...prev]);
-    setNoteTags((prev) => ({ ...prev, [newNote.id]: [] }));
-    setSectionContents((prev) => ({ ...prev, [newNote.sections[0].id]: "" }));
-
-    // Open the new note in a tab
-    if (!openTabs.includes(newNote.id)) {
-      setOpenTabs((prev) => [...prev, newNote.id]);
-    }
+    await axios.post("/api/notes", newNote);
+    setNotes(prev => [{ id: newNote.id, title: newNote.title }, ...prev]);
+    if (!openTabs.includes(newNote.id)) setOpenTabs(prev => [...prev, newNote.id]);
     setActiveTab(newNote.id);
-    setEditingSections((prev) => new Set([...prev, newNote.sections[0].id]));
   };
 
   // Add new section to note
-  const addSection = (noteId: string, sectionType: Section["type"]) => {
-    const newSection: Section = {
-      id: generateId(),
-      type: sectionType,
-      content: "",
-      language: sectionType === "code" ? "javascript" : undefined,
-      createdAt: new Date(),
-    };
-
-    axios.post(`/api/notes/${noteId}/addSection`, newSection);
-
-    setNotes((prev) =>
-      prev.map((note) =>
-        note.id === noteId
-          ? {
-              ...note,
-              sections: [...note.sections, newSection],
-              updatedAt: new Date(),
-            }
-          : note,
-      ),
-    );
-
-    setSectionContents((prev) => ({ ...prev, [newSection.id]: "" }));
-    setEditingSections((prev) => new Set([...prev, newSection.id]));
+  const addSection = (_noteId: string, _sectionType: Section["type"]) => {
+    // handled inside viewer for local mode; server mode viewer triggers axios
   };
 
   // Delete section
-  const deleteSection = (noteId: string, sectionId: string) => {
-    if (
-      !window.confirm(
-        "Are you sure you want to delete this section? This action cannot be undone.",
-      )
-    )
-      return;
-
-    axios.delete(`/api/notes/${noteId}/deleteSection/${sectionId}`);
-
-    setNotes((prev) =>
-      prev.map((note) =>
-        note.id === noteId
-          ? {
-              ...note,
-              sections: note.sections.filter((s) => s.id !== sectionId),
-              updatedAt: new Date(),
-            }
-          : note,
-      ),
-    );
-
-    setSectionContents((prev) => {
-      const newContents = { ...prev };
-      delete newContents[sectionId];
-      return newContents;
-    });
-
-    setEditingSections((prev) => {
-      const newSet = new Set(prev);
-      newSet.delete(sectionId);
-      return newSet;
-    });
-  };
+  const deleteSection = (_noteId: string, _sectionId: string) => {};
 
   // Update section content
-  const updateSectionContent = (sectionId: string, content: string) => {
-    setSectionContents((prev) => ({ ...prev, [sectionId]: content }));
-  };
+  const updateSectionContent = (_sectionId: string, _content: string) => {};
 
   // Update section language (for code sections)
-  const updateSectionLanguage = (sectionId: string, language: string) => {
-    setSectionLanguages((prev) => ({ ...prev, [sectionId]: language }));
-
-    setNotes((prev) =>
-      prev.map((note) => ({
-        ...note,
-        sections: note.sections.map((section) =>
-          section.id === sectionId ? { ...section, language } : section,
-        ),
-      })),
-    );
-  };
+  const updateSectionLanguage = (_sectionId: string, _language: string) => {};
 
   // Toggle section edit mode
   const toggleSectionEdit = (sectionId: string) => {
@@ -239,36 +147,7 @@ export default function Index() {
   };
 
   // Save section changes
-  const saveSection = (noteId: string, sectionId: string) => {
-    const content = sectionContents[sectionId] || "";
-    const language = sectionLanguages[sectionId] || "";
-
-    axios.put(`/api/notes/${noteId}/updateSection/${sectionId}/content`, {
-      content,
-    });
-
-    if (language) {
-      axios.put(`/api/notes/${noteId}/updateSection/${sectionId}/language`, {
-        language,
-      });
-    }
-
-    setNotes((prev) =>
-      prev.map((note) => ({
-        ...note,
-        sections: note.sections.map((section) =>
-          section.id === sectionId ? { ...section, content } : section,
-        ),
-        updatedAt: new Date(),
-      })),
-    );
-
-    setEditingSections((prev) => {
-      const newSet = new Set(prev);
-      newSet.delete(sectionId);
-      return newSet;
-    });
-  };
+  const saveSection = (_noteId: string, _sectionId: string) => {};
 
   // Handle image paste
   const handleImagePaste = (noteId: string, event: ClipboardEvent) => {
@@ -293,36 +172,16 @@ export default function Index() {
   };
 
   // Add image section
-  const addImageSection = (noteId: string, imageData: string) => {
-    const newSection: Section = {
-      id: generateId(),
-      type: "image",
-      content: "Image",
-      imageData: imageData,
-      createdAt: new Date(),
-    };
-
-    axios.post(`/api/notes/${noteId}/addSection`, newSection);
-
-    setNotes((prev) =>
-      prev.map((note) =>
-        note.id === noteId
-          ? {
-              ...note,
-              sections: [...note.sections, newSection],
-              updatedAt: new Date(),
-            }
-          : note,
-      ),
-    );
-  };
+  const addImageSection = (_noteId: string, _imageData: string) => {};
 
   // Open note in tab
-  const openNoteInTab = (noteId: string) => {
-    if (!openTabs.includes(noteId)) {
-      setOpenTabs((prev) => [...prev, noteId]);
-    }
+  const openNoteInTab = async (noteId: string) => {
+    if (!openTabs.includes(noteId)) setOpenTabs(prev => [...prev, noteId]);
     setActiveTab(noteId);
+    // prefetch in local mode (optional)
+    if (isLocalMode()) {
+      try { await getLocalNote(noteId); } catch {}
+    }
   };
 
   // Close tab
@@ -375,20 +234,10 @@ export default function Index() {
   // Save title changes
   const saveTitle = (noteId: string) => {
     const title = titleContents[noteId]?.trim() || "Untitled";
-
-    axios.put(`/api/notes/${noteId}/setTitle`, { title });
-
-    setNotes((prev) =>
-      prev.map((note) =>
-        note.id === noteId ? { ...note, title, updatedAt: new Date() } : note,
-      ),
-    );
-
-    setEditingTitles((prev) => {
-      const newSet = new Set(prev);
-      newSet.delete(noteId);
-      return newSet;
-    });
+    if (!title) return;
+    // viewer handles updating in local mode; list needs title update
+    setNotes(prev => prev.map(n => n.id === noteId ? { ...n, title } : n));
+    setEditingTitles(prev => { const ns = new Set(prev); ns.delete(noteId); return ns; });
   };
 
   // Save note changes (mainly for tags)
@@ -403,71 +252,29 @@ export default function Index() {
   };
 
   // Delete note
-  const deleteNote = (noteId: string) => {
-    if (
-      !window.confirm(
-        "Are you sure you want to delete this note? This action cannot be undone.",
-      )
-    )
-      return;
-
-    axios.delete(`/api/notes/${noteId}`);
-
-    setNotes((prev) => prev.filter((note) => note.id !== noteId));
+  const deleteNote = async (noteId: string) => {
+    if (!window.confirm("Are you sure you want to delete this note? This action cannot be undone.")) return;
+    if (isLocalMode()) {
+      const { deleteNote: deleteLocal } = await import("@/lib/notesClient");
+      await deleteLocal(noteId);
+    } else {
+      axios.delete(`/api/notes/${noteId}`);
+    }
+    setNotes(prev => prev.filter(n => n.id !== noteId));
     closeTab(noteId);
-    setNoteTags((prev) => {
-      const newTags = { ...prev };
-      delete newTags[noteId];
-      return newTags;
-    });
   };
 
   // Add tag to note
-  const addTagToNote = (noteId: string, tag: string) => {
-    const trimmedTag = tag.trim().toLowerCase();
-    if (!trimmedTag) return;
-
-    axios.post(`/api/notes/${noteId}/tags`, { tag: trimmedTag });
-
-    setNoteTags((prev) => {
-      const currentTags = prev[noteId] || [];
-      if (currentTags.includes(trimmedTag)) return prev;
-      return { ...prev, [noteId]: [...currentTags, trimmedTag] };
-    });
-  };
+  const addTagToNote = (_noteId: string, _tag: string) => {};
 
   // Remove tag from note
-  const removeTagFromNote = (noteId: string, tagToRemove: string) => {
-    if (!window.confirm(`Remove tag \"${tagToRemove}\" from this note?`))
-      return;
-
-    axios.delete(`/api/notes/${noteId}/tags/${tagToRemove}`);
-
-    setNoteTags((prev) => ({
-      ...prev,
-      [noteId]: (prev[noteId] || []).filter((tag) => tag !== tagToRemove),
-    }));
-  };
+  const removeTagFromNote = (_noteId: string, _tagToRemove: string) => {};
 
   // Format date for display
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat("en-US", {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(date);
-  };
+  const formatDate = (date: Date) => new Intl.DateTimeFormat("en-US", { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(date);
 
   // Get preview text for sidebar
-  const getPreviewText = (sections: Section[]) => {
-    const firstTextSection = sections.find((s) => s.content.trim());
-    if (!firstTextSection) return "Empty note";
-    return (
-      firstTextSection.content.slice(0, 60).replace(/\\n/g, " ") +
-      (firstTextSection.content.length > 60 ? "..." : "")
-    );
-  };
+  const getPreviewText = (_sections: Section[]) => "";
 
   return (
     <div className="h-screen bg-background flex overflow-hidden">
@@ -478,7 +285,7 @@ export default function Index() {
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-xl font-semibold text-foreground flex items-center gap-2">
               <FileText className="h-5 w-5" />
-              Notes
+              Notes {isLocalMode() && <span className="text-xs text-green-600 border rounded px-1">Local</span>}
             </h1>
             <Button
               variant="ghost"
@@ -490,6 +297,11 @@ export default function Index() {
               <Settings className="h-4 w-4" />
             </Button>
           </div>
+          {!isLocalMode() && (
+            <Button variant="outline" size="sm" className="mb-2 w-full" onClick={() => enableLocalMode()}>
+              Use Local Folder
+            </Button>
+          )}
 
           {/* Search */}
           <div className="relative">
@@ -605,7 +417,7 @@ export default function Index() {
                   }
 
                   // Handle note tabs
-                  const note = notes.find((n) => n.id === tabId);
+                  const note = notes.find(n => n.id === tabId);
                   if (!note) return null;
 
                   return (
@@ -649,15 +461,11 @@ export default function Index() {
                 }
 
                 // Handle note tabs
-                const note = notes.find((n) => n.id === tabId);
+                const note = notes.find(n => n.id === tabId);
                 if (!note) return null;
 
                 return (
-                  <TnNoteViewer
-                    key={tabId}
-                    noteId={tabId}
-                    onDeleteNote={deleteNote}
-                  />
+                  <TnNoteViewer key={tabId} noteId={tabId} onDeleteNote={deleteNote} />
                 );
               })}
             </div>

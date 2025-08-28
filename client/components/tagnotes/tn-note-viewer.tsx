@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
-import axios from "axios";
+import { useState, useEffect } from "react";
+import axios from "axios"; // server fallback
 
 import { TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,18 @@ import {
 
 import TnSection from "./tn-section";
 import { Note, Section } from "@shared/api";
+import {
+  getNote as getLocalNote,
+  addTag as addTagLocal,
+  removeTag as removeTagLocal,
+  deleteNote as deleteNoteLocal,
+  addSection as addSectionLocal,
+  addImageSection as addImageSectionLocal,
+  updateSectionContent as updateSectionContentLocal,
+  updateSectionLanguage as updateSectionLanguageLocal,
+  updateTitle as updateTitleLocal,
+  isLocalMode,
+} from "@/lib/notesClient";
 import TnSectionCode from "./tn-section-code";
 import TnSectionMarkdown from "./tn-section-markdown";
 import TnSectionImage from "./tn-section-image";
@@ -52,21 +64,31 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
   const [editingTitle, setEditingTitle] = useState(false);
 
   useEffect(() => {
+    let active = true;
     const fetchNote = async () => {
-      const res = await axios.get(`/api/notes/${noteId}`);
-      const data = res.data;
-      setNote({
-        ...data,
-        createdAt: new Date(data.createdAt),
-        updatedAt: new Date(data.updatedAt),
-        sections: data.sections.map((section: any) => ({
-          ...section,
-          createdAt: new Date(section.createdAt),
-        })),
-      });
+      try {
+        if (isLocalMode()) {
+          const data = await getLocalNote(noteId);
+          if (!active) return;
+          setNote(data);
+        } else {
+          const res = await axios.get(`/api/notes/${noteId}`);
+          const data = res.data;
+          if (!active) return;
+          setNote({
+            ...data,
+            createdAt: new Date(data.createdAt),
+            updatedAt: new Date(data.updatedAt),
+            sections: data.sections.map((section: any) => ({
+              ...section,
+              createdAt: new Date(section.createdAt),
+            })),
+          });
+        }
+      } catch {}
     };
-
     fetchNote();
+    return () => { active = false; };
   }, [noteId]);
 
   // Format date for display
@@ -88,48 +110,34 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
   const addTagToNote = (noteId: string, tag: string) => {
     const trimmedTag = tag.trim().toLowerCase();
     if (!trimmedTag) return;
-
-    axios.post(`/api/notes/${noteId}/tags`, { tag: trimmedTag });
-
-    setNote((prev) => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        tags: [...(prev.tags || []), trimmedTag],
-        updatedAt: new Date(),
-      };
-    });
+    if (isLocalMode()) {
+      addTagLocal(noteId, trimmedTag).then(updated => setNote(updated));
+    } else {
+      axios.post(`/api/notes/${noteId}/tags`, { tag: trimmedTag });
+      setNote(prev => ({ ...prev, tags: [...prev.tags, trimmedTag], updatedAt: new Date() }));
+    }
   };
 
   // Delete note
   const deleteNote = (noteId: string) => {
-    if (
-      !window.confirm(
-        "Are you sure you want to delete this note? This action cannot be undone.",
-      )
-    )
-      return;
-
-    axios.delete(`/api/notes/${noteId}`);
-
-    onDeleteNote?.call(null, noteId);
+    if (!window.confirm("Are you sure you want to delete this note? This action cannot be undone.")) return;
+    if (isLocalMode()) {
+      deleteNoteLocal(noteId).then(() => onDeleteNote?.call(null, noteId));
+    } else {
+      axios.delete(`/api/notes/${noteId}`);
+      onDeleteNote?.call(null, noteId);
+    }
   };
 
   // Remove tag from note
   const removeTagFromNote = (noteId: string, tagToRemove: string) => {
-    if (!window.confirm(`Remove tag \"${tagToRemove}\" from this note?`))
-      return;
-
-    axios.delete(`/api/notes/${noteId}/tags/${tagToRemove}`);
-
-    setNote((prev) => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        tags: (prev.tags || []).filter((tag) => tag !== tagToRemove),
-        updatedAt: new Date(),
-      };
-    });
+    if (!window.confirm(`Remove tag \"${tagToRemove}\" from this note?`)) return;
+    if (isLocalMode()) {
+      removeTagLocal(noteId, tagToRemove).then(updated => setNote(updated));
+    } else {
+      axios.delete(`/api/notes/${noteId}/tags/${tagToRemove}`);
+      setNote(prev => ({ ...prev, tags: prev.tags.filter(t => t !== tagToRemove), updatedAt: new Date() }));
+    }
   };
 
   // Handle image paste
@@ -156,24 +164,13 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
 
   // Add image section
   const addImageSection = (noteId: string, imageData: string) => {
-    const newSection: Section = {
-      id: generateId(),
-      type: "image",
-      content: "Image",
-      imageData: imageData,
-      createdAt: new Date(),
-    };
-
-    axios.post(`/api/notes/${noteId}/addSection`, newSection);
-
-    setNote((prev) => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        sections: [...prev.sections, newSection],
-        updatedAt: new Date(),
-      };
-    });
+    if (isLocalMode()) {
+      addImageSectionLocal(noteId, imageData).then(updated => setNote(updated));
+    } else {
+      const newSection: Section = { id: generateId(), type: 'image', content: 'Image', imageData, createdAt: new Date() };
+      axios.post(`/api/notes/${noteId}/addSection`, newSection);
+      setNote(prev => ({ ...prev, sections: [...prev.sections, newSection], updatedAt: new Date() }));
+    }
   };
 
   const handleSetTitle = (title: string) => {
@@ -188,8 +185,11 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
   };
 
   const saveTitle = () => {
-    axios.put(`/api/notes/${note.id}/setTitle`, { title: note.title });
-
+    if (isLocalMode()) {
+      updateTitleLocal(note.id, note.title).then(updated => setNote(updated));
+    } else {
+      axios.put(`/api/notes/${note.id}/setTitle`, { title: note.title });
+    }
     setEditingTitle(false);
   };
 
@@ -210,111 +210,32 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
 
   // Add new section to note
   const addSection = (noteId: string, sectionType: Section["type"]) => {
-    const newSection: Section = {
-      id: generateId(),
-      type: sectionType,
-      content: "",
-      language: sectionType === "code" ? "javascript" : undefined,
-      createdAt: new Date(),
-    };
-
-    axios.post(`/api/notes/${noteId}/addSection`, newSection);
-
-    setNote((prev) => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        sections: [...prev.sections, newSection],
-        updatedAt: new Date(),
-      };
-    });
-
-    // setNotes((prev) =>
-    //   prev.map((note) =>
-    //     note.id === noteId
-    //       ? {
-    //         ...note,
-    //         sections: [...note.sections, newSection],
-    //         updatedAt: new Date(),
-    //       }
-    //       : note,
-    //   ),
-    // );
-
-    // setSectionContents((prev) => ({ ...prev, [newSection.id]: "" }));
-    // setEditingSections((prev) => new Set([...prev, newSection.id]));
+    if (isLocalMode()) {
+      addSectionLocal(noteId, sectionType).then(updated => setNote(updated));
+    } else {
+      const newSection: Section = { id: generateId(), type: sectionType, content: '', language: sectionType === 'code' ? 'javascript' : undefined, createdAt: new Date() };
+      axios.post(`/api/notes/${noteId}/addSection`, newSection);
+      setNote(prev => ({ ...prev, sections: [...prev.sections, newSection], updatedAt: new Date() }));
+    }
   };
 
   // Save section changes
-  const saveSection = (
-    sectionId: string,
-    content: string,
-    language?: string,
-  ) => {
-    setNote((prev) => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        sections: prev.sections.map((section) =>
-          section.id === sectionId
-            ? { ...section, content, language }
-            : section,
-        ),
-        updatedAt: new Date(),
-      };
-    });
-
-    //   setNotes((prev) =>
-    //     prev.map((note) => ({
-    //       ...note,
-    //       sections: note.sections.map((section) =>
-    //         section.id === sectionId ? { ...section, content } : section,
-    //       ),
-    //       updatedAt: new Date(),
-    //     })),
-    //   );
-
-    //   setEditingSections((prev) => {
-    //     const newSet = new Set(prev);
-    //     newSet.delete(sectionId);
-    //     return newSet;
-    //   });
+  const saveSection = (sectionId: string, content: string, language?: string) => {
+    if (isLocalMode()) {
+      updateSectionContentLocal(note.id, sectionId, content).then(updated => setNote(updated));
+      if (language) updateSectionLanguageLocal(note.id, sectionId, language).then(updated => setNote(updated));
+    } else {
+      setNote(prev => ({ ...prev, sections: prev.sections.map(s => s.id === sectionId ? { ...s, content, language } : s), updatedAt: new Date() }));
+    }
   };
 
   // Delete section
   const deleteSection = (sectionId: string) => {
-    setNote((prev) => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        sections: prev.sections.filter((s) => s.id !== sectionId),
-        updatedAt: new Date(),
-      };
-    });
-
-    // setNotes((prev) =>
-    //   prev.map((note) =>
-    //     note.id === noteId
-    //       ? {
-    //         ...note,
-    //         sections: note.sections.filter((s) => s.id !== sectionId),
-    //         updatedAt: new Date(),
-    //       }
-    //       : note,
-    //   ),
-    // );
-
-    // setSectionContents((prev) => {
-    //   const newContents = { ...prev };
-    //   delete newContents[sectionId];
-    //   return newContents;
-    // });
-
-    // setEditingSections((prev) => {
-    //   const newSet = new Set(prev);
-    //   newSet.delete(sectionId);
-    //   return newSet;
-    // });
+    if (isLocalMode()) {
+      import("@/lib/notesClient").then(m => m.deleteSection(note.id, sectionId).then(updated => setNote(updated)));
+    } else {
+      setNote(prev => ({ ...prev, sections: prev.sections.filter(s => s.id !== sectionId), updatedAt: new Date() }));
+    }
   };
 
   return (
