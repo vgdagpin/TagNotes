@@ -3,19 +3,16 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 
 import { Trash, Image } from '../tn-icons';
 import { Section } from "@shared/models";
-import axios from "axios";
 import { DialogTitle } from "@radix-ui/react-dialog";
 
 type TnSectionImageProps = {
   section: Section;
-  noteId: string;
-
   onDeleteSection?: (sectionId: string) => void;
 };
 
 const TnSectionImage = ({
   section,
-  noteId,
+  // noteId removed
   onDeleteSection,
 }: TnSectionImageProps) => {
   const handleDelete = () => {
@@ -25,8 +22,6 @@ const TnSectionImage = ({
       )
     )
       return;
-
-    axios.delete(`/api/notes/${noteId}/deleteSection/${section.id}`);
 
     onDeleteSection?.call(null, section.id);
   };

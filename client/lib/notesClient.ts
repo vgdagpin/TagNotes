@@ -1,10 +1,9 @@
-import axios from 'axios';
 import { Note, Section } from '@shared/models';
 import { pickNotesDirectory, getPersistedDirectoryHandle, writeNoteFile, readAllNoteFiles, deleteNoteFile, upsertIndexEntry } from './fs-access';
 import { v4 as uuid } from 'uuid';
 
 let dirHandle: FileSystemDirectoryHandle | null = null;
-let loadedIndex: Note[] = [];
+let loadedIndex: (Note & { location?: string })[] = [];
 let indexLoaded = false;
 
 async function ensureHandleLoaded() {
@@ -43,18 +42,15 @@ async function refreshIndex() {
         updatedAt: n.updatedAt,
         createdAt: n.createdAt,
         sections: [],
-        tags: []
+        tags: [],
+        location: n.location
     }));
     indexLoaded = true;
 }
 
 export async function listNotes(search: string) {
     await ensureHandleLoaded();
-    if (!dirHandle) {
-        // server fallback
-        const res = await axios.get(`/api/notes?search=${encodeURIComponent(search)}`);
-        return res.data.result as { id: string; title: string }[];
-    }
+    if (!dirHandle) return [] as { id: string; title: string }[];
     if (!indexLoaded) await refreshIndex();
     let list = loadedIndex;
     if (search && search.trim()) {
@@ -66,15 +62,22 @@ export async function listNotes(search: string) {
 
 async function readNote(id: string): Promise<Note | null> {
     if (!dirHandle) return null;
-    for await (const entry of (dirHandle as any).values()) {
-        if (entry.kind === 'file' && entry.name === `${id}.json`) {
-            const file = await entry.getFile();
-            const text = await file.text();
-            const raw = JSON.parse(text);
-            return hydrate(raw);
-        }
+    if (!indexLoaded) await refreshIndex();
+    const meta = loadedIndex.find(n => n.id === id);
+    if (!meta || !meta.location) return null;
+    const parts = meta.location.split('/');
+    if (parts.length !== 3) return null; // expect Notes/YYYY-MM-DD/<id>.json
+    try {
+    const [rootName, dateFolder, fileName] = parts as [string, string, string];
+    const notesRoot = await dirHandle.getDirectoryHandle(rootName, { create: false });
+    const dateDir = await notesRoot.getDirectoryHandle(dateFolder, { create: false });
+    const fileHandle = await dateDir.getFileHandle(fileName, { create: false });
+        const file = await fileHandle.getFile();
+        const text = await file.text();
+        return hydrate(JSON.parse(text));
+    } catch {
+        return null;
     }
-    return null;
 }
 
 function hydrate(raw: any): Note {
@@ -88,11 +91,7 @@ function hydrate(raw: any): Note {
 
 export async function getNote(noteId: string): Promise<Note> {
     await ensureHandleLoaded();
-    if (!dirHandle) {
-        const res = await axios.get(`/api/notes/${noteId}`);
-        const note = res.data.result || res.data; // support both shapes
-        return hydrate(note);
-    }
+    if (!dirHandle) throw new Error('Local directory not selected');
     const note = await readNote(noteId);
     if (!note) throw new Error('Note not found');
     return note;
@@ -100,6 +99,7 @@ export async function getNote(noteId: string): Promise<Note> {
 
 export async function createNote(initial?: Partial<Note>): Promise<Note> {
     await ensureHandleLoaded();
+    if (!dirHandle) throw new Error('Local directory not selected');
     const newNote: Note = {
         id: initial?.id || uuid(),
         title: initial?.title || 'New Note',
@@ -108,30 +108,9 @@ export async function createNote(initial?: Partial<Note>): Promise<Note> {
         createdAt: new Date(),
         updatedAt: new Date()
     };
-
-    if (!dirHandle) {
-        // (Optional) server fallback not implemented fully; you could POST here
-        return newNote;
-    }
-
     const path = await writeNoteFile(dirHandle, serialize(newNote));
-    await upsertIndexEntry(dirHandle, {
-        id: newNote.id,
-        title: newNote.title,
-        createdAt: newNote.createdAt,
-        updatedAt: newNote.updatedAt,
-        path,
-        location: path
-    } as any);
-    // Update in-memory index without full rescan
-    loadedIndex.unshift({
-        id: newNote.id,
-        title: newNote.title,
-        createdAt: newNote.createdAt,
-        updatedAt: newNote.updatedAt,
-        sections: [],
-        tags: []
-    });
+    await upsertIndexEntry(dirHandle, { id: newNote.id, title: newNote.title, createdAt: newNote.createdAt, updatedAt: newNote.updatedAt, path, location: path } as any);
+    loadedIndex.unshift({ id: newNote.id, title: newNote.title, createdAt: newNote.createdAt, updatedAt: newNote.updatedAt, sections: [], tags: [], location: path });
     indexLoaded = true;
     return newNote;
 }
@@ -149,10 +128,18 @@ async function update(noteId: string, mutator: (n: Note) => void): Promise<Note>
     const note = await getNote(noteId);
     mutator(note);
     note.updatedAt = new Date();
-    if (!dirHandle) {
-        // minimal server updates depend on endpoint granularity; send full note for simplicity if you add such endpoint later
+    if (!dirHandle) throw new Error('Local directory not selected');
+    await writeNoteFile(dirHandle, serialize(note));
+    // update index entry incrementally
+    const idx = loadedIndex.find(i => i.id === note.id);
+    const loc = idx?.location;
+    if (idx) {
+        idx.title = note.title;
+        idx.updatedAt = note.updatedAt;
+    }
+    if (loc) {
+        await upsertIndexEntry(dirHandle, { id: note.id, title: note.title, createdAt: note.createdAt, updatedAt: note.updatedAt, path: loc, location: loc } as any);
     } else {
-        await writeNoteFile(dirHandle, serialize(note));
         await refreshIndex();
     }
     return note;
@@ -202,10 +189,8 @@ export async function removeTag(noteId: string, tag: string) {
 
 export async function deleteNote(noteId: string) {
     await ensureHandleLoaded();
-    if (!dirHandle) {
-        await axios.delete(`/api/notes/${noteId}`);
-        return;
-    }
+    if (!dirHandle) throw new Error('Local directory not selected');
     await deleteNoteFile(dirHandle, noteId);
+    loadedIndex = loadedIndex.filter(n => n.id !== noteId);
     await refreshIndex();
 }

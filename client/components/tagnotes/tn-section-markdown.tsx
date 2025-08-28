@@ -5,21 +5,18 @@ import { Edit, Save, Trash, Hash, } from '../tn-icons';
 
 import { Section } from "@shared/models";
 import { useState, useEffect } from "react";
-import axios from "axios";
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
 type TnSectionMarkdownProps = {
   section: Section;
-  noteId: string;
-
   onSaveSection?: (content: string, language?: string) => void;
   onDeleteSection?: (sectionId: string) => void;
 };
 
 const TnSectionMarkdown = ({
   section,
-  noteId,
+  // noteId removed
   onSaveSection,
   onDeleteSection,
 }: TnSectionMarkdownProps) => {
@@ -28,11 +25,7 @@ const TnSectionMarkdown = ({
   const [content, setContent] = useState(section.content);
 
   const handleSave = () => {
-    axios.put(`/api/notes/${noteId}/updateSection/${section.id}/content`, {
-      content,
-    });
-
-    onSaveSection?.call(null, content, null);
+  onSaveSection?.call(null, content, undefined);
     setSectionEdit(false);
   };
 
@@ -43,8 +36,6 @@ const TnSectionMarkdown = ({
       )
     )
       return;
-
-    axios.delete(`/api/notes/${noteId}/deleteSection/${section.id}`);
 
     onDeleteSection?.call(null, section.id);
   };

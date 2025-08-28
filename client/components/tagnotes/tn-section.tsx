@@ -4,19 +4,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Edit, Save, Trash, Type } from '../tn-icons'; 
 import { Section } from "@shared/models";
 import { useState, useEffect } from "react";
-import axios from "axios";
 
 type TnSectionProps = {
   section: Section;
-  noteId: string;
-
   onSaveSection?: (content: string, language?: string | null) => void;
   onDeleteSection?: (sectionId: string) => void;
 };
 
 const TnSection = ({
   section,
-  noteId,
+  // noteId removed (no remote calls)
   onSaveSection,
   onDeleteSection,
 }: TnSectionProps) => {
@@ -25,10 +22,6 @@ const TnSection = ({
   const [content, setContent] = useState(section.content);
 
   const handleSave = () => {
-    axios.put(`/api/notes/${noteId}/updateSection/${section.id}/content`, {
-      content,
-    });
-
     onSaveSection?.call(null, content, null);
     setSectionEdit(false);
   };
@@ -40,8 +33,6 @@ const TnSection = ({
       )
     )
       return;
-
-    axios.delete(`/api/notes/${noteId}/deleteSection/${section.id}`);
 
     onDeleteSection?.call(null, section.id);
   };

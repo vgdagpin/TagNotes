@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TabsContent } from "@/components/ui/tabs";
 import { Settings, Save, FileText } from "../tn-icons";
-import axios from "axios";
 import { NotesSettings } from "@shared/models";
 
 type TnSettingsProps = {
@@ -16,21 +15,15 @@ const TnSettings = ({ onClose }: TnSettingsProps) => {
 
   // Load settings on component mount
   useEffect(() => {
-    const fetchSettings = async () => {
-      const res = await axios.get('/api/settings');
-      const data : NotesSettings = res.data;
-
-      setSettings(data);
-    }
-
-    fetchSettings();
+    // No server; initialize default settings in-memory
+    setSettings({ notesDirectory: '' });
   }, []);
 
   const handleSave = useCallback(async () => {
     if (settings) {
       try {
-        await axios.post('/api/settings', settings);
-        alert("Settings saved successfully!");
+  // persist locally if desired (TODO: implement local persistence)
+  alert("Settings saved (local only)");
       } catch (error) {
         console.error("Failed to save settings:", error);
         alert("Failed to save settings. Please try again.");

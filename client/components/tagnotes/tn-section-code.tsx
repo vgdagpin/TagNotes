@@ -15,26 +15,23 @@ import { Edit, Save, Trash, Code, ChevronDown, ChevronUp, } from '../tn-icons';
 
 import { Section } from "@shared/models";
 import { useState, useEffect } from "react";
-import axios from "axios";
 
 type TnSectionCodeProps = {
   section: Section;
-  noteId: string;
-
   onSaveSection?: (content: string, language?: string) => void;
   onDeleteSection?: (sectionId: string) => void;
 };
 
 const TnSectionCode = ({
   section,
-  noteId,
+  // noteId removed
   onSaveSection,
   onDeleteSection,
 }: TnSectionCodeProps) => {
   const [sectionEdit, setSectionEdit] = useState(!section.content.trim());
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const [language, setLanguage] = useState(section.language);
+  const [language, setLanguage] = useState<string | undefined>(section.language || undefined);
   const [content, setContent] = useState(section.content);
 
   // Count lines and determine if folding is needed
@@ -46,17 +43,7 @@ const TnSectionCode = ({
       : section.content;
 
   const handleSave = () => {
-    axios.put(`/api/notes/${noteId}/updateSection/${section.id}/content`, {
-      content,
-    });
-
-    if (language) {
-      axios.put(`/api/notes/${noteId}/updateSection/${section.id}/language`, {
-        language,
-      });
-    }
-
-    onSaveSection?.call(null, content, language);
+  onSaveSection?.call(null, content, language || undefined);
     setSectionEdit(false);
   };
 
@@ -67,8 +54,6 @@ const TnSectionCode = ({
       )
     )
       return;
-
-    axios.delete(`/api/notes/${noteId}/deleteSection/${section.id}`);
 
     onDeleteSection?.call(null, section.id);
   };
@@ -130,8 +115,8 @@ const TnSectionCode = ({
       {sectionEdit ? (
         <div className="space-y-2">
           <Select
-            value={language}
-            onValueChange={(value) => setLanguage(value)}
+            value={language || ''}
+            onValueChange={(value) => setLanguage(value || undefined)}
           >
             <SelectTrigger className="w-40">
               <SelectValue />

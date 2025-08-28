@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import axios from "axios"; // server fallback
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,7 +13,6 @@ import {
 } from "../components/tn-icons";
 
 import { cn } from "@/lib/utils";
-import { Note } from "@shared/models";
 import {
   listNotes as listNotesLocal,
   createNote as createLocalNote,
@@ -22,6 +20,7 @@ import {
   enableLocalMode,
   isLocalMode,
   tryRestoreLocalMode,
+  deleteNote as deleteLocalNote
 } from "@/lib/notesClient";
 import TnNoteViewer from "@/components/tagnotes/tn-note-viewer";
 import TnSettings from "@/components/tagnotes/tn-settings";
@@ -46,9 +45,8 @@ export default function Index() {
           const list = await listNotesLocal(searchQuery);
           if (active) setNotes(list);
         } else {
-          const res = await axios.get(`/api/notes?search=${encodeURIComponent(searchQuery)}`);
-          const data = res.data;
-          if (active) setNotes(data.result.map((n: any) => ({ id: n.id, title: n.title })));
+          // no server mode; wait for user to enable local folder
+          if (active) setNotes([]);
         }
       } catch { /* ignore */ }
     };
@@ -57,31 +55,18 @@ export default function Index() {
   }, [searchQuery]);
 
   // Generate new ID
-  const generateId = () => {
-    return Date.now().toString() + Math.random().toString(36).slice(2, 11);
-  };
+  // generateId removed (no server fallback)
 
   // Create new note with default section
   const createNote = async () => {
-    if (isLocalMode()) {
-      const note = await createLocalNote({});
-      setNotes(prev => [{ id: note.id, title: note.title }, ...prev]);
-      if (!openTabs.includes(note.id)) setOpenTabs(prev => [...prev, note.id]);
-      setActiveTab(note.id);
+    if (!isLocalMode()) {
+      alert('Select a local folder first');
       return;
     }
-    const newNote: Note = {
-      id: generateId(),
-      title: "New Note",
-      sections: [ { id: generateId(), type: "text", content: "", createdAt: new Date() } ],
-      tags: [],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    await axios.post("/api/notes", newNote);
-    setNotes(prev => [{ id: newNote.id, title: newNote.title }, ...prev]);
-    if (!openTabs.includes(newNote.id)) setOpenTabs(prev => [...prev, newNote.id]);
-    setActiveTab(newNote.id);
+    const note = await createLocalNote({});
+    setNotes(prev => [{ id: note.id, title: note.title }, ...prev]);
+    if (!openTabs.includes(note.id)) setOpenTabs(prev => [...prev, note.id]);
+    setActiveTab(note.id);
   };
 
   // Open note in tab
@@ -125,13 +110,9 @@ export default function Index() {
 
   // Delete note
   const deleteNote = async (noteId: string) => {
-    if (!window.confirm("Are you sure you want to delete this note? This action cannot be undone.")) return;
-    if (isLocalMode()) {
-      const { deleteNote: deleteLocal } = await import("@/lib/notesClient");
-      await deleteLocal(noteId);
-    } else {
-      axios.delete(`/api/notes/${noteId}`);
-    }
+  if (!window.confirm("Are you sure you want to delete this note? This action cannot be undone.")) return;
+  if (!isLocalMode()) return;
+  await deleteLocalNote(noteId);
     setNotes(prev => prev.filter(n => n.id !== noteId));
     closeTab(noteId);
   };

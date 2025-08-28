@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import axios from "axios"; // server fallback
 
 import { TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -67,24 +66,10 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
     let active = true;
     const fetchNote = async () => {
       try {
-        if (isLocalMode()) {
-          const data = await getLocalNote(noteId);
-          if (!active) return;
-          setNote(data);
-        } else {
-          const res = await axios.get(`/api/notes/${noteId}`);
-          const data = res.data;
-          if (!active) return;
-          setNote({
-            ...data,
-            createdAt: new Date(data.createdAt),
-            updatedAt: new Date(data.updatedAt),
-            sections: data.sections.map((section: any) => ({
-              ...section,
-              createdAt: new Date(section.createdAt),
-            })),
-          });
-        }
+  if (!isLocalMode()) return;
+  const data = await getLocalNote(noteId);
+  if (!active) return;
+  setNote(data);
       } catch {}
     };
     fetchNote();
@@ -102,42 +87,28 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
   };
 
   // Generate new ID
-  const generateId = () => {
-    return Date.now().toString() + Math.random().toString(36).slice(2, 11);
-  };
+  // generateId removed (no server-created placeholder sections)
 
   // Add tag to note
   const addTagToNote = (noteId: string, tag: string) => {
     const trimmedTag = tag.trim().toLowerCase();
     if (!trimmedTag) return;
-    if (isLocalMode()) {
-      addTagLocal(noteId, trimmedTag).then(updated => setNote(updated));
-    } else {
-      axios.post(`/api/notes/${noteId}/tags`, { tag: trimmedTag });
-      setNote(prev => ({ ...prev, tags: [...prev.tags, trimmedTag], updatedAt: new Date() }));
-    }
+  if (!isLocalMode()) return;
+  addTagLocal(noteId, trimmedTag).then(updated => setNote(updated));
   };
 
   // Delete note
   const deleteNote = (noteId: string) => {
     if (!window.confirm("Are you sure you want to delete this note? This action cannot be undone.")) return;
-    if (isLocalMode()) {
-      deleteNoteLocal(noteId).then(() => onDeleteNote?.call(null, noteId));
-    } else {
-      axios.delete(`/api/notes/${noteId}`);
-      onDeleteNote?.call(null, noteId);
-    }
+  if (!isLocalMode()) return;
+  deleteNoteLocal(noteId).then(() => onDeleteNote?.call(null, noteId));
   };
 
   // Remove tag from note
   const removeTagFromNote = (noteId: string, tagToRemove: string) => {
     if (!window.confirm(`Remove tag \"${tagToRemove}\" from this note?`)) return;
-    if (isLocalMode()) {
-      removeTagLocal(noteId, tagToRemove).then(updated => setNote(updated));
-    } else {
-      axios.delete(`/api/notes/${noteId}/tags/${tagToRemove}`);
-      setNote(prev => ({ ...prev, tags: prev.tags.filter(t => t !== tagToRemove), updatedAt: new Date() }));
-    }
+  if (!isLocalMode()) return;
+  removeTagLocal(noteId, tagToRemove).then(updated => setNote(updated));
   };
 
   // Handle image paste
@@ -164,13 +135,8 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
 
   // Add image section
   const addImageSection = (noteId: string, imageData: string) => {
-    if (isLocalMode()) {
-      addImageSectionLocal(noteId, imageData).then(updated => setNote(updated));
-    } else {
-      const newSection: Section = { id: generateId(), type: 'image', content: 'Image', imageData, createdAt: new Date() };
-      axios.post(`/api/notes/${noteId}/addSection`, newSection);
-      setNote(prev => ({ ...prev, sections: [...prev.sections, newSection], updatedAt: new Date() }));
-    }
+  if (!isLocalMode()) return;
+  addImageSectionLocal(noteId, imageData).then(updated => setNote(updated));
   };
 
   const handleSetTitle = (title: string) => {
@@ -184,11 +150,8 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
   };
 
   const saveTitle = () => {
-    if (isLocalMode()) {
-      updateTitleLocal(note.id, note.title).then(updated => setNote(updated));
-    } else {
-      axios.put(`/api/notes/${note.id}/setTitle`, { title: note.title });
-    }
+  if (!isLocalMode()) return;
+  updateTitleLocal(note.id, note.title).then(updated => setNote(updated));
     setEditingTitle(false);
   };
 
@@ -209,41 +172,21 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
 
   // Add new section to note
   const addSection = (noteId: string, sectionType: Section["type"]) => {
-    if (isLocalMode()) {
-      addSectionLocal(noteId, sectionType).then(updated => setNote(updated));
-    } else {
-      const newSection: Section = { id: generateId(),
-        type: sectionType, 
-        content: '', 
-        language: sectionType === 'code' ? 'javascript' : null, 
-        createdAt: new Date() 
-      };
-      
-      axios.post(`/api/notes/${noteId}/addSection`, newSection);
-      setNote(prev => ({ ...prev, sections: [...prev.sections, newSection], updatedAt: new Date() }));
-    }
+  if (!isLocalMode()) return;
+  addSectionLocal(noteId, sectionType).then(updated => setNote(updated));
   };
 
   // Save section changes
   const saveSection = (sectionId: string, content: string, language?: string | null) => {
-    if (isLocalMode()) {
-      updateSectionContentLocal(note.id, sectionId, content).then(updated => setNote(updated));
-      if (language) updateSectionLanguageLocal(note.id, sectionId, language).then(updated => setNote(updated));
-    } else {
-      setNote(prev => ({ ...prev, 
-        sections: prev.sections.map(s => s.id === sectionId ? { ...s, content, language } : s), 
-        updatedAt: new Date() 
-      }));
-    }
+  if (!isLocalMode()) return;
+  updateSectionContentLocal(note.id, sectionId, content).then(updated => setNote(updated));
+  if (language) updateSectionLanguageLocal(note.id, sectionId, language).then(updated => setNote(updated));
   };
 
   // Delete section
   const deleteSection = (sectionId: string) => {
-    if (isLocalMode()) {
-      import("@/lib/notesClient").then(m => m.deleteSection(note.id, sectionId).then(updated => setNote(updated)));
-    } else {
-      setNote(prev => ({ ...prev, sections: prev.sections.filter(s => s.id !== sectionId), updatedAt: new Date() }));
-    }
+  if (!isLocalMode()) return;
+  import("@/lib/notesClient").then(m => m.deleteSection(note.id, sectionId).then(updated => setNote(updated)));
   };
 
   return (
@@ -399,10 +342,7 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
                   <TnSectionCode
                     key={section.id}
                     section={section}
-                    noteId={noteId}
-                    onSaveSection={(content, language) =>
-                      saveSection(section.id, content, language)
-                    }
+                    onSaveSection={(content, language) => saveSection(section.id, content, language)}
                     onDeleteSection={(sectionId) => deleteSection(sectionId)}
                   />
                 );
@@ -411,10 +351,7 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
                   <TnSectionMarkdown
                     key={section.id}
                     section={section}
-                    noteId={noteId}
-                    onSaveSection={(content, language) =>
-                      saveSection(section.id, content, language)
-                    }
+                    onSaveSection={(content, language) => saveSection(section.id, content, language)}
                     onDeleteSection={(sectionId) => deleteSection(sectionId)}
                   />
                 );
@@ -423,7 +360,6 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
                   <TnSectionImage
                     key={section.id}
                     section={section}
-                    noteId={noteId}
                     onDeleteSection={(sectionId) => deleteSection(sectionId)}
                   />
                 );
@@ -432,10 +368,7 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
                   <TnSection
                     key={section.id}
                     section={section}
-                    noteId={noteId}
-                    onSaveSection={(content, language) =>
-                      saveSection(section.id, content, language)
-                    }
+                    onSaveSection={(content, language) => saveSection(section.id, content, language)}
                     onDeleteSection={(sectionId) => deleteSection(sectionId)}
                   />
                 );
