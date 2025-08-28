@@ -1,5 +1,5 @@
 import { Note, Section } from '@shared/models';
-import { pickNotesDirectory, getPersistedDirectoryHandle, writeNoteFile, readAllNoteFiles, deleteNoteFile, upsertIndexEntry } from './fs-access';
+import { pickNotesDirectory, getPersistedDirectoryHandle, writeNoteFile, readAllNoteFiles, deleteNoteFile, upsertIndexEntry, removeIndexEntry } from './fs-access';
 import { v4 as uuid } from 'uuid';
 
 let dirHandle: FileSystemDirectoryHandle | null = null;
@@ -68,10 +68,10 @@ async function readNote(id: string): Promise<Note | null> {
     const parts = meta.location.split('/');
     if (parts.length !== 3) return null; // expect Notes/YYYY-MM-DD/<id>.json
     try {
-    const [rootName, dateFolder, fileName] = parts as [string, string, string];
-    const notesRoot = await dirHandle.getDirectoryHandle(rootName, { create: false });
-    const dateDir = await notesRoot.getDirectoryHandle(dateFolder, { create: false });
-    const fileHandle = await dateDir.getFileHandle(fileName, { create: false });
+        const [rootName, dateFolder, fileName] = parts as [string, string, string];
+        const notesRoot = await dirHandle.getDirectoryHandle(rootName, { create: false });
+        const dateDir = await notesRoot.getDirectoryHandle(dateFolder, { create: false });
+        const fileHandle = await dateDir.getFileHandle(fileName, { create: false });
         const file = await fileHandle.getFile();
         const text = await file.text();
         return hydrate(JSON.parse(text));
@@ -146,7 +146,23 @@ async function update(noteId: string, mutator: (n: Note) => void): Promise<Note>
 }
 
 export async function updateTitle(noteId: string, title: string) {
-    return update(noteId, n => { n.title = title; });
+    // Optimized path: update only title & updatedAt without loading full sections
+    await ensureHandleLoaded();
+    if (!dirHandle) throw new Error('Local directory not selected');
+    if (!indexLoaded) await refreshIndex();
+    const entry = loadedIndex.find(n => n.id === noteId);
+    if (!entry) return update(noteId, n => { n.title = title; }); // fallback
+    entry.title = title;
+    entry.updatedAt = new Date();
+    // Persist: load note file, modify title & updatedAt, write back, then upsert index entry
+    const full = await getNote(noteId); // reuse existing loader for consistency
+    full.title = title;
+    full.updatedAt = entry.updatedAt;
+    await writeNoteFile(dirHandle, serialize(full));
+    if (entry.location) {
+        await upsertIndexEntry(dirHandle, { id: full.id, title: full.title, createdAt: full.createdAt, updatedAt: full.updatedAt, path: entry.location, location: entry.location } as any);
+    }
+    return full;
 }
 
 export async function addSection(noteId: string, sectionType: Section['type']) {
@@ -192,5 +208,6 @@ export async function deleteNote(noteId: string) {
     if (!dirHandle) throw new Error('Local directory not selected');
     await deleteNoteFile(dirHandle, noteId);
     loadedIndex = loadedIndex.filter(n => n.id !== noteId);
-    await refreshIndex();
+    await removeIndexEntry(dirHandle, noteId);
+    // no need full refresh; keep in-memory consistent
 }
