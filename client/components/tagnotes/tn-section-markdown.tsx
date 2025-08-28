@@ -3,7 +3,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { Edit, Save, Trash, Hash, } from '../tn-icons'; 
 
-import { Section } from "@shared/api";
+import { Section } from "@shared/models";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import Markdown from 'react-markdown'

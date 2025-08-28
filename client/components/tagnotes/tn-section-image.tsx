@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 
 import { Trash, Image } from '../tn-icons';
-import { Section } from "@shared/api";
+import { Section } from "@shared/models";
 import axios from "axios";
 import { DialogTitle } from "@radix-ui/react-dialog";
 

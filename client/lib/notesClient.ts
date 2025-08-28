@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Note, Section } from '@shared/api';
+import { Note, Section } from '@shared/models';
 import { pickNotesDirectory, getPersistedDirectoryHandle, writeNoteFile, readAllNoteFiles, deleteNoteFile } from './fs-access';
 import { v4 as uuid } from 'uuid';
 

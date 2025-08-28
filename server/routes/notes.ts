@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { Note, Section } from "@shared/api";
+import { Note, Section } from "@shared/models";
 import * as fs from "fs";
 import * as path from "path";
 import { getCurrentSettings } from "./settings";

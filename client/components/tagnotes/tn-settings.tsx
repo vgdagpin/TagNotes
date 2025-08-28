@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { TabsContent } from "@/components/ui/tabs";
 import { Settings, Save, FileText } from "../tn-icons";
 import axios from "axios";
-import { NotesSettings } from "@shared/api";
+import { NotesSettings } from "@shared/models";
 
 type TnSettingsProps = {
   onClose?: () => void;

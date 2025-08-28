@@ -21,13 +21,21 @@ export interface Section {
   createdAt: Date;
 }
 
+export interface NoteSummary {
+  id: string;
+  title: string;
+  createdAt: Date;
+  updatedAt: Date;
+  location: string;
+}
+
 export interface Note {
   id: string;
   title: string;
-  sections: Section[];
-  tags: string[];
   createdAt: Date;
   updatedAt: Date;
+  sections: Section[];
+  tags: string[];
 }
 
 export interface NotesSettings {

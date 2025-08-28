@@ -13,7 +13,7 @@ import {
 
 import { Edit, Save, Trash, Code, ChevronDown, ChevronUp, } from '../tn-icons'; 
 
-import { Section } from "@shared/api";
+import { Section } from "@shared/models";
 import { useState, useEffect } from "react";
 import axios from "axios";
 

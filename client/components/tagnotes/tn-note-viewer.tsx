@@ -27,7 +27,7 @@ import {
 } from '../tn-icons';
 
 import TnSection from "./tn-section";
-import { Note, Section } from "@shared/api";
+import { Note, Section } from "@shared/models";
 import {
   getNote as getLocalNote,
   addTag as addTagLocal,

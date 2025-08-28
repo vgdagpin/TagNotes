@@ -14,7 +14,7 @@ import {
 } from "../components/tn-icons";
 
 import { cn } from "@/lib/utils";
-import { Note } from "@shared/api";
+import { Note } from "@shared/models";
 import {
   listNotes as listNotesLocal,
   createNote as createLocalNote,
