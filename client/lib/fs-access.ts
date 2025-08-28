@@ -17,30 +17,54 @@ export async function pickNotesDirectory(): Promise<FileSystemDirectoryHandle> {
     throw new Error('File System Access API not supported in this browser.');
   }
   const handle = await (window as any).showDirectoryPicker({ mode: 'readwrite' });
-  await verifyPermission(handle, true);
+  // Request write permission explicitly now
+  const granted = await verifyPermission(handle, true, true);
+  if (!granted) throw new Error('Permission denied for selected directory.');
   await set(DIR_HANDLE_KEY, handle);
+  // Ask browser to persist storage (best-effort)
+  try { await ensurePersistentStorage(); } catch { /* ignore */ }
   return handle;
 }
 
 export async function getPersistedDirectoryHandle(): Promise<FileSystemDirectoryHandle | null> {
   const handle = await get(DIR_HANDLE_KEY);
-  if (!handle) return null;
-  // Re-check permission
-  const ok = await verifyPermission(handle, false).catch(() => false);
-  if (!ok) return null;
-  return isDirectoryHandle(handle) ? handle : null;
+  if (!handle || !isDirectoryHandle(handle)) return null;
+  // Only query permission; do NOT prompt user automatically on load
+  const hasPerm = await verifyPermission(handle, false, false).catch(() => false);
+  if (!hasPerm) return null;
+  return handle;
 }
 
 export async function revokeDirectoryHandle() {
   await del(DIR_HANDLE_KEY);
 }
 
-async function verifyPermission(handle: any, requestWrite: boolean) {
+async function verifyPermission(handle: any, requestWrite: boolean, promptIfNeeded: boolean) {
   if (!handle) return false;
   const opts: any = { mode: requestWrite ? 'readwrite' : 'read' };
-  if (await handle.queryPermission(opts) === 'granted') return true;
-  if (await handle.requestPermission(opts) === 'granted') return true;
+  const current = await handle.queryPermission(opts);
+  if (current === 'granted') return true;
+  if (!promptIfNeeded) return false;
+  const req = await handle.requestPermission(opts);
+  return req === 'granted';
+}
+
+/** Attempt to make site storage persistent so the directory handle reference survives eviction */
+export async function ensurePersistentStorage(): Promise<boolean> {
+  try {
+    if (navigator.storage && (navigator.storage as any).persist) {
+      const persisted = await (navigator.storage as any).persisted();
+      if (persisted) return true;
+      return await (navigator.storage as any).persist();
+    }
+  } catch { /* ignore */ }
   return false;
+}
+
+/** Returns true if a directory handle is stored and still has permission */
+export async function hasRestorableHandle(): Promise<boolean> {
+  const handle = await getPersistedDirectoryHandle();
+  return !!handle;
 }
 
 // ---------------- Index & Notes Folder Management ----------------

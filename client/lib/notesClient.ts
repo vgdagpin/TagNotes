@@ -23,6 +23,13 @@ export async function enableLocalMode() {
     await refreshIndex();
 }
 
+// Attempt to restore previously persisted directory handle silently.
+export async function tryRestoreLocalMode(): Promise<boolean> {
+    if (dirHandle) return true;
+    await ensureHandleLoaded();
+    return !!dirHandle;
+}
+
 export async function disableLocalMode() {
     dirHandle = null; // leave handle persistence removal to caller if needed
 }

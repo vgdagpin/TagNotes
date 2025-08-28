@@ -21,6 +21,7 @@ import {
   getNote as getLocalNote,
   enableLocalMode,
   isLocalMode,
+  tryRestoreLocalMode,
 } from "@/lib/notesClient";
 import TnNoteViewer from "@/components/tagnotes/tn-note-viewer";
 import TnSettings from "@/components/tagnotes/tn-settings";
@@ -35,7 +36,11 @@ export default function Index() {
   // Fetch notes from API on mount
   useEffect(() => {
     let active = true;
-    const fetchList = async () => {
+    const run = async () => {
+      // First attempt silent restore once (only on initial mount or when no local mode yet)
+      if (!isLocalMode()) {
+        try { await tryRestoreLocalMode(); } catch { /* ignore */ }
+      }
       try {
         if (isLocalMode()) {
           const list = await listNotesLocal(searchQuery);
@@ -43,14 +48,11 @@ export default function Index() {
         } else {
           const res = await axios.get(`/api/notes?search=${encodeURIComponent(searchQuery)}`);
           const data = res.data;
-            // server returns id/title only (performance)
-          if (active) setNotes(data.result.map((n: any)=>({ id: n.id, title: n.title })));
+          if (active) setNotes(data.result.map((n: any) => ({ id: n.id, title: n.title })));
         }
-      } catch (e) {
-        // ignore
-      }
+      } catch { /* ignore */ }
     };
-    const h = setTimeout(fetchList, 400);
+    const h = setTimeout(run, 300);
     return () => { active = false; clearTimeout(h); };
   }, [searchQuery]);
 
