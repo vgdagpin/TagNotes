@@ -147,7 +147,7 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
 
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
-      if (item.type.indexOf("image") !== -1) {
+      if (item && item.type.indexOf("image") !== -1) {
         const file = item.getAsFile();
         if (file) {
           const reader = new FileReader();
@@ -175,7 +175,6 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
 
   const handleSetTitle = (title: string) => {
     setNote((prev) => {
-      if (!prev) return null;
       return {
         ...prev,
         title: title,
@@ -213,19 +212,28 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
     if (isLocalMode()) {
       addSectionLocal(noteId, sectionType).then(updated => setNote(updated));
     } else {
-      const newSection: Section = { id: generateId(), type: sectionType, content: '', language: sectionType === 'code' ? 'javascript' : undefined, createdAt: new Date() };
+      const newSection: Section = { id: generateId(),
+        type: sectionType, 
+        content: '', 
+        language: sectionType === 'code' ? 'javascript' : null, 
+        createdAt: new Date() 
+      };
+      
       axios.post(`/api/notes/${noteId}/addSection`, newSection);
       setNote(prev => ({ ...prev, sections: [...prev.sections, newSection], updatedAt: new Date() }));
     }
   };
 
   // Save section changes
-  const saveSection = (sectionId: string, content: string, language?: string) => {
+  const saveSection = (sectionId: string, content: string, language?: string | null) => {
     if (isLocalMode()) {
       updateSectionContentLocal(note.id, sectionId, content).then(updated => setNote(updated));
       if (language) updateSectionLanguageLocal(note.id, sectionId, language).then(updated => setNote(updated));
     } else {
-      setNote(prev => ({ ...prev, sections: prev.sections.map(s => s.id === sectionId ? { ...s, content, language } : s), updatedAt: new Date() }));
+      setNote(prev => ({ ...prev, 
+        sections: prev.sections.map(s => s.id === sectionId ? { ...s, content, language } : s), 
+        updatedAt: new Date() 
+      }));
     }
   };
 

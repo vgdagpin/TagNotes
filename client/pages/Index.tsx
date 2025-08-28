@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios"; // server fallback
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import {
   Search,
@@ -14,7 +14,7 @@ import {
 } from "../components/tn-icons";
 
 import { cn } from "@/lib/utils";
-import { Note, Section } from "@shared/api";
+import { Note } from "@shared/api";
 import {
   listNotes as listNotesLocal,
   createNote as createLocalNote,
@@ -31,20 +31,6 @@ export default function Index() {
   const [searchQuery, setSearchQuery] = useState("");
   const [openTabs, setOpenTabs] = useState<string[]>(["1"]); // Start with first note open
   const [activeTab, setActiveTab] = useState("1");
-  const [noteTags, setNoteTags] = useState<Record<string, string[]>>({});
-  const [sectionContents, setSectionContents] = useState<
-    Record<string, string>
-  >({});
-  const [sectionLanguages, setSectionLanguages] = useState<
-    Record<string, string>
-  >({});
-  const [editingSections, setEditingSections] = useState<Set<string>>(
-    new Set(),
-  );
-  const [editingTitles, setEditingTitles] = useState<Set<string>>(new Set());
-  const [titleContents, setTitleContents] = useState<Record<string, string>>(
-    {},
-  );
 
   // Fetch notes from API on mount
   useEffect(() => {
@@ -67,29 +53,6 @@ export default function Index() {
     const h = setTimeout(fetchList, 400);
     return () => { active = false; clearTimeout(h); };
   }, [searchQuery]);
-
-  // Initialize note tags, section contents, and title contents for editing
-  useEffect(() => {
-    setNoteTags({});
-    setSectionContents({});
-    setSectionLanguages({});
-    setTitleContents({});
-  }, [notes]);
-
-  // // Filtered notes based on search
-  // const filteredNotes = useMemo(() => {
-  //   if (!searchQuery.trim()) return notes;
-
-  //   const query = searchQuery.toLowerCase();
-  //   return notes.filter(
-  //     (note) =>
-  //       note.title.toLowerCase().includes(query) ||
-  //       note.sections.some((section) =>
-  //         section.content.toLowerCase().includes(query),
-  //       ) ||
-  //       note.tags.some((tag) => tag.toLowerCase().includes(query)),
-  //   );
-  // }, [notes, searchQuery]);
 
   // Generate new ID
   const generateId = () => {
@@ -118,61 +81,6 @@ export default function Index() {
     if (!openTabs.includes(newNote.id)) setOpenTabs(prev => [...prev, newNote.id]);
     setActiveTab(newNote.id);
   };
-
-  // Add new section to note
-  const addSection = (_noteId: string, _sectionType: Section["type"]) => {
-    // handled inside viewer for local mode; server mode viewer triggers axios
-  };
-
-  // Delete section
-  const deleteSection = (_noteId: string, _sectionId: string) => {};
-
-  // Update section content
-  const updateSectionContent = (_sectionId: string, _content: string) => {};
-
-  // Update section language (for code sections)
-  const updateSectionLanguage = (_sectionId: string, _language: string) => {};
-
-  // Toggle section edit mode
-  const toggleSectionEdit = (sectionId: string) => {
-    setEditingSections((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(sectionId)) {
-        newSet.delete(sectionId);
-      } else {
-        newSet.add(sectionId);
-      }
-      return newSet;
-    });
-  };
-
-  // Save section changes
-  const saveSection = (_noteId: string, _sectionId: string) => {};
-
-  // Handle image paste
-  const handleImagePaste = (noteId: string, event: ClipboardEvent) => {
-    const items = event.clipboardData?.items;
-    if (!items) return;
-
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      if (item.type.indexOf("image") !== -1) {
-        const file = item.getAsFile();
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const imageData = e.target?.result as string;
-            addImageSection(noteId, imageData);
-          };
-          reader.readAsDataURL(file);
-        }
-        break;
-      }
-    }
-  };
-
-  // Add image section
-  const addImageSection = (_noteId: string, _imageData: string) => {};
 
   // Open note in tab
   const openNoteInTab = async (noteId: string) => {
@@ -213,44 +121,6 @@ export default function Index() {
     closeTab("settings");
   };
 
-  // Toggle title edit mode
-  const toggleTitleEdit = (noteId: string) => {
-    setEditingTitles((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(noteId)) {
-        newSet.delete(noteId);
-      } else {
-        newSet.add(noteId);
-      }
-      return newSet;
-    });
-  };
-
-  // Update title content
-  const updateTitleContent = (noteId: string, title: string) => {
-    setTitleContents((prev) => ({ ...prev, [noteId]: title }));
-  };
-
-  // Save title changes
-  const saveTitle = (noteId: string) => {
-    const title = titleContents[noteId]?.trim() || "Untitled";
-    if (!title) return;
-    // viewer handles updating in local mode; list needs title update
-    setNotes(prev => prev.map(n => n.id === noteId ? { ...n, title } : n));
-    setEditingTitles(prev => { const ns = new Set(prev); ns.delete(noteId); return ns; });
-  };
-
-  // Save note changes (mainly for tags)
-  const saveNote = (noteId: string) => {
-    const tags = noteTags[noteId] || [];
-
-    setNotes((prev) =>
-      prev.map((note) =>
-        note.id === noteId ? { ...note, tags, updatedAt: new Date() } : note,
-      ),
-    );
-  };
-
   // Delete note
   const deleteNote = async (noteId: string) => {
     if (!window.confirm("Are you sure you want to delete this note? This action cannot be undone.")) return;
@@ -263,18 +133,6 @@ export default function Index() {
     setNotes(prev => prev.filter(n => n.id !== noteId));
     closeTab(noteId);
   };
-
-  // Add tag to note
-  const addTagToNote = (_noteId: string, _tag: string) => {};
-
-  // Remove tag from note
-  const removeTagFromNote = (_noteId: string, _tagToRemove: string) => {};
-
-  // Format date for display
-  const formatDate = (date: Date) => new Intl.DateTimeFormat("en-US", { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(date);
-
-  // Get preview text for sidebar
-  const getPreviewText = (_sections: Section[]) => "";
 
   return (
     <div className="h-screen bg-background flex overflow-hidden">

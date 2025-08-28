@@ -17,13 +17,19 @@
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
 
-    /* Linting */
-    "strict": false,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "noImplicitAny": false,
-    "noFallthroughCasesInSwitch": false,
-    "strictNullChecks": false,
+  /* Linting / Strictness */
+  "strict": true,
+  "noUnusedLocals": true,
+  "noUnusedParameters": true,
+  "noImplicitAny": true,
+  "noFallthroughCasesInSwitch": true,
+  "strictNullChecks": true,
+  "noImplicitThis": true,
+  "alwaysStrict": true,
+  "exactOptionalPropertyTypes": true,
+  "noUncheckedIndexedAccess": true,
+  "noImplicitOverride": true,
+  "useUnknownInCatchVariables": true,
 
     /* Path mapping */
     "baseUrl": ".",

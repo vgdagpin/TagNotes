@@ -10,7 +10,7 @@ type TnSectionProps = {
   section: Section;
   noteId: string;
 
-  onSaveSection?: (content: string, language?: string) => void;
+  onSaveSection?: (content: string, language?: string | null) => void;
   onDeleteSection?: (sectionId: string) => void;
 };
 

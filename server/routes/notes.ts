@@ -19,7 +19,7 @@ function ensureDataFile() {
 
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     if (!fs.existsSync(file)) {
-        const seed = [];
+        const seed : Note[] = [];
         fs.writeFileSync(file, JSON.stringify(seed, null, 2));
     }
 

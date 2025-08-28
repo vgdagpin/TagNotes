@@ -16,7 +16,7 @@ export interface Section {
   id: string;
   type: "markdown" | "text" | "code" | "image";
   content: string;
-  language?: string; // for code sections
+  language?: string | null | undefined; // for code sections
   imageData?: string; // for image sections (base64)
   createdAt: Date;
 }
