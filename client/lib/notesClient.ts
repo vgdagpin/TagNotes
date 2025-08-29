@@ -122,9 +122,9 @@ export async function createNote(initial?: Partial<Note>): Promise<Note> {
         createdAt: new Date(),
         updatedAt: new Date()
     };
-    const path = await writeNoteFile(dirHandle, serialize(newNote));
-    await upsertIndexEntry(dirHandle, { id: newNote.id, title: newNote.title, createdAt: newNote.createdAt, updatedAt: newNote.updatedAt, path, location: path, tags: newNote.tags } as any);
-    loadedIndex.unshift({ id: newNote.id, title: newNote.title, createdAt: newNote.createdAt, updatedAt: newNote.updatedAt, sections: [], tags: newNote.tags, location: path });
+    const location = await writeNoteFile(dirHandle, serialize(newNote));
+    await upsertIndexEntry(dirHandle, { id: newNote.id, title: newNote.title, createdAt: newNote.createdAt, updatedAt: newNote.updatedAt, location, tags: newNote.tags } as any);
+    loadedIndex.unshift({ id: newNote.id, title: newNote.title, createdAt: newNote.createdAt, updatedAt: newNote.updatedAt, sections: [], tags: newNote.tags, location });
     indexLoaded = true;
     return newNote;
 }
@@ -158,7 +158,7 @@ async function update(noteId: string, mutator: (n: Note) => void): Promise<Note>
         idx.tags = note.tags;
     }
     if (loc) {
-    await upsertIndexEntry(dirHandle, { id: note.id, title: note.title, createdAt: note.createdAt, updatedAt: note.updatedAt, path: loc, location: loc, tags: note.tags } as any);
+    await upsertIndexEntry(dirHandle, { id: note.id, title: note.title, createdAt: note.createdAt, updatedAt: note.updatedAt, location: loc, tags: note.tags } as any);
     } else {
         await refreshIndex();
     }
@@ -184,7 +184,7 @@ export async function updateTitle(noteId: string, title: string) {
         await writeNoteFile(dirHandle, serialize(full));
     }
     if (entry.location) {
-        await upsertIndexEntry(dirHandle, { id: full.id, title: full.title, createdAt: full.createdAt, updatedAt: full.updatedAt, path: entry.location, location: entry.location, tags: full.tags } as any);
+    await upsertIndexEntry(dirHandle, { id: full.id, title: full.title, createdAt: full.createdAt, updatedAt: full.updatedAt, location: entry.location, tags: full.tags } as any);
     }
     return full;
 }

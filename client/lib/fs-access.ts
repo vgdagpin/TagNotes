@@ -83,7 +83,8 @@ export function computeNotePath(id: string, date: Date = new Date()): string {
   return `${NOTES_DIR}/${formatDateFolder(date)}/${id}.json`;
 }
 
-export interface NoteIndexEntry extends Omit<NoteSummary, 'location'> { path: string; location: string; }
+// Internal index entry now uses only 'location'. Older index versions may still have 'path'; we migrate it.
+export interface NoteIndexEntry extends NoteSummary {}
 
 async function ensureNotesDir(handle: FileSystemDirectoryHandle): Promise<FileSystemDirectoryHandle> {
   const root = await handle.getDirectoryHandle(NOTES_DIR, { create: true });
@@ -106,7 +107,17 @@ async function loadIndexRaw(handle: FileSystemDirectoryHandle): Promise<NoteInde
     if (!txt) return null;
     const data = JSON.parse(txt) as any;
     if (!data || !Array.isArray(data.notes)) return null;
-    return data.notes.filter((n: any) => n && n.id && n.title && n.path);
+    // Map legacy entries that used 'path' to 'location'. Accept entries that have either.
+    return data.notes
+      .filter((n: any) => n && n.id && n.title && (n.location || n.path))
+      .map((n: any) => ({
+        id: n.id,
+        title: n.title,
+        createdAt: n.createdAt,
+        updatedAt: n.updatedAt,
+        location: n.location || n.path,
+        tags: n.tags || []
+      }));
   } catch { return null; }
 }
 
@@ -140,7 +151,6 @@ export async function loadIndex(handle: FileSystemDirectoryHandle): Promise<Note
               title: parsed.title,
               createdAt: parsed.createdAt || parsed.updatedAt || new Date().toISOString(),
               updatedAt: parsed.updatedAt || parsed.createdAt || new Date().toISOString(),
-              path: location,
               location,
               tags: parsed.tags || []
             });
@@ -161,7 +171,6 @@ export async function loadIndex(handle: FileSystemDirectoryHandle): Promise<Note
                   title: parsed.title,
                   createdAt: parsed.createdAt || parsed.updatedAt || new Date().toISOString(),
                   updatedAt: parsed.updatedAt || parsed.createdAt || new Date().toISOString(),
-                  path: location,
                   location,
                   tags: parsed.tags || []
                 });
