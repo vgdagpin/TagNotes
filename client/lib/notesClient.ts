@@ -1,5 +1,5 @@
 import { Note, Section } from '@shared/models';
-import { pickNotesDirectory, getPersistedDirectoryHandle, writeNoteFile, readAllNoteFiles, deleteNoteFile, upsertIndexEntry, removeIndexEntry } from './fs-access';
+import { pickNotesDirectory, getPersistedDirectoryHandle, writeNoteFile, writeNoteFileAtPath, readAllNoteFiles, deleteNoteFile, upsertIndexEntry, removeIndexEntry } from './fs-access';
 import { v4 as uuid } from 'uuid';
 
 let dirHandle: FileSystemDirectoryHandle | null = null;
@@ -143,10 +143,15 @@ async function update(noteId: string, mutator: (n: Note) => void): Promise<Note>
     mutator(note);
     note.updatedAt = new Date();
     if (!dirHandle) throw new Error('Local directory not selected');
-    await writeNoteFile(dirHandle, serialize(note));
     // update index entry incrementally
     const idx = loadedIndex.find(i => i.id === note.id);
     const loc = idx?.location;
+    // preserve original path (date folder) so we don't create duplicates when day rolls over
+    if (loc) {
+        await writeNoteFileAtPath(dirHandle, loc, serialize(note));
+    } else {
+        await writeNoteFile(dirHandle, serialize(note));
+    }
     if (idx) {
         idx.title = note.title;
         idx.updatedAt = note.updatedAt;
@@ -173,7 +178,11 @@ export async function updateTitle(noteId: string, title: string) {
     const full = await getNote(noteId); // reuse existing loader for consistency
     full.title = title;
     full.updatedAt = entry.updatedAt;
-    await writeNoteFile(dirHandle, serialize(full));
+    if (entry.location) {
+        await writeNoteFileAtPath(dirHandle, entry.location, serialize(full));
+    } else {
+        await writeNoteFile(dirHandle, serialize(full));
+    }
     if (entry.location) {
         await upsertIndexEntry(dirHandle, { id: full.id, title: full.title, createdAt: full.createdAt, updatedAt: full.updatedAt, path: entry.location, location: entry.location, tags: full.tags } as any);
     }

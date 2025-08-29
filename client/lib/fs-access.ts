@@ -187,6 +187,41 @@ export async function writeNoteFile(handle: FileSystemDirectoryHandle, note: any
   return `${NOTES_DIR}/${folderName}/${note.id}.json`;
 }
 
+// Write a note JSON file at an existing path without changing its date folder.
+// Path formats supported:
+//   Notes/<id>.json (legacy)
+//   Notes/YYYY-MM-DD/<id>.json (current)
+export async function writeNoteFileAtPath(handle: FileSystemDirectoryHandle, path: string, note: any): Promise<string> {
+  if (!path.startsWith(`${NOTES_DIR}/`)) {
+    // Fall back to regular writer (will assign a date folder)
+    return writeNoteFile(handle, note);
+  }
+  const parts = path.split('/'); // e.g., ["Notes", "2025-08-29", "abc.json"] or ["Notes", "abc.json"]
+  if (parts.length === 3) {
+    const [, dateFolderRaw, fileNameRaw] = parts;
+    const dateFolder = dateFolderRaw!; // parts length check ensures defined
+    const fileName = fileNameRaw!;
+    const root = await handle.getDirectoryHandle(NOTES_DIR, { create: true });
+    const dateDir = await root.getDirectoryHandle(dateFolder, { create: true });
+    const fh = await dateDir.getFileHandle(fileName, { create: true });
+    const ws = await fh.createWritable();
+    await ws.write(JSON.stringify(note, null, 2));
+    await ws.close();
+    return path; // unchanged
+  } else if (parts.length === 2) {
+    const [, fileNameRaw] = parts;
+    const fileName = fileNameRaw!;
+    const root = await handle.getDirectoryHandle(NOTES_DIR, { create: true });
+    const fh = await root.getFileHandle(fileName, { create: true });
+    const ws = await fh.createWritable();
+    await ws.write(JSON.stringify(note, null, 2));
+    await ws.close();
+    return path;
+  }
+  // Unexpected format: delegate
+  return writeNoteFile(handle, note);
+}
+
 export async function deleteNoteFile(handle: FileSystemDirectoryHandle, noteId: string) {
   try {
     // We don't know which date folder it is in; scan current date first then others.
