@@ -301,7 +301,14 @@ export default function Index() {
                 if (!note) return null;
 
                 return (
-                  <TnNoteViewer key={tabId} noteId={tabId} onDeleteNote={deleteNote} />
+                  <TnNoteViewer
+                    key={tabId}
+                    noteId={tabId}
+                    onDeleteNote={deleteNote}
+                    onTitleUpdated={(id, newTitle) => {
+                      setNotes(prev => prev.map(n => n.id === id ? { ...n, title: newTitle } : n));
+                    }}
+                  />
                 );
               })}
             </div>

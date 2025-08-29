@@ -49,9 +49,10 @@ type TnNoteViewerProps = {
   noteId: string;
 
   onDeleteNote?: (noteId: string) => void;
+  onTitleUpdated?: (noteId: string, newTitle: string) => void;
 };
 
-const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
+const TnNoteViewer = ({ noteId, onDeleteNote, onTitleUpdated }: TnNoteViewerProps) => {
   const [note, setNote] = useState<Note>({
     id: noteId,
     title: "",
@@ -151,7 +152,11 @@ const TnNoteViewer = ({ noteId, onDeleteNote }: TnNoteViewerProps) => {
 
   const saveTitle = () => {
   if (!isLocalMode()) return;
-  updateTitleLocal(note.id, note.title).then(updated => setNote(updated));
+  const newTitle = note.title;
+  updateTitleLocal(note.id, newTitle).then(updated => {
+    setNote(updated);
+    onTitleUpdated?.(updated.id, updated.title);
+  });
     setEditingTitle(false);
   };
 
