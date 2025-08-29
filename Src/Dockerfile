@@ -4,12 +4,8 @@
 FROM node:20-bookworm-slim AS build
 WORKDIR /app
 
-# Ensure reproducible installs & skip native rollup binary (use JS fallback) if optional dep hiccups
-ENV ROLLUP_SKIP_NODEJS_NATIVE=1 \
-	CI=true
-
 # Install dependencies (dev + prod). Copy only package.json to allow fresh resolution (lock may be out of sync)
-COPY package.json ./
+COPY ['Src/package.json', '.']
 RUN --mount=type=cache,id=npm-cache,target=/root/.npm npm install
 
 # Copy source
