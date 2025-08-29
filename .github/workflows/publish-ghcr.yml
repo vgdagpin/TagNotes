@@ -1,0 +1,59 @@
+﻿name: Build API Container and push to GHCR
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - release
+
+env:
+  REGISTRY: ghcr.io
+  GHCR_READWRITE_TOKEN: ${{ secrets.GHCR_TOKEN }} # read and write packages to private feed (TeeLedger Push Server Container)
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+
+  Build-Containers:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🛠️ Checkout Code
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: 🔑 Log in to Github Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ env.GHCR_READWRITE_TOKEN }}
+
+      # TeeLedger.Server
+      - name: ♎ TeeLedger.Api - Build & Push Container
+        run: |
+          VERSION=$(grep '<Version>' Src/TeeLedger.Api/TeeLedger.Api.csproj | sed -n 's/.*<Version>\(.*\)<\/Version>.*/\1/p')
+          docker build \
+            -f ./Src/TeeLedger.Api/Dockerfile \
+            -t ghcr.io/${{ github.repository_owner }}/teeledger.api:$VERSION \
+            -t ghcr.io/${{ github.repository_owner }}/teeledger.api:latest \
+            .
+          docker push ghcr.io/${{ github.repository_owner }}/teeledger.api:$VERSION
+          docker push ghcr.io/${{ github.repository_owner }}/teeledger.api:latest
+
+      # # TeeLedger.Client
+      # - name: ♎ TeeLedger.Client - Build & Push Container
+      #   run: |
+      #     VERSION=$(grep '<Version>' Src/TeeLedger.Client/Teeledger.Client.esproj | sed -n 's/.*<Version>\(.*\)<\/Version>.*/\1/p')
+      #     docker build \
+      #       -f ./Src/TeeLedger.Client/Dockerfile \
+      #       -t ghcr.io/${{ github.repository_owner }}/teeledger.client:$VERSION \
+      #       -t ghcr.io/${{ github.repository_owner }}/teeledger.client:latest \
+      #       .
+      #     docker push ghcr.io/${{ github.repository_owner }}/teeledger.client:$VERSION
+      #     docker push ghcr.io/${{ github.repository_owner }}/teeledger.client:latest
