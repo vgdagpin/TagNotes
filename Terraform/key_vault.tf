@@ -37,22 +37,11 @@ resource "azurerm_key_vault_access_policy" "current_user_access_policy" {
 resource "azurerm_key_vault_access_policy" "server_container_app" {
   key_vault_id = azurerm_key_vault.main.id
   tenant_id    = data.azurerm_client_config.current.tenant_id
-  object_id    = azurerm_user_assigned_identity.api.principal_id
+  object_id    = azurerm_user_assigned_identity.app.principal_id
 
   secret_permissions = [
     "Get",
     "List",
-  ]
-}
-
-# https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/key_vault_secret.html
-# terraform import azurerm_key_vault_secret.dbaminpassword "https://teeledger-q-kv.vault.azure.net/secrets/db-admin-password/eaa5aa755edf4fd092eac03aded4f089"
-resource "azurerm_key_vault_secret" "database_connection_string" {
-  name         = "database-connection-string"
-  value        = var.database_connection_string
-  key_vault_id = azurerm_key_vault.main.id
-  depends_on = [
-    azurerm_key_vault_access_policy.current_user_access_policy
   ]
 }
 

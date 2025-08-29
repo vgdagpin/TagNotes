@@ -26,22 +26,16 @@ variable "ghcr_pat" {
   type        = string
 }
 
-variable "api_version" {
-  description = "The version of api"
+variable "image" {
+  description = "The path of the image"
   type        = string
-  default     = "latest"
+  default     = "tagnotes:latest"
 }
 
 variable "services_prefix" {
   description = "The prefix of each services"
   type        = string
-  default     = "teeledger"
-}
-
-variable "database_connection_string" {
-  description = "Database connection string"
-  type        = string
-  sensitive   = true
+  default     = "tagnotes"
 }
 
 variable "tags" {
