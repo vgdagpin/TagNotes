@@ -4,15 +4,20 @@
 FROM node:20-bookworm-slim AS build
 WORKDIR /app
 
-# Install dependencies (dev + prod). Copy only package.json to allow fresh resolution (lock may be out of sync)
-COPY ['Src/package.json', '.']
-RUN --mount=type=cache,id=npm-cache,target=/root/.npm npm install
+# Environment tweaks: skip native rollup optional binary (use JS fallback) & make installs deterministic-ish
+ENV ROLLUP_SKIP_NODEJS_NATIVE=1 \
+	CI=true
 
-# Copy source
-COPY . .
+# Copy manifest (Docker build context root is repo root; files live under Src/)
+COPY Src/package.json ./package.json
+# (Omit package-lock.json to allow fresh resolution; avoids stale optional native rollup mismatch)
+RUN --mount=type=cache,id=npm-cache,target=/root/.npm npm install --no-audit --no-fund
 
-# Build (produces dist/spa)
-RUN npm run build
+# Copy the rest of the source inside Src directory only (avoid bringing in Terraform, etc.)
+COPY Src/. .
+
+# Build (produces dist/spa) ensuring env var present in same RUN invocation to force JS fallback
+RUN ROLLUP_SKIP_NODEJS_NATIVE=1 npm run build
 
 # Prune dev dependencies for slimmer runtime
 RUN npm prune --production
