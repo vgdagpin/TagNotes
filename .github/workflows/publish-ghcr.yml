@@ -34,26 +34,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ env.GHCR_READWRITE_TOKEN }}
 
-      # TeeLedger.Server
-      - name: ♎ TeeLedger.Api - Build & Push Container
+      # TagNotes
+      - name: ♎ TagNotes - Build & Push Container
         run: |
-          VERSION=$(grep '<Version>' Src/TeeLedger.Api/TeeLedger.Api.csproj | sed -n 's/.*<Version>\(.*\)<\/Version>.*/\1/p')
+          VERSION=1.0.0.1
           docker build \
-            -f ./Src/TeeLedger.Api/Dockerfile \
-            -t ghcr.io/${{ github.repository_owner }}/teeledger.api:$VERSION \
-            -t ghcr.io/${{ github.repository_owner }}/teeledger.api:latest \
+            -f ./Src/TagNotes/Dockerfile \
+            -t ghcr.io/${{ github.repository_owner }}/tagnotes:$VERSION \
+            -t ghcr.io/${{ github.repository_owner }}/tagnotes:latest \
             .
-          docker push ghcr.io/${{ github.repository_owner }}/teeledger.api:$VERSION
-          docker push ghcr.io/${{ github.repository_owner }}/teeledger.api:latest
-
-      # # TeeLedger.Client
-      # - name: ♎ TeeLedger.Client - Build & Push Container
-      #   run: |
-      #     VERSION=$(grep '<Version>' Src/TeeLedger.Client/Teeledger.Client.esproj | sed -n 's/.*<Version>\(.*\)<\/Version>.*/\1/p')
-      #     docker build \
-      #       -f ./Src/TeeLedger.Client/Dockerfile \
-      #       -t ghcr.io/${{ github.repository_owner }}/teeledger.client:$VERSION \
-      #       -t ghcr.io/${{ github.repository_owner }}/teeledger.client:latest \
-      #       .
-      #     docker push ghcr.io/${{ github.repository_owner }}/teeledger.client:$VERSION
-      #     docker push ghcr.io/${{ github.repository_owner }}/teeledger.client:latest
+          docker push ghcr.io/${{ github.repository_owner }}/tagnotes:$VERSION
+          docker push ghcr.io/${{ github.repository_owner }}/tagnotes:latest
