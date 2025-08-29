@@ -2,11 +2,8 @@
 ```
 subscription_id = "..." # Your subscription ID
 
-# TeeLedger Read API Container
+# TagNotes Container
 ghcr_pat = "..." # PAT of ghcr package (read only)
-
-# Database connectionstring
-database_connection_string = "..."
 ```
 
 ```
@@ -15,6 +12,3 @@ terraform plan
 terraform apply
 ```
 
-```
-https://teeledger-q-ca-api.calmmoss-19d2c7c9.southeastasia.azurecontainerapps.io
-```
