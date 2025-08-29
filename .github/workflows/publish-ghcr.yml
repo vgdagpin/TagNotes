@@ -39,7 +39,7 @@ jobs:
         run: |
           VERSION=1.0.0.1
           docker build \
-            -f ./Src/TagNotes/Dockerfile \
+            -f ./Src/Dockerfile \
             -t ghcr.io/${{ github.repository_owner }}/tagnotes:$VERSION \
             -t ghcr.io/${{ github.repository_owner }}/tagnotes:latest \
             .
