@@ -21,6 +21,7 @@ export interface NoteSummary {
   createdAt: Date;
   updatedAt: Date;
   location: string;
+  tags: string[]; // added for search indexing
 }
 
 export interface Note {

@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TabsContent } from "@/components/ui/tabs";
-import { Settings, Save, FileText } from "../tn-icons";
+import { Settings, FileText } from "../tn-icons";
 import { NotesSettings } from "@shared/models";
+import { switchLocalDirectory, getCurrentDirectoryName } from '@/lib/notesClient';
 
 type TnSettingsProps = {
   onClose?: () => void;
@@ -16,24 +17,19 @@ const TnSettings = ({ onClose }: TnSettingsProps) => {
   // Load settings on component mount
   useEffect(() => {
     // No server; initialize default settings in-memory
-    setSettings({ notesDirectory: '' });
+  const current = getCurrentDirectoryName();
+  setSettings({ notesDirectory: current || '' });
   }, []);
 
-  const handleSave = useCallback(async () => {
-    if (settings) {
-      try {
-  // persist locally if desired (TODO: implement local persistence)
-  alert("Settings saved (local only)");
-      } catch (error) {
-        console.error("Failed to save settings:", error);
-        alert("Failed to save settings. Please try again.");
-      }
-    }
-  }, [settings]);
+  // No explicit save: changing directory is immediate.
 
-  const handleSetNotesDirectory = (value: string) => {
-    if (settings) {
-      setSettings((prev) => ({ ...prev, notesDirectory: value }));
+  const handlePickDirectory = async () => {
+    try {
+      const name = await switchLocalDirectory();
+      setSettings({ notesDirectory: name });
+    } catch (e) {
+      console.error('Failed to switch directory', e);
+      alert('Failed to switch directory');
     }
   };
 
@@ -67,26 +63,18 @@ const TnSettings = ({ onClose }: TnSettingsProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes-directory">Notes Directory Path</Label>
-            <Input
-              id="notes-directory"
-              value={settings?.notesDirectory || ''}
-              onChange={(e) => handleSetNotesDirectory(e.target.value)}
-              placeholder="Enter directory path (e.g., /home/user/notes or C:\Users\username\Documents\Notes)"
-            />
-            <p className="text-xs text-muted-foreground">
-              Specify the directory where your notes will be saved. Leave empty
-              to use the default location.
-            </p>
+            <Label>Current Notes Directory</Label>
+            <div className="flex gap-2">
+              <Input readOnly value={settings?.notesDirectory || ''} placeholder="Not selected" />
+              <Button type="button" variant="outline" onClick={handlePickDirectory}>Change…</Button>
+            </div>
+            <p className="text-xs text-muted-foreground">Select a directory to store your notes locally. This uses the File System Access API in your browser.</p>
           </div>
         </div>
 
-        {/* Save Button */}
-        <div className="pt-4">
-          <Button onClick={handleSave} className="w-full">
-            <Save className="h-4 w-4 mr-2" />
-            Save Settings
-          </Button>
+        <div className="pt-4 text-xs text-muted-foreground space-y-2">
+          <p>The browser File System Access API does not expose the full absolute path for privacy. Only the selected folder name is shown.</p>
+          <p>If you need to remember the full path, rename the folder in your OS or add it to bookmarks.</p>
         </div>
       </div>
     </TabsContent>

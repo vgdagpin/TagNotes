@@ -33,6 +33,20 @@ export async function disableLocalMode() {
     dirHandle = null; // leave handle persistence removal to caller if needed
 }
 
+// Switch to a new local directory (user picks). Returns directory name.
+export async function switchLocalDirectory(): Promise<string> {
+    dirHandle = await pickNotesDirectory();
+    indexLoaded = false;
+    await refreshIndex();
+    const name = (dirHandle as any)?.name || '';
+    try { window.dispatchEvent(new CustomEvent('tagnotes:directoryChanged', { detail: { name } })); } catch {}
+    return name;
+}
+
+export function getCurrentDirectoryName(): string | null {
+    return dirHandle ? (dirHandle as any).name || null : null;
+}
+
 async function refreshIndex() {
     if (!dirHandle) return;
     const notes = await readAllNoteFiles(dirHandle);
@@ -42,7 +56,7 @@ async function refreshIndex() {
         updatedAt: n.updatedAt,
         createdAt: n.createdAt,
         sections: [],
-        tags: [],
+        tags: n.tags || [],
         location: n.location
     }));
     indexLoaded = true;
@@ -55,7 +69,7 @@ export async function listNotes(search: string) {
     let list = loadedIndex;
     if (search && search.trim()) {
         const q = search.toLowerCase();
-        list = list.filter(n => n.title.toLowerCase().includes(q));
+        list = list.filter(n => n.title.toLowerCase().includes(q) || n.tags.some(t => t.includes(q)));
     }
     return list.map(n => ({ id: n.id, title: n.title }));
 }
@@ -109,8 +123,8 @@ export async function createNote(initial?: Partial<Note>): Promise<Note> {
         updatedAt: new Date()
     };
     const path = await writeNoteFile(dirHandle, serialize(newNote));
-    await upsertIndexEntry(dirHandle, { id: newNote.id, title: newNote.title, createdAt: newNote.createdAt, updatedAt: newNote.updatedAt, path, location: path } as any);
-    loadedIndex.unshift({ id: newNote.id, title: newNote.title, createdAt: newNote.createdAt, updatedAt: newNote.updatedAt, sections: [], tags: [], location: path });
+    await upsertIndexEntry(dirHandle, { id: newNote.id, title: newNote.title, createdAt: newNote.createdAt, updatedAt: newNote.updatedAt, path, location: path, tags: newNote.tags } as any);
+    loadedIndex.unshift({ id: newNote.id, title: newNote.title, createdAt: newNote.createdAt, updatedAt: newNote.updatedAt, sections: [], tags: newNote.tags, location: path });
     indexLoaded = true;
     return newNote;
 }
@@ -136,9 +150,10 @@ async function update(noteId: string, mutator: (n: Note) => void): Promise<Note>
     if (idx) {
         idx.title = note.title;
         idx.updatedAt = note.updatedAt;
+        idx.tags = note.tags;
     }
     if (loc) {
-        await upsertIndexEntry(dirHandle, { id: note.id, title: note.title, createdAt: note.createdAt, updatedAt: note.updatedAt, path: loc, location: loc } as any);
+    await upsertIndexEntry(dirHandle, { id: note.id, title: note.title, createdAt: note.createdAt, updatedAt: note.updatedAt, path: loc, location: loc, tags: note.tags } as any);
     } else {
         await refreshIndex();
     }
@@ -160,7 +175,7 @@ export async function updateTitle(noteId: string, title: string) {
     full.updatedAt = entry.updatedAt;
     await writeNoteFile(dirHandle, serialize(full));
     if (entry.location) {
-        await upsertIndexEntry(dirHandle, { id: full.id, title: full.title, createdAt: full.createdAt, updatedAt: full.updatedAt, path: entry.location, location: entry.location } as any);
+        await upsertIndexEntry(dirHandle, { id: full.id, title: full.title, createdAt: full.createdAt, updatedAt: full.updatedAt, path: entry.location, location: entry.location, tags: full.tags } as any);
     }
     return full;
 }

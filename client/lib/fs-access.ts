@@ -141,7 +141,8 @@ export async function loadIndex(handle: FileSystemDirectoryHandle): Promise<Note
               createdAt: parsed.createdAt || parsed.updatedAt || new Date().toISOString(),
               updatedAt: parsed.updatedAt || parsed.createdAt || new Date().toISOString(),
               path: location,
-              location
+              location,
+              tags: parsed.tags || []
             });
           }
         } catch { /* skip */ }
@@ -161,7 +162,8 @@ export async function loadIndex(handle: FileSystemDirectoryHandle): Promise<Note
                   createdAt: parsed.createdAt || parsed.updatedAt || new Date().toISOString(),
                   updatedAt: parsed.updatedAt || parsed.createdAt || new Date().toISOString(),
                   path: location,
-                  location
+                  location,
+                  tags: parsed.tags || []
                 });
               }
             } catch { /* skip */ }
@@ -207,12 +209,13 @@ export async function deleteNoteFile(handle: FileSystemDirectoryHandle, noteId: 
 
 export async function readAllNoteFiles(handle: FileSystemDirectoryHandle): Promise<NoteSummary[]> {
   const idx = await loadIndex(handle);
-  return idx.map(({ id, title, createdAt, updatedAt, location }) => ({
+  return idx.map(({ id, title, createdAt, updatedAt, location, tags }) => ({
     id,
     title,
     createdAt: new Date(createdAt as any),
     updatedAt: new Date(updatedAt as any),
-    location
+    location,
+    tags: tags || []
   }));
 }
 

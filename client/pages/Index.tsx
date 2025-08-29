@@ -17,7 +17,6 @@ import {
   listNotes as listNotesLocal,
   createNote as createLocalNote,
   getNote as getLocalNote,
-  enableLocalMode,
   isLocalMode,
   tryRestoreLocalMode,
   deleteNote as deleteLocalNote
@@ -138,11 +137,7 @@ export default function Index() {
               <Settings className="h-4 w-4" />
             </Button>
           </div>
-          {!isLocalMode() && (
-            <Button variant="outline" size="sm" className="mb-2 w-full" onClick={() => enableLocalMode()}>
-              Use Local Folder
-            </Button>
-          )}
+          {/* Removed 'Use Local Folder' button; directory selection now in Settings */}
 
           {/* Search */}
           <div className="relative">
