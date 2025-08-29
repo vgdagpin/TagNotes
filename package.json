@@ -18,7 +18,9 @@
     "start": "node dist/server/node-build.mjs",
     "test": "vitest --run",
     "format.fix": "prettier --write .",
-    "typecheck": "tsc"
+  "typecheck": "tsc",
+  "docker:build": "docker build -t tagnotes .",
+  "docker:run": "docker run --rm -p 3000:3000 tagnotes"
   },
   "dependencies": {
     "@types/react-syntax-highlighter": "^15.5.13",
