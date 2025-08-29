@@ -34,14 +34,14 @@
     /* Path mapping */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./client/*"],
-      "@shared/*": ["./shared/*"]
+      "@/*": ["./src/*"],
+      "@shared/*": ["./src/shared/*"]
     }
   },
   "include": [
-    "client/**/*",
+    "src/**/*",
     "server/**/*",
-    "shared/**/*",
+    "src/shared/**/*",
     "vite.config.ts",
     "vite.config.server.ts"
   ],
