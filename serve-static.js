@@ -1,0 +1,32 @@
+import http from 'http';
+import { readFile, stat } from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const root = path.join(__dirname, 'dist', 'spa');
+const port = process.env.PORT || 3000;
+
+const mime = { 
+  '.html':'text/html; charset=UTF-8', '.js':'text/javascript; charset=UTF-8', '.css':'text/css; charset=UTF-8', '.svg':'image/svg+xml', '.png':'image/png', '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.gif':'image/gif', '.json':'application/json', '.txt':'text/plain; charset=UTF-8' 
+};
+
+function send(res, status, body, headers={}) { res.writeHead(status, { 'Content-Length': Buffer.byteLength(body), ...headers }); res.end(body); }
+
+const server = http.createServer(async (req, res) => {
+  try {
+    let urlPath = (req.url || '/').split('?')[0];
+    if (urlPath === '/') urlPath = '/index.html';
+    let filePath = path.join(root, urlPath);
+    // Fallback to SPA index.html for non-file routes
+    try { const s = await stat(filePath); if (!s.isFile()) throw new Error('not file'); } catch { filePath = path.join(root, 'index.html'); }
+    const ext = path.extname(filePath).toLowerCase();
+    const data = await readFile(filePath);
+    send(res, 200, data, { 'Content-Type': mime[ext] || 'application/octet-stream' });
+  } catch (e) {
+    send(res, 500, 'Internal Server Error');
+  }
+});
+
+server.listen(port, () => console.log(`Static SPA served at http://localhost:${port}`));
