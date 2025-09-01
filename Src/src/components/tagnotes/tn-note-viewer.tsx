@@ -1,29 +1,11 @@
 import { useState, useEffect } from "react";
 
-import { TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
-import {
-  Edit,
-  Plus,
-  X,
-  FileText,
-  Tag,
-  Hash,
-  Type,
-  Trash,
-  Code,
-} from '../tn-icons';
+import { Edit, Plus, X, FileText, Hash, Type, Trash, Code } from '../tn-icons';
 
 import TnSection from "./tn-section";
 import { Note, Section } from "@shared/models";
@@ -62,20 +44,21 @@ const TnNoteViewer = ({ noteId, onDeleteNote, onTitleUpdated }: TnNoteViewerProp
     updatedAt: new Date(),
   });
   const [editingTitle, setEditingTitle] = useState(false);
+  const localMode = isLocalMode();
 
   useEffect(() => {
     let active = true;
     const fetchNote = async () => {
       try {
-  if (!isLocalMode()) return;
-  const data = await getLocalNote(noteId);
-  if (!active) return;
-  setNote(data);
+    if (!localMode) return;
+    const data = await getLocalNote(noteId);
+    if (!active) return;
+    setNote(data);
       } catch {}
     };
     fetchNote();
     return () => { active = false; };
-  }, [noteId]);
+  }, [noteId, localMode]);
 
   // Format date for display
   const formatDate = (date: Date) => {
@@ -195,13 +178,10 @@ const TnNoteViewer = ({ noteId, onDeleteNote, onTitleUpdated }: TnNoteViewerProp
   };
 
   return (
-    <TabsContent
+    <div
       key={noteId}
-      value={noteId}
-      className="h-full mt-0 data-[state=active]:flex flex-col min-w-0 w-full"
-      onPaste={(e) => {
-        handleImagePaste(noteId, e.nativeEvent);
-      }}
+      className="h-full flex flex-col min-w-0 w-full"
+      onPaste={(e) => handleImagePaste(noteId, e.nativeEvent)}
     >
       <div className="note-viewer-container">
         {/* Note Header */}
@@ -255,10 +235,7 @@ const TnNoteViewer = ({ noteId, onDeleteNote, onTitleUpdated }: TnNoteViewerProp
 
               {/* Tags Section */}
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Tag className="h-4 w-4" />
-                  Tags
-                </div>
+               
 
                 <div className="space-y-2">
                   {/* Tag Input */}
@@ -419,7 +396,7 @@ const TnNoteViewer = ({ noteId, onDeleteNote, onTitleUpdated }: TnNoteViewerProp
           </div>
         </div>
       </div>
-    </TabsContent>
+  </div>
   );
 };
 

@@ -1,16 +1,10 @@
 import { useState, useEffect } from "react";
+import { useNavigate, useParams } from 'react-router-dom';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// Tabs removed – single note view
 
-import {
-  Search,
-  Plus,
-  X,
-  FileText,
-  Trash,
-  Settings,
-} from "../components/tn-icons";
+import { Search, Plus, FileText, Trash, Settings } from "../components/tn-icons";
 
 import { cn } from "@/lib/utils";
 import {
@@ -28,8 +22,9 @@ export default function Index() {
   // Notes list (id/title only). Full note loaded in viewer.
   const [notes, setNotes] = useState<{ id: string; title: string }[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [openTabs, setOpenTabs] = useState<string[]>(["1"]); // Start with first note open
-  const [activeTab, setActiveTab] = useState("1");
+  const [activeView, setActiveView] = useState<string | null>(null); // note id or 'settings'
+  const navigate = useNavigate();
+  const { noteId } = useParams();
 
   // Fetch notes from API on mount
   useEffect(() => {
@@ -64,57 +59,65 @@ export default function Index() {
     }
     const note = await createLocalNote({});
     setNotes(prev => [{ id: note.id, title: note.title }, ...prev]);
-    if (!openTabs.includes(note.id)) setOpenTabs(prev => [...prev, note.id]);
-    setActiveTab(note.id);
+    setActiveView(note.id);
+    navigate(`/${note.id}`);
   };
 
   // Open note in tab
-  const openNoteInTab = async (noteId: string) => {
-    if (!openTabs.includes(noteId)) setOpenTabs(prev => [...prev, noteId]);
-    setActiveTab(noteId);
-    // prefetch in local mode (optional)
+  const openNote = async (noteId: string) => {
+    setActiveView(noteId);
+    navigate(`/${noteId}`);
     if (isLocalMode()) {
       try { await getLocalNote(noteId); } catch {}
     }
   };
 
   // Close tab
-  const closeTab = (noteId: string) => {
-    const newOpenTabs = openTabs.filter((id) => id !== noteId);
-    setOpenTabs(newOpenTabs);
-
-    if (activeTab === noteId) {
-      const currentIndex = openTabs.indexOf(noteId);
-      const nextTab =
-        newOpenTabs[Math.max(0, currentIndex - 1)] || newOpenTabs[0];
-      if (nextTab) {
-        setActiveTab(nextTab);
-      }
-    }
-  };
+  // (closeCurrent removed – no external caller yet)
 
   // Open settings in tab
-  const openSettings = () => {
-    const settingsId = "settings";
-    if (!openTabs.includes(settingsId)) {
-      setOpenTabs((prev) => [...prev, settingsId]);
-    }
-    setActiveTab(settingsId);
-  };
+  const openSettings = () => { setActiveView("settings"); navigate('/settings'); };
 
   // Close settings tab
-  const closeSettings = () => {
-    closeTab("settings");
-  };
+  const closeSettings = () => { if (activeView === "settings") { setActiveView(null); navigate('/'); } };
 
   // Delete note
   const deleteNote = async (noteId: string) => {
-  if (!window.confirm("Are you sure you want to delete this note? This action cannot be undone.")) return;
-  if (!isLocalMode()) return;
-  await deleteLocalNote(noteId);
+    if (!window.confirm("Are you sure you want to delete this note? This action cannot be undone.")) return;
+    if (!isLocalMode()) return;
+    await deleteLocalNote(noteId);
     setNotes(prev => prev.filter(n => n.id !== noteId));
-    closeTab(noteId);
+  if (activeView === noteId) { setActiveView(null); navigate('/'); }
   };
+
+  // Auto-open first note if none selected
+  useEffect(() => {
+    // Sync active view only when a route param is present; otherwise leave blank state.
+    if (noteId) {
+      if (noteId === 'settings') {
+        if (activeView !== 'settings') setActiveView('settings');
+      } else if (activeView !== noteId) {
+        setActiveView(noteId);
+      }
+    }
+  }, [noteId, activeView]);
+
+  // When a noteId is in the URL but note metadata list doesn't include it yet, attempt preload
+  useEffect(() => {
+    const preload = async () => {
+      if (!noteId || noteId === 'settings') return;
+      if (!isLocalMode()) return; // wait for local mode
+      const exists = notes.some(n => n.id === noteId);
+      if (!exists) {
+        try {
+          const full = await getLocalNote(noteId);
+          // add minimal metadata if fetch succeeded
+          setNotes(prev => [{ id: full.id, title: full.title }, ...prev]);
+        } catch { /* ignore */ }
+      }
+    };
+    preload();
+  }, [noteId, notes]);
 
   return (
     <div className="h-screen bg-background flex overflow-hidden">
@@ -161,10 +164,10 @@ export default function Index() {
             notes.map((note) => (
               <div
                 key={note.id}
-                onClick={() => openNoteInTab(note.id)}
+                onClick={() => openNote(note.id)}
                 className={cn(
                   "px-2 py-1 border-b border-border cursor-pointer hover:bg-accent transition-colors group",
-                  activeTab === note.id && "bg-accent",
+                  activeView === note.id && "bg-accent",
                 )}
               >
                 <div className="flex items-center justify-between gap-2">
@@ -199,9 +202,9 @@ export default function Index() {
         </div>
       </div>
 
-      {/* Right Main Content - Tabbed Interface */}
+      {/* Right Main Content - Single View */}
       <div className="flex-1 flex flex-col min-w-0">
-        {openTabs.length === 0 ? (
+        {!activeView ? (
           <div className="flex-1 flex items-center justify-center text-center">
             <div>
               <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -217,102 +220,16 @@ export default function Index() {
               </Button>
             </div>
           </div>
+        ) : activeView === 'settings' ? (
+          <TnSettings onClose={closeSettings} />
         ) : (
-          <Tabs
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="flex-1 flex flex-col"
-          >
-            {/* Tabs List */}
-            <div className="border-b border-border bg-card px-4 overflow-x-auto">
-              <TabsList className="h-12 p-0 bg-transparent w-max min-w-full">
-                {openTabs.map((tabId) => {
-                  // Handle settings tab
-                  if (tabId === "settings") {
-                    return (
-                      <div key="settings" className="flex items-center">
-                        <TabsTrigger
-                          value="settings"
-                          className="relative pr-8 max-w-48"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Settings className="h-3 w-3" />
-                            <span className="truncate">Settings</span>
-                          </div>
-                        </TabsTrigger>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 -ml-6 z-10"
-                          onClick={closeSettings}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    );
-                  }
-
-                  // Handle note tabs
-                  const note = notes.find(n => n.id === tabId);
-                  if (!note) return null;
-
-                  return (
-                    <div key={tabId} className="flex items-center">
-                      <TabsTrigger
-                        value={tabId}
-                        className="relative pr-8 max-w-48"
-                      >
-                        <span className="truncate">{note.title}</span>
-                      </TabsTrigger>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 -ml-6 z-10"
-                        onClick={() => closeTab(tabId)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  );
-                })}
-
-                {/* Add new note tab */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-10 w-10 ml-2"
-                  onClick={createNote}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </TabsList>
-            </div>
-
-            {/* Tab Contents */}
-            <div className="flex-1 min-w-0 overflow-hidden">
-              {openTabs.map((tabId) => {
-                // Handle settings tab
-                if (tabId === "settings") {
-                  return <TnSettings key="settings" onClose={closeSettings} />;
-                }
-
-                // Handle note tabs
-                const note = notes.find(n => n.id === tabId);
-                if (!note) return null;
-
-                return (
-                  <TnNoteViewer
-                    key={tabId}
-                    noteId={tabId}
-                    onDeleteNote={deleteNote}
-                    onTitleUpdated={(id, newTitle) => {
-                      setNotes(prev => prev.map(n => n.id === id ? { ...n, title: newTitle } : n));
-                    }}
-                  />
-                );
-              })}
-            </div>
-          </Tabs>
+          <TnNoteViewer
+            noteId={activeView}
+            onDeleteNote={deleteNote}
+            onTitleUpdated={(id, newTitle) => {
+              setNotes(prev => prev.map(n => n.id === id ? { ...n, title: newTitle } : n));
+            }}
+          />
         )}
       </div>
     </div>

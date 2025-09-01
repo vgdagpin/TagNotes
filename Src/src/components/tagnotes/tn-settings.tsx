@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { TabsContent } from "@/components/ui/tabs";
 import { Settings, FileText } from "../tn-icons";
 import { NotesSettings } from "@shared/models";
 import { switchLocalDirectory, getCurrentDirectoryName } from '@/lib/notesClient';
@@ -34,10 +33,7 @@ const TnSettings = ({ onClose }: TnSettingsProps) => {
   };
 
   return (
-    <TabsContent
-      value="settings"
-      className="h-full mt-0 data-[state=active]:flex flex-col min-w-0 w-full"
-    >
+    <div className="h-full flex flex-col min-w-0 w-full">
       {/* Settings Header */}
       <div className="p-4 border-b border-border bg-card">
         <div className="flex items-center justify-between">
@@ -77,7 +73,7 @@ const TnSettings = ({ onClose }: TnSettingsProps) => {
           <p>If you need to remember the full path, rename the folder in your OS or add it to bookmarks.</p>
         </div>
       </div>
-    </TabsContent>
+  </div>
   );
 };
 
