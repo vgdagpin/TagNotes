@@ -1,38 +1,36 @@
 ## syntax=docker/dockerfile:1.7
 
+# Multi-stage: build with Node, serve with nginx (no Node in final image)
+
 # ---------- Build Stage ----------
-FROM node:20-bookworm-slim AS build
+FROM node:20-alpine AS build
 WORKDIR /app
 
-# Environment tweaks: skip native rollup optional binary (use JS fallback) & make installs deterministic-ish
-ENV ROLLUP_SKIP_NODEJS_NATIVE=1 \
-	CI=true
+# Skip optional native rollup binary & make non-interactive
+ENV ROLLUP_SKIP_NODEJS_NATIVE=1 CI=true
 
-# Copy manifest (Docker build context root is repo root; files live under Src/)
+# Copy manifest (lock file intentionally omitted as in original setup)
 COPY Src/package.json ./package.json
-# (Omit package-lock.json to allow fresh resolution; avoids stale optional native rollup mismatch)
 RUN --mount=type=cache,id=npm-cache,target=/root/.npm npm install --no-audit --no-fund
 
-# Copy the rest of the source inside Src directory only (avoid bringing in Terraform, etc.)
+# Copy sources (only Src/ contents)
 COPY Src/. .
 
-# Build (produces dist/spa) ensuring env var present in same RUN invocation to force JS fallback
-RUN ROLLUP_SKIP_NODEJS_NATIVE=1 npm run build
-
-# Prune dev dependencies for slimmer runtime
-RUN npm prune --production
+# Build Vite project (outputs to dist/)
+RUN npm run build
 
 # ---------- Runtime Stage ----------
-FROM node:20-bookworm-slim AS runtime
-ENV NODE_ENV=production
-WORKDIR /app
+FROM nginx:1.27-alpine AS runtime
 
-# Copy only what we need
-COPY --from=build /app/package.json ./
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/serve-static.js ./serve-static.js
+# Copy custom nginx config (includes SPA fallback + caching)
+COPY Src/nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copy built static assets
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# (Optional) Drop build metadata / ensure correct permissions
+RUN chmod -R 755 /usr/share/nginx/html
 
 EXPOSE 3000
 
-CMD ["node", "serve-static.js"]
+# Default CMD provided by nginx base image ("nginx -g 'daemon off;'")
