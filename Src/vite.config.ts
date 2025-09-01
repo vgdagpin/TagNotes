@@ -1,28 +1,22 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
-import path from "path";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-// https://vitejs.dev/config/
-export default defineConfig(() => ({
-  server: {
-    host: "::",
-    port: 8080,
-    fs: {
-      allow: ["./src", "./src/shared"],
-      deny: [".env", ".env.*", "*.{crt,pem}", "**/.git/**", "server/**"],
+// Recreate __dirname in ESM
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
+
+export default defineConfig({
+    plugins: [react()],
+    server: {
+        port: 8080,       // Changed from default 5173
+        strictPort: true, // Fail if 8080 is taken instead of incrementing
+        open: true        // Automatically open browser
     },
-  },
-  build: {
-    outDir: "dist/spa",
-  },
-  plugins: [react()],
-  resolve: {
+    resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
       "@shared": path.resolve(__dirname, "./src/shared"),
     },
   },
-}));
-
-// Express dev middleware removed (server folder deleted) – pure client build.
- 
+});

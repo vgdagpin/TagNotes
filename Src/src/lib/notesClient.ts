@@ -1,4 +1,4 @@
-import { Note, Section } from '@shared/models';
+import type { Note, Section } from '@/shared/models';
 import { pickNotesDirectory, getPersistedDirectoryHandle, writeNoteFile, writeNoteFileAtPath, readAllNoteFiles, deleteNoteFile, upsertIndexEntry, removeIndexEntry } from './fs-access';
 import { v4 as uuid } from 'uuid';
 

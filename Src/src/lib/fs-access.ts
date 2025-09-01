@@ -2,7 +2,7 @@
 // Provides: pickNotesDirectory, getPersistedDirectoryHandle, writeNoteFile, readAllNoteFiles, revokeDirectoryHandle
 // Persists handle via IndexedDB using idb-keyval.
 
-import { NoteSummary } from '@shared/models';
+import type { NoteSummary } from '@/shared/models';
 import { set, get, del } from 'idb-keyval';
 
 const DIR_HANDLE_KEY = 'tagnotes.dirHandle';

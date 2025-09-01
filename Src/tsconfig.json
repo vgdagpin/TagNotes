@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "ES2022",
     "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
 
     /* Bundler mode */
@@ -17,33 +17,27 @@
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
 
-  /* Linting / Strictness */
-  "strict": true,
-  "noUnusedLocals": true,
-  "noUnusedParameters": true,
-  "noImplicitAny": true,
-  "noFallthroughCasesInSwitch": true,
-  "strictNullChecks": true,
-  "noImplicitThis": true,
-  "alwaysStrict": true,
-  "exactOptionalPropertyTypes": true,
-  "noUncheckedIndexedAccess": true,
-  "noImplicitOverride": true,
-  "useUnknownInCatchVariables": true,
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitAny": true,
+    "noFallthroughCasesInSwitch": true,
+    "strictNullChecks": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "useUnknownInCatchVariables": true,
 
-    /* Path mapping */
+     /* Path mapping */
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@shared/*": ["./src/shared/*"]
-    }
+    },
+    "types": ["node"]
   },
-  "include": [
-    "src/**/*",
-    "server/**/*",
-    "src/shared/**/*",
-    "vite.config.ts",
-    "vite.config.server.ts"
-  ],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src", "vite.config.ts"]
 }

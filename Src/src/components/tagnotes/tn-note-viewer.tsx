@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
-
 import { Edit, Plus, X, FileText, Hash, Type, Trash, Code } from '../tn-icons';
 
 import TnSection from "./tn-section";
@@ -50,11 +49,11 @@ const TnNoteViewer = ({ noteId, onDeleteNote, onTitleUpdated }: TnNoteViewerProp
     let active = true;
     const fetchNote = async () => {
       try {
-    if (!localMode) return;
-    const data = await getLocalNote(noteId);
-    if (!active) return;
-    setNote(data);
-      } catch {}
+        if (!localMode) return;
+        const data = await getLocalNote(noteId);
+        if (!active) return;
+        setNote(data);
+      } catch { }
     };
     fetchNote();
     return () => { active = false; };
@@ -77,22 +76,22 @@ const TnNoteViewer = ({ noteId, onDeleteNote, onTitleUpdated }: TnNoteViewerProp
   const addTagToNote = (noteId: string, tag: string) => {
     const trimmedTag = tag.trim().toLowerCase();
     if (!trimmedTag) return;
-  if (!isLocalMode()) return;
-  addTagLocal(noteId, trimmedTag).then(updated => setNote(updated));
+    if (!isLocalMode()) return;
+    addTagLocal(noteId, trimmedTag).then(updated => setNote(updated));
   };
 
   // Delete note
   const deleteNote = (noteId: string) => {
     if (!window.confirm("Are you sure you want to delete this note? This action cannot be undone.")) return;
-  if (!isLocalMode()) return;
-  deleteNoteLocal(noteId).then(() => onDeleteNote?.call(null, noteId));
+    if (!isLocalMode()) return;
+    deleteNoteLocal(noteId).then(() => onDeleteNote?.call(null, noteId));
   };
 
   // Remove tag from note
   const removeTagFromNote = (noteId: string, tagToRemove: string) => {
     if (!window.confirm(`Remove tag \"${tagToRemove}\" from this note?`)) return;
-  if (!isLocalMode()) return;
-  removeTagLocal(noteId, tagToRemove).then(updated => setNote(updated));
+    if (!isLocalMode()) return;
+    removeTagLocal(noteId, tagToRemove).then(updated => setNote(updated));
   };
 
   // Handle image paste
@@ -119,8 +118,8 @@ const TnNoteViewer = ({ noteId, onDeleteNote, onTitleUpdated }: TnNoteViewerProp
 
   // Add image section
   const addImageSection = (noteId: string, imageData: string) => {
-  if (!isLocalMode()) return;
-  addImageSectionLocal(noteId, imageData).then(updated => setNote(updated));
+    if (!isLocalMode()) return;
+    addImageSectionLocal(noteId, imageData).then(updated => setNote(updated));
   };
 
   const handleSetTitle = (title: string) => {
@@ -134,12 +133,12 @@ const TnNoteViewer = ({ noteId, onDeleteNote, onTitleUpdated }: TnNoteViewerProp
   };
 
   const saveTitle = () => {
-  if (!isLocalMode()) return;
-  const newTitle = note.title;
-  updateTitleLocal(note.id, newTitle).then(updated => {
-    setNote(updated);
-    onTitleUpdated?.(updated.id, updated.title);
-  });
+    if (!isLocalMode()) return;
+    const newTitle = note.title;
+    updateTitleLocal(note.id, newTitle).then(updated => {
+      setNote(updated);
+      onTitleUpdated?.(updated.id, updated.title);
+    });
     setEditingTitle(false);
   };
 
@@ -160,21 +159,21 @@ const TnNoteViewer = ({ noteId, onDeleteNote, onTitleUpdated }: TnNoteViewerProp
 
   // Add new section to note
   const addSection = (noteId: string, sectionType: Section["type"]) => {
-  if (!isLocalMode()) return;
-  addSectionLocal(noteId, sectionType).then(updated => setNote(updated));
+    if (!isLocalMode()) return;
+    addSectionLocal(noteId, sectionType).then(updated => setNote(updated));
   };
 
   // Save section changes
   const saveSection = (sectionId: string, content: string, language?: string | null) => {
-  if (!isLocalMode()) return;
-  updateSectionContentLocal(note.id, sectionId, content).then(updated => setNote(updated));
-  if (language) updateSectionLanguageLocal(note.id, sectionId, language).then(updated => setNote(updated));
+    if (!isLocalMode()) return;
+    updateSectionContentLocal(note.id, sectionId, content).then(updated => setNote(updated));
+    if (language) updateSectionLanguageLocal(note.id, sectionId, language).then(updated => setNote(updated));
   };
 
   // Delete section
   const deleteSection = (sectionId: string) => {
-  if (!isLocalMode()) return;
-  import("@/lib/notesClient").then(m => m.deleteSection(note.id, sectionId).then(updated => setNote(updated)));
+    if (!isLocalMode()) return;
+    import("@/lib/notesClient").then(m => m.deleteSection(note.id, sectionId).then(updated => setNote(updated)));
   };
 
   return (
@@ -235,7 +234,7 @@ const TnNoteViewer = ({ noteId, onDeleteNote, onTitleUpdated }: TnNoteViewerProp
 
               {/* Tags Section */}
               <div className="space-y-2">
-               
+
 
                 <div className="space-y-2">
                   {/* Tag Input */}
@@ -396,7 +395,7 @@ const TnNoteViewer = ({ noteId, onDeleteNote, onTitleUpdated }: TnNoteViewerProp
           </div>
         </div>
       </div>
-  </div>
+    </div>
   );
 };
 
