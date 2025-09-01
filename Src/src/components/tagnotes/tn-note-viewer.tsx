@@ -387,35 +387,32 @@ const TnNoteViewer = ({ noteId, onDeleteNote, onTitleUpdated }: TnNoteViewerProp
               <Plus className="h-4 w-4" />
               Add New Section
             </div>
-            <Select
-              onValueChange={(value) =>
-                addSection(noteId, value as Section["type"])
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Choose section type..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="text">
-                  <div className="flex items-center gap-2">
-                    <Type className="h-4 w-4" />
-                    Plain Text
-                  </div>
-                </SelectItem>
-                <SelectItem value="markdown">
-                  <div className="flex items-center gap-2">
-                    <Hash className="h-4 w-4" />
-                    Markdown
-                  </div>
-                </SelectItem>
-                <SelectItem value="code">
-                  <div className="flex items-center gap-2">
-                    <Code className="h-4 w-4" />
-                    Code
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2 w-full">
+              <Button
+                variant="outline"
+                className="flex-1 flex items-center gap-2"
+                onClick={() => addSection(noteId, "text")}
+              >
+                <Type className="h-4 w-4" />
+                Plain Text
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1 flex items-center gap-2"
+                onClick={() => addSection(noteId, "markdown")}
+              >
+                <Hash className="h-4 w-4" />
+                Markdown
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1 flex items-center gap-2"
+                onClick={() => addSection(noteId, "code")}
+              >
+                <Code className="h-4 w-4" />
+                Code
+              </Button>
+            </div>
             <p className="text-xs text-muted-foreground mt-2">
               Paste images from clipboard to add image sections
             </p>
