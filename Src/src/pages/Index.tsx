@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 
 import { Search, Plus, FileText, Trash, Settings } from "@/components/tn-icons";
 
-import { cn } from "@/lib/utils";
+import { cn, formatDateTimeShort } from "@/lib/utils";
 import {
   listNotes as listNotesLocal,
   createNote as createLocalNote,
@@ -38,7 +38,7 @@ export default function Index() {
   const [activeView, setActiveView] = useState<string | null>(null); // note id or 'settings'
   const [missingNote, setMissingNote] = useState<boolean | undefined>(undefined);
   const navigate = useNavigate();
-  const { noteId } = useParams();  
+  const { noteId } = useParams();
 
   useEffect(() => {
     let localMode = isLocalMode();
@@ -66,8 +66,8 @@ export default function Index() {
   useEffect(() => {
     if (isDirectoryLoaded) {
       const list = async () => {
-        console.log('list 1');
         const list = await listNotesLocal();
+        list.sort((a, b) => (b.createdAt as any).getTime() - (a.createdAt as any).getTime());
         setAllNotes(list);
       };
 
@@ -86,13 +86,14 @@ export default function Index() {
 
       try {
         if (isDirectoryLoaded) {
-        console.log('list 2');
           let list = allNotes;
 
           if (searchQuery && searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
             list = list.filter(n => n.title.toLowerCase().includes(q) || n.tags.some(t => t.includes(q)));
           }
+          // Ensure sorted by createdAt desc (newest first)
+          list = [...list].sort((a, b) => (b.createdAt as any).getTime() - (a.createdAt as any).getTime());
           if (active) setFilteredNotes(list);
         } else {
           if (active) setFilteredNotes([]);
@@ -109,7 +110,7 @@ export default function Index() {
       if (!noteId || noteId === 'settings') return;
       if (!isDirectoryLoaded) return; // wait for local mode (don't mark missing yet)
       const exists = allNotes.some(n => n.id === noteId);
-      
+
       setMissingNote(!exists);
     };
 
@@ -125,15 +126,15 @@ export default function Index() {
     }
     const note = await createLocalNote({});
 
-    setAllNotes(prev => [{ 
-      id: note.id, 
-      title: note.title, 
-      createdAt: note.createdAt, 
-      updatedAt: note.updatedAt, 
-      location: note.location!, 
-      tags: note.tags 
+    setAllNotes(prev => [{
+      id: note.id,
+      title: note.title,
+      createdAt: note.createdAt,
+      updatedAt: note.updatedAt,
+      location: note.location!,
+      tags: note.tags
     }, ...prev]);
-    
+
     setActiveView(note.id);
     navigate(`/${note.id}`);
   };
@@ -180,7 +181,7 @@ export default function Index() {
     } else {
       setMissingNote(false);
     }
-  }, [noteId, activeView]);  
+  }, [noteId, activeView]);
 
   return (
     <div className="h-screen bg-background flex overflow-hidden">
@@ -238,6 +239,7 @@ export default function Index() {
                       <h3 className="font-normal text-sm text-foreground truncate">
                         {note.title}
                       </h3>
+                      <span className="text-xs text-muted-foreground">{formatDateTimeShort(note.createdAt)}</span>
                     </div>
                     <Button
                       variant="ghost"
@@ -290,17 +292,17 @@ export default function Index() {
                 </div>
               </div>
             ) : activeView === 'settings' ? (
-                  <TnSettings onClose={closeSettings} />
+              <TnSettings onClose={closeSettings} />
             ) : missingNote === true ? (
-                <NotFound />
+              <NotFound />
             ) : (
-                  <TnNoteViewer
-                    noteId={activeView}
-                    onTitleUpdated={(id, newTitle) => {
-                      setAllNotes(prev => prev.map(n => n.id === id ? { ...n, title: newTitle } : n));
-                    }}
-                  />
-                )
+              <TnNoteViewer
+                noteId={activeView}
+                onTitleUpdated={(id, newTitle) => {
+                  setAllNotes(prev => prev.map(n => n.id === id ? { ...n, title: newTitle } : n));
+                }}
+              />
+            )
           ) : (activeView === 'settings' ? (<TnSettings onClose={closeSettings} />) : <></>)
 
         }
