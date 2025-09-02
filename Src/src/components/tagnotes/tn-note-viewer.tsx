@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { Edit, Plus, X, FileText, Hash, Type, Trash, Code } from '@/components/tn-icons';
+import { Edit, Plus, FileText, Hash, Type, Code } from '@/components/tn-icons';
 
 import TnSection from "./tn-section";
 import { Note, Section } from "@shared/models";
@@ -11,7 +11,6 @@ import {
   getNote as getLocalNote,
   addTag as addTagLocal,
   removeTag as removeTagLocal,
-  deleteNote as deleteNoteLocal,
   addSection as addSectionLocal,
   addImageSection as addImageSectionLocal,
   updateSectionContent as updateSectionContentLocal,
@@ -29,11 +28,10 @@ import TnTagsPicker from "./tn-tags-picker";
 type TnNoteViewerProps = {
   noteId: string;
 
-  onDeleteNote?: (noteId: string) => void;
   onTitleUpdated?: (noteId: string, newTitle: string) => void;
 };
 
-const TnNoteViewer = ({ noteId, onDeleteNote, onTitleUpdated }: TnNoteViewerProps) => {
+const TnNoteViewer = ({ noteId, onTitleUpdated }: TnNoteViewerProps) => {
   const [note, setNote] = useState<Note>({
     id: noteId,
     title: "",
@@ -78,14 +76,6 @@ const TnNoteViewer = ({ noteId, onDeleteNote, onTitleUpdated }: TnNoteViewerProp
      const updated = await removeTagLocal(noteId, tag);
      setNote(updated);
   }
-
-  // Delete note
-  const deleteNote = (noteId: string) => {
-    if (!window.confirm("Are you sure you want to delete this note? This action cannot be undone.")) return;
-    if (!isLocalMode()) return;
-    deleteNoteLocal(noteId).then(() => onDeleteNote?.call(null, noteId));
-  };
-
 
   // Handle image paste
   const handleImagePaste = (noteId: string, event: ClipboardEvent) => {
@@ -227,16 +217,6 @@ const TnNoteViewer = ({ noteId, onDeleteNote, onTitleUpdated }: TnNoteViewerProp
 
               <TnTagsPicker note={note} onAddTag={handleAddTag} onRemoveTag={handleRemoveTag} />
 
-            </div>
-
-            <div className="flex items-center gap-2 ml-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => deleteNote(noteId)}
-              >
-                <Trash className="h-4 w-4" />
-              </Button>
             </div>
           </div>
         </div>

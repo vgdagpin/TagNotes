@@ -278,7 +278,6 @@ export default function Index() {
             ) : (
                   <TnNoteViewer
                     noteId={activeView}
-                    onDeleteNote={deleteNote}
                     onTitleUpdated={(id, newTitle) => {
                       setNotes(prev => prev.map(n => n.id === id ? { ...n, title: newTitle } : n));
                     }}
