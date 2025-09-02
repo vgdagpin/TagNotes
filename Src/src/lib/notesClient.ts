@@ -1,11 +1,11 @@
-import type { Note, Section } from '@/shared/models';
+import type { Note, NoteSummary, Section } from '@/shared/models';
 import { pickNotesDirectory, getPersistedDirectoryHandle, writeNoteFile, writeNoteFileAtPath, readAllNoteFiles, deleteNoteFile, upsertIndexEntry, removeIndexEntry } from './fs-access';
 import { v4 as uuid } from 'uuid';
 
 export { getPersistedDirectoryHandle } from './fs-access';
 
 let dirHandle: FileSystemDirectoryHandle | null = null;
-let loadedIndex: (Note & { location?: string })[] = [];
+let loadedIndex: NoteSummary[] = [];
 let indexLoaded = false;
 
 async function ensureHandleLoaded() {
@@ -70,16 +70,16 @@ async function refreshIndex() {
     indexLoaded = true;
 }
 
-export async function listNotes(search?: string) {
+export async function listNotes(search?: string): Promise<NoteSummary[]> {
     await ensureHandleLoaded();
-    if (!dirHandle) return [] as { id: string; title: string }[];
+    if (!dirHandle) return [] as NoteSummary[];
     if (!indexLoaded) await refreshIndex();
     let list = loadedIndex;
     if (search && search.trim()) {
         const q = search.toLowerCase();
         list = list.filter(n => n.title.toLowerCase().includes(q) || n.tags.some(t => t.includes(q)));
     }
-    return list.map(n => ({ id: n.id, title: n.title }));
+    return list.map(n => ({ id: n.id, title: n.title, createdAt: n.createdAt, updatedAt: n.updatedAt, location: n.location, tags: n.tags }));
 }
 
 async function readNote(id: string): Promise<Note | null> {
@@ -131,8 +131,11 @@ export async function createNote(initial?: Partial<Note>): Promise<Note> {
         updatedAt: new Date()
     };
     const location = await writeNoteFile(dirHandle, serialize(newNote));
+
+    newNote.location = location;
+
     await upsertIndexEntry(dirHandle, { id: newNote.id, title: newNote.title, createdAt: newNote.createdAt, updatedAt: newNote.updatedAt, location, tags: newNote.tags } as any);
-    loadedIndex.unshift({ id: newNote.id, title: newNote.title, createdAt: newNote.createdAt, updatedAt: newNote.updatedAt, sections: [], tags: newNote.tags, location });
+    loadedIndex.unshift({ id: newNote.id, title: newNote.title, createdAt: newNote.createdAt, updatedAt: newNote.updatedAt, tags: newNote.tags, location });
     indexLoaded = true;
     return newNote;
 }

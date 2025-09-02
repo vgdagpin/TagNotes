@@ -29,6 +29,7 @@ export interface Note {
   title: string;
   createdAt: Date;
   updatedAt: Date;
+  location?: string;
   sections: Section[];
   tags: string[];
 }

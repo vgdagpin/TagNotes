@@ -23,6 +23,7 @@ import TnSettings from "@/components/tagnotes/tn-settings";
 import { Hamburger, NavDrawer, NavDrawerBody, NavDrawerHeader } from "@fluentui/react-components";
 
 import './Index.css'
+import { NoteSummary } from "@/shared/models";
 
 export default function Index() {
   // Notes list (id/title only). Full note loaded in viewer.
@@ -30,7 +31,9 @@ export default function Index() {
 
   const [isDirectoryLoaded, setIsDirectoryLoaded] = useState<boolean | undefined>(undefined);
 
-  const [notes, setNotes] = useState<{ id: string; title: string }[]>([]);
+  const [allNotes, setAllNotes] = useState<NoteSummary[]>([]);
+  const [filteredNotes, setFilteredNotes] = useState<NoteSummary[]>([]);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [activeView, setActiveView] = useState<string | null>(null); // note id or 'settings'
   const [missingNote, setMissingNote] = useState(false); // true when noteId param doesn't resolve
@@ -63,8 +66,9 @@ export default function Index() {
   useEffect(() => {
     if (isDirectoryLoaded) {
       const list = async () => {
+        console.log('list 1');
         const list = await listNotesLocal();
-        setNotes(list);
+        setAllNotes(list);
       };
 
       list();
@@ -82,19 +86,36 @@ export default function Index() {
 
       try {
         if (isDirectoryLoaded) {
-          const list = await listNotesLocal(searchQuery);
-          if (active) setNotes(list);
+        console.log('list 2');
+          let list = allNotes;
+
+          if (searchQuery && searchQuery.trim()) {
+            const q = searchQuery.toLowerCase();
+            list = list.filter(n => n.title.toLowerCase().includes(q) || n.tags.some(t => t.includes(q)));
+          }
+          if (active) setFilteredNotes(list);
         } else {
-          if (active) setNotes([]);
+          if (active) setFilteredNotes([]);
         }
       } catch { /* ignore */ }
     };
     const h = setTimeout(run, 300);
     return () => { active = false; clearTimeout(h); };
-  }, [searchQuery, isDirectoryLoaded]);
+  }, [searchQuery, isDirectoryLoaded, allNotes]);
 
-  // Generate new ID
-  // generateId removed (no server fallback)
+  // When a noteId is in the URL but note metadata list doesn't include it yet, attempt preload
+  useEffect(() => {
+    const preload = async () => {
+      if (!noteId || noteId === 'settings') return;
+      if (!isDirectoryLoaded) return; // wait for local mode (don't mark missing yet)
+      const exists = allNotes.some(n => n.id === noteId);
+      
+      setMissingNote(!exists);
+    };
+
+    preload();
+
+  }, [noteId, allNotes, searchQuery, isDirectoryLoaded]);
 
   // Create new note with default section
   const createNote = async () => {
@@ -103,7 +124,16 @@ export default function Index() {
       return;
     }
     const note = await createLocalNote({});
-    setNotes(prev => [{ id: note.id, title: note.title }, ...prev]);
+
+    setAllNotes(prev => [{ 
+      id: note.id, 
+      title: note.title, 
+      createdAt: note.createdAt, 
+      updatedAt: note.updatedAt, 
+      location: note.location!, 
+      tags: note.tags 
+    }, ...prev]);
+    
     setActiveView(note.id);
     navigate(`/${note.id}`);
   };
@@ -131,7 +161,7 @@ export default function Index() {
     if (!window.confirm("Are you sure you want to delete this note? This action cannot be undone.")) return;
     if (!isDirectoryLoaded) return;
     await deleteLocalNote(noteId);
-    setNotes(prev => prev.filter(n => n.id !== noteId));
+    setAllNotes(prev => prev.filter(n => n.id !== noteId));
     if (activeView === noteId) { setActiveView(null); navigate('/'); }
   };
 
@@ -150,19 +180,7 @@ export default function Index() {
     } else {
       setMissingNote(false);
     }
-  }, [noteId, activeView]);
-
-  // When a noteId is in the URL but note metadata list doesn't include it yet, attempt preload
-  useEffect(() => {
-    const preload = async () => {
-      if (!noteId || noteId === 'settings') return;
-      if (!isDirectoryLoaded) return; // wait for local mode (don't mark missing yet)
-      const exists = notes.some(n => n.id === noteId);
-      
-      setMissingNote(!exists);
-    };
-    preload();
-  }, [noteId, notes, isDirectoryLoaded]);
+  }, [noteId, activeView]);  
 
   return (
     <div className="h-screen bg-background flex overflow-hidden">
@@ -201,12 +219,12 @@ export default function Index() {
 
           {/* Notes List */}
           <div className="flex-1 overflow-y-auto">
-            {notes.length === 0 ? (
+            {filteredNotes.length === 0 ? (
               <div className="p-4 text-center text-muted-foreground">
                 {searchQuery ? "No notes found" : "No notes yet"}
               </div>
             ) : (
-              notes.map((note) => (
+              filteredNotes.map((note) => (
                 <div
                   key={note.id}
                   onClick={() => openNote(note.id)}
@@ -279,7 +297,7 @@ export default function Index() {
                   <TnNoteViewer
                     noteId={activeView}
                     onTitleUpdated={(id, newTitle) => {
-                      setNotes(prev => prev.map(n => n.id === id ? { ...n, title: newTitle } : n));
+                      setAllNotes(prev => prev.map(n => n.id === id ? { ...n, title: newTitle } : n));
                     }}
                   />
                 )
