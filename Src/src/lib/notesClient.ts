@@ -210,15 +210,19 @@ export async function addImageSection(noteId: string, imageData: string) {
     });
 }
 
-export async function updateSectionContent(noteId: string, sectionId: string, content: string) {
-    return update(noteId, n => {
-        const s = n.sections.find(s => s.id === sectionId); if (s) s.content = content;
-    });
-}
+export async function updateSectionContent(noteId: string, sectionId: string, content: string, language?: string | null | undefined) {
 
-export async function updateSectionLanguage(noteId: string, sectionId: string, language: string) {
     return update(noteId, n => {
-        const s = n.sections.find(s => s.id === sectionId); if (s) (s as any).language = language;
+        const s = n.sections.find(s => s.id === sectionId); 
+        if (s)  {
+            s.content = content;
+
+            if (language) {
+                if (s.language != language) {
+                    s.language = language;
+                }
+            }
+        }            
     });
 }
 

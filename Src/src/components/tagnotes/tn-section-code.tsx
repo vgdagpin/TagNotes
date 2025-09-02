@@ -2,7 +2,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { Textarea } from "@/components/ui/textarea";
+
+import { Field, Textarea } from "@fluentui/react-components";
+
 import {
   Select,
   SelectContent,
@@ -14,7 +16,7 @@ import {
 import { Edit, Save, Trash, Code, ChevronDown, ChevronUp, } from '@/components/tn-icons';
 
 import { Section } from "@shared/models";
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 
 type TnSectionCodeProps = {
   section: Section;
@@ -28,7 +30,7 @@ const TnSectionCode = ({
   onSaveSection,
   onDeleteSection,
 }: TnSectionCodeProps) => {
-  const [sectionEdit, setSectionEdit] = useState(!section.content.trim());
+  const [sectionEdit, setSectionEdit] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const [language, setLanguage] = useState<string | undefined>(section.language || undefined);
@@ -42,10 +44,10 @@ const TnSectionCode = ({
       ? codeLines.slice(0, 5).join("\n")
       : section.content;
 
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     onSaveSection?.call(null, content, language || undefined);
     setSectionEdit(false);
-  };
+  }, [content, language]);
 
   const handleDelete = () => {
     if (
@@ -57,21 +59,6 @@ const TnSectionCode = ({
 
     onDeleteSection?.call(null, section.id);
   };
-
-  // Add keyboard shortcut for section editing
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === "s" && sectionEdit) {
-        e.preventDefault();
-        handleSave();
-      }
-    };
-
-    if (sectionEdit) {
-      document.addEventListener("keydown", handleKeyDown);
-      return () => document.removeEventListener("keydown", handleKeyDown);
-    }
-  }, [sectionEdit, content, language]);
 
   return (
     <div className="note-section border border-border rounded-md pb-2 pl-2 pr-2 group hover:border-accent transition-colors min-w-0 w-full">
@@ -134,13 +121,21 @@ const TnSectionCode = ({
               <SelectItem value="bash">Bash</SelectItem>
             </SelectContent>
           </Select>
-          <Textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder={`Enter ${section.type} content...`}
-            className="min-h-32 resize-vertical"
-            autoFocus={!section.content.trim()}
-          />
+          <Field size="medium">
+            <Textarea
+              value={content}
+              onChange={(_, data) => setContent(data.value)}
+              placeholder={`Enter ${section.type} content...`}
+              className=""
+              onKeyDown={(ev) => {
+                if (ev.ctrlKey && ev.key === "s") {
+                  ev.preventDefault();
+                  handleSave();
+                }
+              }}
+              autoFocus={!section.content.trim()}
+            />
+          </Field>
         </div>
       ) : (
         <div className="prose max-w-none min-w-0 w-full">

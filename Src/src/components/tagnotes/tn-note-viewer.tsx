@@ -14,7 +14,6 @@ import {
   addSection as addSectionLocal,
   addImageSection as addImageSectionLocal,
   updateSectionContent as updateSectionContentLocal,
-  updateSectionLanguage as updateSectionLanguageLocal,
   updateTitle as updateTitleLocal,
   isLocalMode,
 } from "@/lib/notesClient";
@@ -148,9 +147,10 @@ const TnNoteViewer = ({ noteId, onTitleUpdated }: TnNoteViewerProps) => {
 
   // Save section changes
   const saveSection = (sectionId: string, content: string, language?: string | null) => {
-    if (!isLocalMode()) return;
-    updateSectionContentLocal(note.id, sectionId, content).then(updated => setNote(updated));
-    if (language) updateSectionLanguageLocal(note.id, sectionId, language).then(updated => setNote(updated));
+    const isDirectoryLoaded = isLocalMode();
+
+    if (!isDirectoryLoaded) return;
+    updateSectionContentLocal(note.id, sectionId, content, language).then(updated => setNote(updated));
   };
 
   // Delete section
