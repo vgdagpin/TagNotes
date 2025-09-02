@@ -69,17 +69,6 @@ const TnNoteViewer = ({ noteId, onDeleteNote, onTitleUpdated }: TnNoteViewerProp
     }).format(date);
   };
 
-  // Generate new ID
-  // generateId removed (no server-created placeholder sections)
-
-  // Add tag to note
-  const addTagToNote = (noteId: string, tag: string) => {
-    const trimmedTag = tag.trim().toLowerCase();
-    if (!trimmedTag) return;
-    if (!isLocalMode()) return;
-    addTagLocal(noteId, trimmedTag).then(updated => setNote(updated));
-  };
-
   const handleAddTag = async (tag: string) => {
      const updated = await addTagLocal(noteId, tag);
      setNote(updated);

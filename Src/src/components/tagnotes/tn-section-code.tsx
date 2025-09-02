@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { Edit, Save, Trash, Code, ChevronDown, ChevronUp, } from '../tn-icons'; 
+import { Edit, Save, Trash, Code, ChevronDown, ChevronUp, } from '@/components/tn-icons';
 
 import { Section } from "@shared/models";
 import { useState, useEffect } from "react";
@@ -43,7 +43,7 @@ const TnSectionCode = ({
       : section.content;
 
   const handleSave = () => {
-  onSaveSection?.call(null, content, language || undefined);
+    onSaveSection?.call(null, content, language || undefined);
     setSectionEdit(false);
   };
 
