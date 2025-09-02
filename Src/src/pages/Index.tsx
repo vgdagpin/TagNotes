@@ -17,9 +17,14 @@ import {
 } from "@/lib/notesClient";
 import TnNoteViewer from "@/components/tagnotes/tn-note-viewer";
 import TnSettings from "@/components/tagnotes/tn-settings";
+import { Hamburger, NavDrawer, NavDrawerBody, NavDrawerHeader, Tooltip } from "@fluentui/react-components";
+
+import './Index.css'
 
 export default function Index() {
   // Notes list (id/title only). Full note loaded in viewer.
+  const [navOpen, setNavOpen] = useState(true);
+
   const [notes, setNotes] = useState<{ id: string; title: string }[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeView, setActiveView] = useState<string | null>(null); // note id or 'settings'
@@ -68,7 +73,7 @@ export default function Index() {
     setActiveView(noteId);
     navigate(`/${noteId}`);
     if (isLocalMode()) {
-      try { await getLocalNote(noteId); } catch {}
+      try { await getLocalNote(noteId); } catch { }
     }
   };
 
@@ -87,7 +92,7 @@ export default function Index() {
     if (!isLocalMode()) return;
     await deleteLocalNote(noteId);
     setNotes(prev => prev.filter(n => n.id !== noteId));
-  if (activeView === noteId) { setActiveView(null); navigate('/'); }
+    if (activeView === noteId) { setActiveView(null); navigate('/'); }
   };
 
   // Auto-open first note if none selected
@@ -121,10 +126,8 @@ export default function Index() {
 
   return (
     <div className="h-screen bg-background flex overflow-hidden">
-      {/* Left Sidebar - Navigation */}
-      <div className="w-80 border-r border-border bg-card flex flex-col">
-        {/* Header */}
-        <div className="p-4 border-b border-border">
+      <NavDrawer open={navOpen} type={'inline'}>
+        <NavDrawerHeader>
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-xl font-semibold text-foreground flex items-center gap-2">
               <FileText className="h-5 w-5" />
@@ -139,8 +142,9 @@ export default function Index() {
             >
               <Settings className="h-4 w-4" />
             </Button>
+
+
           </div>
-          {/* Removed 'Use Local Folder' button; directory selection now in Settings */}
 
           {/* Search */}
           <div className="relative">
@@ -152,58 +156,61 @@ export default function Index() {
               className="pl-9"
             />
           </div>
-        </div>
+        </NavDrawerHeader>
+        <NavDrawerBody>
 
-        {/* Notes List */}
-        <div className="flex-1 overflow-y-auto">
-          {notes.length === 0 ? (
-            <div className="p-4 text-center text-muted-foreground">
-              {searchQuery ? "No notes found" : "No notes yet"}
-            </div>
-          ) : (
-            notes.map((note) => (
-              <div
-                key={note.id}
-                onClick={() => openNote(note.id)}
-                className={cn(
-                  "px-2 py-1 border-b border-border cursor-pointer hover:bg-accent transition-colors group",
-                  activeView === note.id && "bg-accent",
-                )}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-normal text-sm text-foreground truncate">
-                      {note.title}
-                    </h3>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteNote(note.id);
-                    }}
-                  >
-                    <Trash className="h-3 w-3" />
-                  </Button>
-                </div>
+          {/* Notes List */}
+          <div className="flex-1 overflow-y-auto">
+            {notes.length === 0 ? (
+              <div className="p-4 text-center text-muted-foreground">
+                {searchQuery ? "No notes found" : "No notes yet"}
               </div>
-            ))
-          )}
-        </div>
+            ) : (
+              notes.map((note) => (
+                <div
+                  key={note.id}
+                  onClick={() => openNote(note.id)}
+                  className={cn(
+                    "px-2 py-1 border-b border-border cursor-pointer hover:bg-accent transition-colors group",
+                    activeView === note.id && "bg-accent",
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-normal text-sm text-foreground truncate">
+                        {note.title}
+                      </h3>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteNote(note.id);
+                      }}
+                    >
+                      <Trash className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
 
-        {/* Create Note Button */}
-        <div className="p-4 border-t border-border">
-          <Button onClick={createNote} className="w-full">
-            <Plus className="h-4 w-4 mr-2" />
-            New Note
-          </Button>
-        </div>
-      </div>
+          {/* Create Note Button */}
+          <div className="p-4 border-t border-border">
+            <Button onClick={createNote} className="w-full">
+              <Plus className="h-4 w-4 mr-2" />
+              New Note
+            </Button>
+          </div>
 
-      {/* Right Main Content - Single View */}
+        </NavDrawerBody>
+      </NavDrawer>
+
       <div className="flex-1 flex flex-col min-w-0">
+        <Hamburger onClick={() => setNavOpen(!navOpen)} />
         {!activeView ? (
           <div className="flex-1 flex items-center justify-center text-center">
             <div>

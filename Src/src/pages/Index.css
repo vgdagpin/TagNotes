@@ -1,0 +1,6 @@
+.notes-viewer-container {
+    flex: 1;
+    padding: 16px;
+    display: grid;
+    justify-content: flex-start;
+}

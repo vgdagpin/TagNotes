@@ -2,9 +2,8 @@ import { useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 
-import { Edit, Plus, X, FileText, Hash, Type, Trash, Code } from '../tn-icons';
+import { Edit, Plus, X, FileText, Hash, Type, Trash, Code } from '@/components/tn-icons';
 
 import TnSection from "./tn-section";
 import { Note, Section } from "@shared/models";
@@ -25,6 +24,7 @@ import TnSectionMarkdown from "./tn-section-markdown";
 import TnSectionImage from "./tn-section-image";
 
 import "./tn-note-viewer.css";
+import TnTagsPicker from "./tn-tags-picker";
 
 type TnNoteViewerProps = {
   noteId: string;
@@ -80,6 +80,16 @@ const TnNoteViewer = ({ noteId, onDeleteNote, onTitleUpdated }: TnNoteViewerProp
     addTagLocal(noteId, trimmedTag).then(updated => setNote(updated));
   };
 
+  const handleAddTag = async (tag: string) => {
+     const updated = await addTagLocal(noteId, tag);
+     setNote(updated);
+  };
+
+  const handleRemoveTag = async (tag: string) => {
+     const updated = await removeTagLocal(noteId, tag);
+     setNote(updated);
+  }
+
   // Delete note
   const deleteNote = (noteId: string) => {
     if (!window.confirm("Are you sure you want to delete this note? This action cannot be undone.")) return;
@@ -87,12 +97,6 @@ const TnNoteViewer = ({ noteId, onDeleteNote, onTitleUpdated }: TnNoteViewerProp
     deleteNoteLocal(noteId).then(() => onDeleteNote?.call(null, noteId));
   };
 
-  // Remove tag from note
-  const removeTagFromNote = (noteId: string, tagToRemove: string) => {
-    if (!window.confirm(`Remove tag \"${tagToRemove}\" from this note?`)) return;
-    if (!isLocalMode()) return;
-    removeTagLocal(noteId, tagToRemove).then(updated => setNote(updated));
-  };
 
   // Handle image paste
   const handleImagePaste = (noteId: string, event: ClipboardEvent) => {
@@ -232,69 +236,8 @@ const TnNoteViewer = ({ noteId, onDeleteNote, onTitleUpdated }: TnNoteViewerProp
                 Updated {formatDate(note.updatedAt)}
               </p>
 
-              {/* Tags Section */}
-              <div className="space-y-2">
+              <TnTagsPicker note={note} onAddTag={handleAddTag} onRemoveTag={handleRemoveTag} />
 
-
-                <div className="space-y-2">
-                  {/* Tag Input */}
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Add tag..."
-                      className="flex-1"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          const input = e.target as HTMLInputElement;
-                          addTagToNote(noteId, input.value);
-                          input.value = "";
-                        }
-                      }}
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => {
-                        const input = (e.target as HTMLElement)
-                          .closest(".flex")
-                          ?.querySelector("input") as HTMLInputElement;
-                        if (input) {
-                          addTagToNote(noteId, input.value);
-                          input.value = "";
-                        }
-                      }}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  {/* Display Tags */}
-                  <div className="flex flex-wrap gap-2">
-                    {note.tags.map((tag) => (
-                      <Badge
-                        key={tag}
-                        variant="secondary"
-                        className="flex items-center gap-1"
-                      >
-                        <Hash className="h-3 w-3" />
-                        {tag}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
-                          onClick={() => removeTagFromNote(noteId, tag)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </Badge>
-                    ))}
-                    {note.tags.length === 0 && (
-                      <span className="text-muted-foreground italic text-sm">
-                        No tags yet
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
             </div>
 
             <div className="flex items-center gap-2 ml-4">
