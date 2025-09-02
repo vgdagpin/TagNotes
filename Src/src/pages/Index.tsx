@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from 'react-router-dom';
+import NotFound from '@/pages/NotFound';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 // Tabs removed – single note view
 
-import { Search, Plus, FileText, Trash, Settings } from "../components/tn-icons";
+import { Search, Plus, FileText, Trash, Settings } from "@/components/tn-icons";
 
 import { cn } from "@/lib/utils";
 import {
@@ -12,12 +13,14 @@ import {
   createNote as createLocalNote,
   getNote as getLocalNote,
   isLocalMode,
+  getPersistedDirectoryHandle,
   tryRestoreLocalMode,
   deleteNote as deleteLocalNote
 } from "@/lib/notesClient";
+
 import TnNoteViewer from "@/components/tagnotes/tn-note-viewer";
 import TnSettings from "@/components/tagnotes/tn-settings";
-import { Hamburger, NavDrawer, NavDrawerBody, NavDrawerHeader, Tooltip } from "@fluentui/react-components";
+import { Hamburger, NavDrawer, NavDrawerBody, NavDrawerHeader } from "@fluentui/react-components";
 
 import './Index.css'
 
@@ -25,40 +28,77 @@ export default function Index() {
   // Notes list (id/title only). Full note loaded in viewer.
   const [navOpen, setNavOpen] = useState(true);
 
+  const [isDirectoryLoaded, setIsDirectoryLoaded] = useState<boolean | undefined>(undefined);
+
   const [notes, setNotes] = useState<{ id: string; title: string }[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeView, setActiveView] = useState<string | null>(null); // note id or 'settings'
+  const [missingNote, setMissingNote] = useState(false); // true when noteId param doesn't resolve
   const navigate = useNavigate();
-  const { noteId } = useParams();
+  const { noteId } = useParams();  
+
+  useEffect(() => {
+    let localMode = isLocalMode();
+
+    const tryGetPersistedDirectoryHandle = async () => {
+      const dir = await getPersistedDirectoryHandle();
+
+      setIsDirectoryLoaded(!!dir);
+    }
+
+    if (!localMode) {
+      tryGetPersistedDirectoryHandle();
+    }
+
+    setIsDirectoryLoaded(localMode);
+
+    // Listen for directory selection changes -> refresh list immediately
+    const onDirChanged = async () => {
+      setIsDirectoryLoaded(true);
+    };
+
+    window.addEventListener('tagnotes:directoryChanged', onDirChanged as any);
+  }, []);
+
+  useEffect(() => {
+    if (isDirectoryLoaded) {
+      const list = async () => {
+        const list = await listNotesLocal();
+        setNotes(list);
+      };
+
+      list();
+    }
+  }, [isDirectoryLoaded]);
 
   // Fetch notes from API on mount
   useEffect(() => {
     let active = true;
     const run = async () => {
       // First attempt silent restore once (only on initial mount or when no local mode yet)
-      if (!isLocalMode()) {
+      if (isDirectoryLoaded === undefined) {
         try { await tryRestoreLocalMode(); } catch { /* ignore */ }
       }
+
       try {
-        if (isLocalMode()) {
+        if (isDirectoryLoaded) {
           const list = await listNotesLocal(searchQuery);
           if (active) setNotes(list);
         } else {
-          // no server mode; wait for user to enable local folder
           if (active) setNotes([]);
         }
       } catch { /* ignore */ }
     };
     const h = setTimeout(run, 300);
     return () => { active = false; clearTimeout(h); };
-  }, [searchQuery]);
+  }, [searchQuery, isDirectoryLoaded]);
 
   // Generate new ID
   // generateId removed (no server fallback)
 
   // Create new note with default section
   const createNote = async () => {
-    if (!isLocalMode()) {
+    if (!isDirectoryLoaded) {
       alert('Select a local folder first');
       return;
     }
@@ -72,7 +112,7 @@ export default function Index() {
   const openNote = async (noteId: string) => {
     setActiveView(noteId);
     navigate(`/${noteId}`);
-    if (isLocalMode()) {
+    if (isDirectoryLoaded) {
       try { await getLocalNote(noteId); } catch { }
     }
   };
@@ -89,7 +129,7 @@ export default function Index() {
   // Delete note
   const deleteNote = async (noteId: string) => {
     if (!window.confirm("Are you sure you want to delete this note? This action cannot be undone.")) return;
-    if (!isLocalMode()) return;
+    if (!isDirectoryLoaded) return;
     await deleteLocalNote(noteId);
     setNotes(prev => prev.filter(n => n.id !== noteId));
     if (activeView === noteId) { setActiveView(null); navigate('/'); }
@@ -101,9 +141,14 @@ export default function Index() {
     if (noteId) {
       if (noteId === 'settings') {
         if (activeView !== 'settings') setActiveView('settings');
+        setMissingNote(false);
       } else if (activeView !== noteId) {
         setActiveView(noteId);
+        // optimistic reset; actual existence checked in preload effect
+        setMissingNote(false);
       }
+    } else {
+      setMissingNote(false);
     }
   }, [noteId, activeView]);
 
@@ -111,18 +156,13 @@ export default function Index() {
   useEffect(() => {
     const preload = async () => {
       if (!noteId || noteId === 'settings') return;
-      if (!isLocalMode()) return; // wait for local mode
+      if (!isDirectoryLoaded) return; // wait for local mode (don't mark missing yet)
       const exists = notes.some(n => n.id === noteId);
-      if (!exists) {
-        try {
-          const full = await getLocalNote(noteId);
-          // add minimal metadata if fetch succeeded
-          setNotes(prev => [{ id: full.id, title: full.title }, ...prev]);
-        } catch { /* ignore */ }
-      }
+      
+      setMissingNote(!exists);
     };
     preload();
-  }, [noteId, notes]);
+  }, [noteId, notes, isDirectoryLoaded]);
 
   return (
     <div className="h-screen bg-background flex overflow-hidden">
@@ -131,7 +171,7 @@ export default function Index() {
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-xl font-semibold text-foreground flex items-center gap-2">
               <FileText className="h-5 w-5" />
-              TagNotes {isLocalMode() && <span className="text-xs text-green-600 border rounded px-1">Local</span>}
+              TagNotes {isDirectoryLoaded && <span className="text-xs text-green-600 border rounded px-1">Local</span>}
             </h1>
             <Button
               variant="ghost"
@@ -198,46 +238,57 @@ export default function Index() {
             )}
           </div>
 
-          {/* Create Note Button */}
-          <div className="p-4 border-t border-border">
-            <Button onClick={createNote} className="w-full">
-              <Plus className="h-4 w-4 mr-2" />
-              New Note
-            </Button>
-          </div>
+          {/* Create Note Button (only when local mode is active) */}
+          {isDirectoryLoaded && (
+            <div className="p-4 border-t border-border">
+              <Button onClick={createNote} className="w-full">
+                <Plus className="h-4 w-4 mr-2" />
+                New Note
+              </Button>
+            </div>
+          )}
 
         </NavDrawerBody>
       </NavDrawer>
 
       <div className="flex-1 flex flex-col min-w-0">
         <Hamburger onClick={() => setNavOpen(!navOpen)} />
-        {!activeView ? (
-          <div className="flex-1 flex items-center justify-center text-center">
-            <div>
-              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h2 className="text-lg font-medium text-foreground mb-2">
-                No notes open
-              </h2>
-              <p className="text-muted-foreground mb-4">
-                Select a note from the sidebar to get started
-              </p>
-              <Button onClick={createNote}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create your first note
-              </Button>
-            </div>
-          </div>
-        ) : activeView === 'settings' ? (
-          <TnSettings onClose={closeSettings} />
-        ) : (
-          <TnNoteViewer
-            noteId={activeView}
-            onDeleteNote={deleteNote}
-            onTitleUpdated={(id, newTitle) => {
-              setNotes(prev => prev.map(n => n.id === id ? { ...n, title: newTitle } : n));
-            }}
-          />
-        )}
+        {
+          isDirectoryLoaded ? (
+            !activeView ? (
+              <div className="flex-1 flex items-center justify-center text-center">
+                <div>
+                  <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h2 className="text-lg font-medium text-foreground mb-2">
+                    No notes open
+                  </h2>
+                  <p className="text-muted-foreground mb-4">
+                    Select a note from the sidebar to get started
+                  </p>
+                  <Button onClick={createNote}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create your first note
+                  </Button>
+                </div>
+              </div>
+            ) : activeView === 'settings' ? (
+                  <TnSettings onClose={closeSettings} />
+            ) : missingNote ? (
+                <NotFound />
+            ) : (
+                  <TnNoteViewer
+                    noteId={activeView}
+                    onDeleteNote={deleteNote}
+                    onTitleUpdated={(id, newTitle) => {
+                      setNotes(prev => prev.map(n => n.id === id ? { ...n, title: newTitle } : n));
+                    }}
+                  />
+                )
+          ) : (activeView === 'settings' ? (<TnSettings onClose={closeSettings} />) : <></>)
+
+        }
+
+
       </div>
     </div>
   );

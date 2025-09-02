@@ -2,6 +2,8 @@ import type { Note, Section } from '@/shared/models';
 import { pickNotesDirectory, getPersistedDirectoryHandle, writeNoteFile, writeNoteFileAtPath, readAllNoteFiles, deleteNoteFile, upsertIndexEntry, removeIndexEntry } from './fs-access';
 import { v4 as uuid } from 'uuid';
 
+export { getPersistedDirectoryHandle } from './fs-access';
+
 let dirHandle: FileSystemDirectoryHandle | null = null;
 let loadedIndex: (Note & { location?: string })[] = [];
 let indexLoaded = false;
@@ -15,11 +17,17 @@ async function ensureHandleLoaded() {
     }
 }
 
-export function isLocalMode() { return !!dirHandle; }
+export function isLocalMode() { 
+    return dirHandle != null;
+}
 
 export async function enableLocalMode() {
     dirHandle = await pickNotesDirectory();
     await refreshIndex();
+    try {
+        const name = (dirHandle as any)?.name || '';
+        window.dispatchEvent(new CustomEvent('tagnotes:directoryChanged', { detail: { name } }));
+    } catch {}
 }
 
 // Attempt to restore previously persisted directory handle silently.
@@ -62,7 +70,7 @@ async function refreshIndex() {
     indexLoaded = true;
 }
 
-export async function listNotes(search: string) {
+export async function listNotes(search?: string) {
     await ensureHandleLoaded();
     if (!dirHandle) return [] as { id: string; title: string }[];
     if (!indexLoaded) await refreshIndex();
