@@ -36,7 +36,7 @@ export default function Index() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeView, setActiveView] = useState<string | null>(null); // note id or 'settings'
-  const [missingNote, setMissingNote] = useState(false); // true when noteId param doesn't resolve
+  const [missingNote, setMissingNote] = useState<boolean | undefined>(undefined);
   const navigate = useNavigate();
   const { noteId } = useParams();  
 
@@ -291,7 +291,7 @@ export default function Index() {
               </div>
             ) : activeView === 'settings' ? (
                   <TnSettings onClose={closeSettings} />
-            ) : missingNote ? (
+            ) : missingNote === true ? (
                 <NotFound />
             ) : (
                   <TnNoteViewer
