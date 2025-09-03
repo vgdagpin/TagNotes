@@ -16,29 +16,27 @@ type TnTagsPickerProps = {
 };
 
 const TnTagsPicker = ({ noteId, noteTags, directoryLoaded }: TnTagsPickerProps) => {
-    const [tagsUpdateFromHere, setTagsUpdateFromHere] = useState(false);
     const [isDirLoaded, setIsDirLoaded] = useState<boolean | undefined>(directoryLoaded);
 
     const [tags, setTags] = useState<string[]>([]);
     const [inputValue, setInputValue] = useState("");
     const [selectedTags, setSelectedTags] = useState<string[]>(noteTags);
-    const onOptionSelect: TagPickerProps["onOptionSelect"] = (_, data) => {
+    const onOptionSelect: TagPickerProps["onOptionSelect"] = async (_, data) => {
         if (data.value === "no-matches") {
             return;
         }
-        setTagsUpdateFromHere(true);
 
         setSelectedTags(data.selectedOptions);
 
         console.log("Option selected:", data.value, data.selectedOptions);
 
+        setInputValue("");
+
         if (data.selectedOptions.includes(data.value)) {
-            //addTagToNote(data.value);
+            await addTagLocal(noteId, data.value);
         } else {
             removeTagFromNote(data.value);
-        }
-
-        setInputValue("");
+        }        
     };
 
     const children = useTagPickerFilter({
@@ -75,29 +73,6 @@ const TnTagsPicker = ({ noteId, noteTags, directoryLoaded }: TnTagsPickerProps) 
         fetchTags();
     }, []);
 
-    useEffect(() => {
-        // if (tagsUpdateFromHere) {
-        //     setTagsUpdateFromHere(false);
-        //     return;
-        // }
-
-        // Skip if arrays contain the same items (order-insensitive)
-        const a = selectedTags;
-        const b = noteTags;
-        if (a.length === b.length) {
-            const as = [...a].sort();
-            const bs = [...b].sort();
-            let same = true;
-            for (let i = 0; i < as.length; i++) {
-                if (as[i] !== bs[i]) { same = false; break; }
-            }
-            if (same) return;
-        }
-
-        setSelectedTags(noteTags);
-        console.log('tags updated', noteTags, selectedTags);
-    }, [noteTags, selectedTags, tagsUpdateFromHere]);
-
     // Remove tag from note
     const removeTagFromNote = async (tagToRemove: string) => {
         if (!isDirLoaded) return;
@@ -106,7 +81,7 @@ const TnTagsPicker = ({ noteId, noteTags, directoryLoaded }: TnTagsPickerProps) 
     };
 
     useEffect(() => {
-        console.log('note tags changes', noteTags);
+        setSelectedTags(noteTags);
     }, [noteTags]);
 
     const handleKeyDown = async (event: React.KeyboardEvent) => {
@@ -132,7 +107,6 @@ const TnTagsPicker = ({ noteId, noteTags, directoryLoaded }: TnTagsPickerProps) 
 
             const isAdded = await createTag(normalized);
 
-            setTagsUpdateFromHere(true);
             if (isAdded) {
                 setTags(prev => [...prev, normalized]);
             }
@@ -141,9 +115,9 @@ const TnTagsPicker = ({ noteId, noteTags, directoryLoaded }: TnTagsPickerProps) 
                 curr.includes(normalized) ? curr : [...curr, normalized]
             );
 
-            await addTagLocal(noteId, normalized);
-
             setInputValue("");
+
+            await addTagLocal(noteId, normalized);            
         }
     };
 
