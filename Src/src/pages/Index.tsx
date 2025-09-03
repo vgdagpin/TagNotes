@@ -15,8 +15,8 @@ import {
   deleteNote as deleteLocalNote
 } from "@/lib/notesClient";
 
-import TnNoteViewer from "@/components/tagnotes/tn-note-viewer";
-import TnSettings from "@/components/tagnotes/tn-settings";
+import TnNoteViewer from "@/components/ui/tn-note-viewer";
+import TnSettings from "@/components/ui/tn-settings";
 import { Hamburger } from "@fluentui/react-components";
 
 import './Index.css'

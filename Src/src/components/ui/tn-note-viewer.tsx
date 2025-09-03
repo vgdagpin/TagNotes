@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 
 import { Edit, Plus, FileText, Hash, Type, Code } from '@/components/tn-icons';
 
-import TnSection from "./tn-section";
+import TnSection from "@/components/ui/tn-section";
 import { Note, Section } from "@shared/models";
 import {
   getNote as getLocalNote,
@@ -18,7 +18,7 @@ import {
   isLocalMode,
 } from "@/lib/notesClient";
 import TnSectionCode from "./tn-section-code";
-import TnSectionMarkdown from "./tn-section-markdown";
+import TnSectionMarkdown from "@/components/ui/tn-section-markdown";
 import TnSectionImage from "./tn-section-image";
 
 import "./tn-note-viewer.css";

@@ -1,31 +1,28 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
-import { Edit, Save, Trash, Hash, } from '../tn-icons'; 
-
+import { Edit, Save, Trash, Type } from '@/components/tn-icons'; 
 import { Section } from "@shared/models";
 import { useState, useEffect } from "react";
-import Markdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
 
-type TnSectionMarkdownProps = {
+type TnSectionProps = {
   section: Section;
-  onSaveSection?: (content: string, language?: string) => void;
+  onSaveSection?: (content: string, language?: string | null) => void;
   onDeleteSection?: (sectionId: string) => void;
 };
 
-const TnSectionMarkdown = ({
+const TnSection = ({
   section,
-  // noteId removed
+  // noteId removed (no remote calls)
   onSaveSection,
   onDeleteSection,
-}: TnSectionMarkdownProps) => {
+}: TnSectionProps) => {
   const [sectionEdit, setSectionEdit] = useState(!section.content.trim());
 
   const [content, setContent] = useState(section.content);
 
   const handleSave = () => {
-  onSaveSection?.call(null, content, undefined);
+    onSaveSection?.call(null, content, null);
     setSectionEdit(false);
   };
 
@@ -59,7 +56,7 @@ const TnSectionMarkdown = ({
     <div className="note-section border border-border rounded-md pb-2 pl-2 pr-2 group hover:border-accent transition-colors min-w-0 w-full">
       <div className="flex items-center justify-between">
         <div className="flex items-center text-muted-foreground">
-          <Hash className="w-3" />
+          <Type className="w-3" />
         </div>
 
         {/* Hover controls */}
@@ -100,12 +97,14 @@ const TnSectionMarkdown = ({
           />
         </div>
       ) : (
-        <div className="prose max-w-none min-w-0 w-full overflow-hidden">
-          <Markdown remarkPlugins={[remarkGfm]}>{content}</Markdown>
+        <div className="whitespace-pre-wrap text-sm leading-relaxed">
+          {section.content || (
+            <span className="text-muted-foreground italic">Blank..</span>
+          )}
         </div>
       )}
     </div>
   );
 };
 
-export default TnSectionMarkdown;
+export default TnSection;
