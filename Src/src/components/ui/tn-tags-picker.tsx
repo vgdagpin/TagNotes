@@ -16,13 +16,17 @@ type TnTagsPickerProps = {
 };
 
 const TnTagsPicker = ({ note, onAddTag, onRemoveTag }: TnTagsPickerProps) => {
+    const [tagsUpdateFromHere, setTagsUpdateFromHere] = useState(false);
+
     const [tags, setTags] = useState<string[]>([]);
     const [inputValue, setInputValue] = useState("");
-    const [selectedTags, setSelectedTags] = useState<string[]>(note.tags || []);
-    const onOptionSelect: TagPickerProps["onOptionSelect"] = (e, data) => {
+    const [selectedTags, setSelectedTags] = useState<string[]>([]);
+    const onOptionSelect: TagPickerProps["onOptionSelect"] = (_, data) => {
         if (data.value === "no-matches") {
             return;
         }
+        setTagsUpdateFromHere(true);
+
         setSelectedTags(data.selectedOptions);
 
         console.log("Option selected:", data.value, data.selectedOptions);
@@ -34,7 +38,7 @@ const TnTagsPicker = ({ note, onAddTag, onRemoveTag }: TnTagsPickerProps) => {
         }
 
         setInputValue("");
-    };    
+    };
 
     const children = useTagPickerFilter({
         query: inputValue,
@@ -59,8 +63,16 @@ const TnTagsPicker = ({ note, onAddTag, onRemoveTag }: TnTagsPickerProps) => {
     }, []);
 
     useEffect(() => {
-        setSelectedTags(note.tags || []);
-    }, [note.tags]);
+        if (!tagsUpdateFromHere) {
+            setSelectedTags(note.tags || []);
+
+            console.log('tags updated', note.tags);
+
+            setTagsUpdateFromHere(false);
+        }
+
+
+    }, [note.tags, tagsUpdateFromHere]);
 
     // Add tag to note
     const addTagToNote = async (tag: string) => {
@@ -82,13 +94,15 @@ const TnTagsPicker = ({ note, onAddTag, onRemoveTag }: TnTagsPickerProps) => {
         if (!isLocalMode()) return;
 
         onRemoveTag?.(tagToRemove);
-    };    
+    };
 
     const handleKeyDown = (event: React.KeyboardEvent) => {
         if (event.key === "Enter" && inputValue) {
             //console.log(inputValue, selectedTags);
 
-            //addTagToNote(inputValue);
+            setTagsUpdateFromHere(true);
+
+            addTagToNote(inputValue);
             setInputValue("");
             setSelectedTags((curr) =>
                 curr.includes(inputValue) ? curr : [...curr, inputValue]
