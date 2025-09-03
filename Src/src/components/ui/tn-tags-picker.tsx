@@ -1,13 +1,13 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { useEffect, useState } from "react";
 
 import {
+    createTag,
+    getTags,
     isLocalMode,
 } from "@/lib/notesClient";
 
-import { Plus, X, Hash } from '@/components/tn-icons';
 import { Note } from "@/shared/models";
+import { Tag, TagPicker, TagPickerControl, TagPickerGroup, TagPickerInput, TagPickerList, TagPickerOption, TagPickerProps, useTagPickerFilter } from "@fluentui/react-components";
 
 type TnTagsPickerProps = {
     note: Note;
@@ -16,86 +16,112 @@ type TnTagsPickerProps = {
 };
 
 const TnTagsPicker = ({ note, onAddTag, onRemoveTag }: TnTagsPickerProps) => {
+    const [tags, setTags] = useState<string[]>([]);
+    const [inputValue, setInputValue] = useState("");
+    const [selectedTags, setSelectedTags] = useState<string[]>(note.tags || []);
+    const onOptionSelect: TagPickerProps["onOptionSelect"] = (e, data) => {
+        if (data.value === "no-matches") {
+            return;
+        }
+        setSelectedTags(data.selectedOptions);
+
+        console.log("Option selected:", data.value, data.selectedOptions);
+
+        if (data.selectedOptions.includes(data.value)) {
+            addTagToNote(data.value);
+        } else {
+            removeTagFromNote(data.value);
+        }
+
+        setInputValue("");
+    };    
+
+    const children = useTagPickerFilter({
+        query: inputValue,
+        options: tags,
+        noOptionsElement: (
+            <TagPickerOption value="no-matches">{inputValue}</TagPickerOption>
+        ),
+        renderOption: (option) => (
+            <TagPickerOption key={option} value={option}>{option}</TagPickerOption>
+        ),
+
+        filter: (option) => !selectedTags.includes(option) && option.toLowerCase().includes(inputValue.toLowerCase()),
+    });
+
+    useEffect(() => {
+        const fetchTags = async () => {
+            const tags = await getTags();
+
+            setTags(tags);
+        };
+        fetchTags();
+    }, []);
+
+    useEffect(() => {
+        setSelectedTags(note.tags || []);
+    }, [note.tags]);
+
     // Add tag to note
     const addTagToNote = async (tag: string) => {
         const trimmedTag = tag.trim().toLowerCase();
         if (!trimmedTag) return;
         if (!isLocalMode()) return;
 
+        const isAdded = await createTag(trimmedTag);
+
+        if (isAdded) {
+            setTags(prev => [...prev, trimmedTag]);
+        }
+
         onAddTag?.(trimmedTag);
     };
 
     // Remove tag from note
     const removeTagFromNote = async (tagToRemove: string) => {
-        if (!window.confirm(`Remove tag \"${tagToRemove}\" from this note?`)) return;
         if (!isLocalMode()) return;
 
         onRemoveTag?.(tagToRemove);
+    };    
+
+    const handleKeyDown = (event: React.KeyboardEvent) => {
+        if (event.key === "Enter" && inputValue) {
+            //console.log(inputValue, selectedTags);
+
+            //addTagToNote(inputValue);
+            setInputValue("");
+            setSelectedTags((curr) =>
+                curr.includes(inputValue) ? curr : [...curr, inputValue]
+            );
+        }
     };
 
     return (
-        <div className="space-y-2">
+        <>
+            <pre>{JSON.stringify(selectedTags)}</pre>
+            <TagPicker
+                onOptionSelect={onOptionSelect}
+                selectedOptions={selectedTags}
+            >
+                <TagPickerControl>
+                    <TagPickerGroup>
+                        {selectedTags.map((option) => (
+                            <Tag key={option} shape="rounded" value={option}>{option}</Tag>
+                        ))}
+                    </TagPickerGroup>
 
-
-            <div className="space-y-2">
-                {/* Tag Input */}
-                <div className="flex gap-2">
-                    <Input
+                    <TagPickerInput
+                        value={inputValue}
                         placeholder="Add tag..."
-                        className="flex-1"
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                                const input = e.target as HTMLInputElement;
-                                addTagToNote(input.value);
-                                input.value = "";
-                            }
-                        }}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        onKeyDown={handleKeyDown}
                     />
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                            const input = (e.target as HTMLElement)
-                                .closest(".flex")
-                                ?.querySelector("input") as HTMLInputElement;
-                            if (input) {
-                                addTagToNote(input.value);
-                                input.value = "";
-                            }
-                        }}
-                    >
-                        <Plus className="h-4 w-4" />
-                    </Button>
-                </div>
 
-                {/* Display Tags */}
-                <div className="flex flex-wrap gap-2">
-                    {note.tags.map((tag) => (
-                        <Badge
-                            key={tag}
-                            variant="secondary"
-                            className="flex items-center gap-1"
-                        >
-                            <Hash className="h-3 w-3" />
-                            {tag}
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
-                                onClick={() => removeTagFromNote(tag)}
-                            >
-                                <X className="h-3 w-3" />
-                            </Button>
-                        </Badge>
-                    ))}
-                    {note.tags.length === 0 && (
-                        <span className="text-muted-foreground italic text-sm">
-                            No tags yet
-                        </span>
-                    )}
-                </div>
-            </div>
-        </div>
+                </TagPickerControl>
+
+                <TagPickerList>{children}</TagPickerList>
+            </TagPicker>
+        </>
     );
 };
 

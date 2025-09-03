@@ -1,5 +1,5 @@
 import type { Note, NoteSummary, Section } from '@/shared/models';
-import { pickNotesDirectory, getPersistedDirectoryHandle, writeNoteFile, writeNoteFileAtPath, readAllNoteFiles, deleteNoteFile, upsertIndexEntry, removeIndexEntry } from './fs-access';
+import { pickNotesDirectory, getPersistedDirectoryHandle, writeNoteFile, writeNoteFileAtPath, readAllNoteFiles, deleteNoteFile, upsertIndexEntry, removeIndexEntry, loadTags, writeTag } from './fs-access';
 import { v4 as uuid } from 'uuid';
 
 export { getPersistedDirectoryHandle } from './fs-access';
@@ -53,6 +53,14 @@ export async function switchLocalDirectory(): Promise<string> {
 
 export function getCurrentDirectoryName(): string | null {
     return dirHandle ? (dirHandle as any).name || null : null;
+}
+
+export function getTags() {
+    return dirHandle ? loadTags(dirHandle) : Promise.resolve([]);
+}
+
+export function createTag(tag: string) {
+    return dirHandle ? writeTag(dirHandle, tag) : Promise.resolve(false);
 }
 
 async function refreshIndex() {

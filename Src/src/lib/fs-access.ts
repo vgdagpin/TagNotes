@@ -70,6 +70,7 @@ export async function hasRestorableHandle(): Promise<boolean> {
 // ---------------- Index & Notes Folder Management ----------------
 
 const INDEX_FILE = 'index.json';
+const TAGS_FILE = 'tags.txt';
 const NOTES_DIR = 'Notes';
 
 function formatDateFolder(d: Date): string {
@@ -84,7 +85,7 @@ export function computeNotePath(id: string, date: Date = new Date()): string {
 }
 
 // Internal index entry now uses only 'location'. Older index versions may still have 'path'; we migrate it.
-export interface NoteIndexEntry extends NoteSummary {}
+export interface NoteIndexEntry extends NoteSummary { }
 
 async function ensureNotesDir(handle: FileSystemDirectoryHandle): Promise<FileSystemDirectoryHandle> {
   const root = await handle.getDirectoryHandle(NOTES_DIR, { create: true });
@@ -119,6 +120,45 @@ async function loadIndexRaw(handle: FileSystemDirectoryHandle): Promise<NoteInde
         tags: n.tags || []
       }));
   } catch { return null; }
+}
+
+export async function loadTags(handle: FileSystemDirectoryHandle): Promise<string[]> {
+  try {
+    const fh = await handle.getFileHandle(TAGS_FILE, { create: true });
+    const txt = await readFileTextSafe(fh);
+    if (!txt) return [];
+
+    // Line-delimited format: one tag per line
+    const lines = txt.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const line of lines) {
+      const low = line.toLowerCase();
+      if (seen.has(low)) continue;
+      seen.add(low);
+      out.push(low);
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
+export async function writeTag(handle: FileSystemDirectoryHandle, tag: string) {
+  const t = (tag ?? '').trim().toLowerCase();
+  if (!t) return false; // ignore empty
+  const current = await loadTags(handle);
+  if (current.includes(t)) return false; // no duplicate, do nothing
+
+  const updated = [...current, t];
+  const fh = await handle.getFileHandle(TAGS_FILE, { create: true });
+  const ws = await fh.createWritable();
+  // Persist as newline-delimited list; avoids JSON overhead and matches user's format
+  const body = updated.join('\n') + '\n';
+  await ws.write(body);
+  await ws.close();
+
+  return true;
 }
 
 async function writeIndex(handle: FileSystemDirectoryHandle, entries: NoteIndexEntry[]) {
