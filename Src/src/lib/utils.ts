@@ -16,7 +16,6 @@ export function formatDateTimeShort(value: Date | string | number | undefined | 
   hours = hours % 12; if (hours === 0) hours = 12; // 12-hour clock
   const month = pad(d.getMonth() + 1);
   const day = pad(d.getDate());
-  const year = d.getFullYear();
   const mins = pad(d.getMinutes());
-  return `${month}/${day}/${year} ${pad(hours)}:${mins} ${ampm}`;
+  return `${month}/${day} ${pad(hours)}:${mins} ${ampm}`;
 }

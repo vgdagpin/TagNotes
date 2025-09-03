@@ -1,29 +1,27 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from 'react-router-dom';
 import NotFound from '@/pages/NotFound';
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 // Tabs removed – single note view
 
-import { Search, Plus, FileText, Trash, Settings } from "@/components/tn-icons";
+import { Plus, FileText } from "@/components/tn-icons";
 
-import { cn, formatDateTimeShort } from "@/lib/utils";
 import {
   listNotes as listNotesLocal,
   createNote as createLocalNote,
   getNote as getLocalNote,
   isLocalMode,
   getPersistedDirectoryHandle,
-  tryRestoreLocalMode,
   deleteNote as deleteLocalNote
 } from "@/lib/notesClient";
 
 import TnNoteViewer from "@/components/tagnotes/tn-note-viewer";
 import TnSettings from "@/components/tagnotes/tn-settings";
-import { Hamburger, NavDrawer, NavDrawerBody, NavDrawerHeader } from "@fluentui/react-components";
+import { Hamburger } from "@fluentui/react-components";
 
 import './Index.css'
 import { NoteSummary } from "@/shared/models";
+import TnNavigation from "@/components/ui/tn-navigation";
 
 export default function Index() {
   // Notes list (id/title only). Full note loaded in viewer.
@@ -32,9 +30,7 @@ export default function Index() {
   const [isDirectoryLoaded, setIsDirectoryLoaded] = useState<boolean | undefined>(undefined);
 
   const [allNotes, setAllNotes] = useState<NoteSummary[]>([]);
-  const [filteredNotes, setFilteredNotes] = useState<NoteSummary[]>([]);
 
-  const [searchQuery, setSearchQuery] = useState("");
   const [activeView, setActiveView] = useState<string | null>(null); // note id or 'settings'
   const [missingNote, setMissingNote] = useState<boolean | undefined>(undefined);
   const navigate = useNavigate();
@@ -75,35 +71,6 @@ export default function Index() {
     }
   }, [isDirectoryLoaded]);
 
-  // Fetch notes from API on mount
-  useEffect(() => {
-    let active = true;
-    const run = async () => {
-      // First attempt silent restore once (only on initial mount or when no local mode yet)
-      if (isDirectoryLoaded === undefined) {
-        try { await tryRestoreLocalMode(); } catch { /* ignore */ }
-      }
-
-      try {
-        if (isDirectoryLoaded) {
-          let list = allNotes;
-
-          if (searchQuery && searchQuery.trim()) {
-            const q = searchQuery.toLowerCase();
-            list = list.filter(n => n.title.toLowerCase().includes(q) || n.tags.some(t => t.includes(q)));
-          }
-          // Ensure sorted by createdAt desc (newest first)
-          list = [...list].sort((a, b) => (b.createdAt as any).getTime() - (a.createdAt as any).getTime());
-          if (active) setFilteredNotes(list);
-        } else {
-          if (active) setFilteredNotes([]);
-        }
-      } catch { /* ignore */ }
-    };
-    const h = setTimeout(run, 300);
-    return () => { active = false; clearTimeout(h); };
-  }, [searchQuery, isDirectoryLoaded, allNotes]);
-
   // When a noteId is in the URL but note metadata list doesn't include it yet, attempt preload
   useEffect(() => {
     const preload = async () => {
@@ -116,7 +83,7 @@ export default function Index() {
 
     preload();
 
-  }, [noteId, allNotes, searchQuery, isDirectoryLoaded]);
+  }, [noteId, allNotes, isDirectoryLoaded]);
 
   // Create new note with default section
   const createNote = async () => {
@@ -185,91 +152,16 @@ export default function Index() {
 
   return (
     <div className="h-screen bg-background flex overflow-hidden">
-      <NavDrawer open={navOpen} type={'inline'}>
-        <NavDrawerHeader>
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-xl font-semibold text-foreground flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              TagNotes {isDirectoryLoaded && <span className="text-xs text-green-600 border rounded px-1">Local</span>}
-            </h1>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={openSettings}
-              title="Open Settings"
-            >
-              <Settings className="h-4 w-4" />
-            </Button>
-
-
-          </div>
-
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search notes or tags..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-        </NavDrawerHeader>
-        <NavDrawerBody>
-
-          {/* Notes List */}
-          <div className="flex-1 overflow-y-auto">
-            {filteredNotes.length === 0 ? (
-              <div className="p-4 text-center text-muted-foreground">
-                {searchQuery ? "No notes found" : "No notes yet"}
-              </div>
-            ) : (
-              filteredNotes.map((note) => (
-                <div
-                  key={note.id}
-                  onClick={() => openNote(note.id)}
-                  className={cn(
-                    "px-2 py-1 border-b border-border cursor-pointer hover:bg-accent transition-colors group",
-                    activeView === note.id && "bg-accent",
-                  )}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-normal text-sm text-foreground truncate">
-                        {note.title}
-                      </h3>
-                      <span className="text-xs text-muted-foreground">{formatDateTimeShort(note.createdAt)}</span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteNote(note.id);
-                      }}
-                    >
-                      <Trash className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Create Note Button (only when local mode is active) */}
-          {isDirectoryLoaded && (
-            <div className="p-4 border-t border-border">
-              <Button onClick={createNote} className="w-full">
-                <Plus className="h-4 w-4 mr-2" />
-                New Note
-              </Button>
-            </div>
-          )}
-
-        </NavDrawerBody>
-      </NavDrawer>
+      <TnNavigation
+        openNavigation={navOpen}
+        directoryLoaded={isDirectoryLoaded}
+        notes={allNotes}
+        currentActiveView={activeView}
+        onOpenSettings={openSettings}
+        onOpenNote={openNote}
+        onDeleteNote={deleteNote}
+        onCreateNote={createNote}
+      />
 
       <div className="flex-1 flex flex-col min-w-0">
         <Hamburger onClick={() => setNavOpen(!navOpen)} />
