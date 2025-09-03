@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
     createTag,
@@ -53,6 +53,14 @@ const TnTagsPicker = ({ note, onAddTag, onRemoveTag }: TnTagsPickerProps) => {
         filter: (option) => !selectedTags.includes(option) && option.toLowerCase().includes(inputValue.toLowerCase()),
     });
 
+    // Locally compute filtered options to control Enter key behavior
+    const filteredOptions = useMemo(() => {
+        const q = inputValue.toLowerCase();
+        return tags.filter(
+            (option) => !selectedTags.includes(option) && option.toLowerCase().includes(q)
+        );
+    }, [tags, selectedTags, inputValue]);
+
     useEffect(() => {
         const fetchTags = async () => {
             const tags = await getTags();
@@ -98,14 +106,24 @@ const TnTagsPicker = ({ note, onAddTag, onRemoveTag }: TnTagsPickerProps) => {
 
     const handleKeyDown = (event: React.KeyboardEvent) => {
         if (event.key === "Enter" && inputValue) {
-            //console.log(inputValue, selectedTags);
+            const hasMatches = filteredOptions.length > 0;
+            if (hasMatches) {
+                // There are suggestions; let the picker handle selection instead of adding a new tag
+                return;
+            }
+
+            const normalized = inputValue.trim().toLowerCase();
+            if (!normalized) return;
+
+            // We're creating a new tag; prevent the default to avoid selecting the option
+            event.preventDefault();
+            event.stopPropagation();
 
             setTagsUpdateFromHere(true);
-
-            addTagToNote(inputValue);
+            addTagToNote(normalized);
             setInputValue("");
             setSelectedTags((curr) =>
-                curr.includes(inputValue) ? curr : [...curr, inputValue]
+                curr.includes(normalized) ? curr : [...curr, normalized]
             );
         }
     };
