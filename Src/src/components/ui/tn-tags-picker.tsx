@@ -1,26 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
 
 import {
+    addTag as addTagLocal,
+    removeTag as removeTagLocal,
     createTag,
     getTags,
-    isLocalMode,
 } from "@/lib/notesClient";
 
-import { Note } from "@/shared/models";
 import { Tag, TagPicker, TagPickerControl, TagPickerGroup, TagPickerInput, TagPickerList, TagPickerOption, TagPickerProps, useTagPickerFilter } from "@fluentui/react-components";
 
 type TnTagsPickerProps = {
-    note: Note;
-    onAddTag?: (tag: string) => void;
-    onRemoveTag?: (tag: string) => void;
+    noteId: string;
+    noteTags: string[];
+    directoryLoaded: boolean | undefined;
 };
 
-const TnTagsPicker = ({ note, onAddTag, onRemoveTag }: TnTagsPickerProps) => {
+const TnTagsPicker = ({ noteId, noteTags, directoryLoaded }: TnTagsPickerProps) => {
     const [tagsUpdateFromHere, setTagsUpdateFromHere] = useState(false);
+    const [isDirLoaded, setIsDirLoaded] = useState<boolean | undefined>(directoryLoaded);
 
     const [tags, setTags] = useState<string[]>([]);
     const [inputValue, setInputValue] = useState("");
-    const [selectedTags, setSelectedTags] = useState<string[]>([]);
+    const [selectedTags, setSelectedTags] = useState<string[]>(noteTags);
     const onOptionSelect: TagPickerProps["onOptionSelect"] = (_, data) => {
         if (data.value === "no-matches") {
             return;
@@ -32,7 +33,7 @@ const TnTagsPicker = ({ note, onAddTag, onRemoveTag }: TnTagsPickerProps) => {
         console.log("Option selected:", data.value, data.selectedOptions);
 
         if (data.selectedOptions.includes(data.value)) {
-            addTagToNote(data.value);
+            //addTagToNote(data.value);
         } else {
             removeTagFromNote(data.value);
         }
@@ -62,6 +63,10 @@ const TnTagsPicker = ({ note, onAddTag, onRemoveTag }: TnTagsPickerProps) => {
     }, [tags, selectedTags, inputValue]);
 
     useEffect(() => {
+        setIsDirLoaded(directoryLoaded);
+    }, [directoryLoaded]);
+
+    useEffect(() => {
         const fetchTags = async () => {
             const tags = await getTags();
 
@@ -71,66 +76,79 @@ const TnTagsPicker = ({ note, onAddTag, onRemoveTag }: TnTagsPickerProps) => {
     }, []);
 
     useEffect(() => {
-        if (!tagsUpdateFromHere) {
-            setSelectedTags(note.tags || []);
+        // if (tagsUpdateFromHere) {
+        //     setTagsUpdateFromHere(false);
+        //     return;
+        // }
 
-            console.log('tags updated', note.tags);
-
-            setTagsUpdateFromHere(false);
+        // Skip if arrays contain the same items (order-insensitive)
+        const a = selectedTags;
+        const b = noteTags;
+        if (a.length === b.length) {
+            const as = [...a].sort();
+            const bs = [...b].sort();
+            let same = true;
+            for (let i = 0; i < as.length; i++) {
+                if (as[i] !== bs[i]) { same = false; break; }
+            }
+            if (same) return;
         }
 
-
-    }, [note.tags, tagsUpdateFromHere]);
-
-    // Add tag to note
-    const addTagToNote = async (tag: string) => {
-        const trimmedTag = tag.trim().toLowerCase();
-        if (!trimmedTag) return;
-        if (!isLocalMode()) return;
-
-        const isAdded = await createTag(trimmedTag);
-
-        if (isAdded) {
-            setTags(prev => [...prev, trimmedTag]);
-        }
-
-        onAddTag?.(trimmedTag);
-    };
+        setSelectedTags(noteTags);
+        console.log('tags updated', noteTags, selectedTags);
+    }, [noteTags, selectedTags, tagsUpdateFromHere]);
 
     // Remove tag from note
     const removeTagFromNote = async (tagToRemove: string) => {
-        if (!isLocalMode()) return;
+        if (!isDirLoaded) return;
 
-        onRemoveTag?.(tagToRemove);
+        await removeTagLocal(noteId, tagToRemove);
     };
 
-    const handleKeyDown = (event: React.KeyboardEvent) => {
+    useEffect(() => {
+        console.log('note tags changes', noteTags);
+    }, [noteTags]);
+
+    const handleKeyDown = async (event: React.KeyboardEvent) => {
         if (event.key === "Enter" && inputValue) {
+            const normalized = inputValue.trim().toLowerCase();
+            if (!normalized) return;
+
+            if (normalized.length < 3 || normalized.length > 15) {
+                setInputValue("");
+                return;
+            }
+
+
             const hasMatches = filteredOptions.length > 0;
             if (hasMatches) {
                 // There are suggestions; let the picker handle selection instead of adding a new tag
                 return;
             }
 
-            const normalized = inputValue.trim().toLowerCase();
-            if (!normalized) return;
+            // // We're creating a new tag; prevent the default to avoid selecting the option
+            // event.preventDefault();
+            // event.stopPropagation();
 
-            // We're creating a new tag; prevent the default to avoid selecting the option
-            event.preventDefault();
-            event.stopPropagation();
+            const isAdded = await createTag(normalized);
 
             setTagsUpdateFromHere(true);
-            addTagToNote(normalized);
-            setInputValue("");
+            if (isAdded) {
+                setTags(prev => [...prev, normalized]);
+            }
+
             setSelectedTags((curr) =>
                 curr.includes(normalized) ? curr : [...curr, normalized]
             );
+
+            await addTagLocal(noteId, normalized);
+
+            setInputValue("");
         }
     };
 
     return (
         <>
-            <pre>{JSON.stringify(selectedTags)}</pre>
             <TagPicker
                 onOptionSelect={onOptionSelect}
                 selectedOptions={selectedTags}

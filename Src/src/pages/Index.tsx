@@ -190,6 +190,7 @@ export default function Index() {
             ) : (
               <TnNoteViewer
                 noteId={activeView}
+                directoryLoaded={isDirectoryLoaded}
                 onTitleUpdated={(id, newTitle) => {
                   setAllNotes(prev => prev.map(n => n.id === id ? { ...n, title: newTitle } : n));
                 }}

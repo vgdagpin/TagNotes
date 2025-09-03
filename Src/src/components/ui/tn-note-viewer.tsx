@@ -9,8 +9,6 @@ import TnSection from "@/components/ui/tn-section";
 import { Note, Section } from "@shared/models";
 import {
   getNote as getLocalNote,
-  addTag as addTagLocal,
-  removeTag as removeTagLocal,
   addSection as addSectionLocal,
   addImageSection as addImageSectionLocal,
   updateSectionContent as updateSectionContentLocal,
@@ -26,11 +24,15 @@ import TnTagsPicker from "./tn-tags-picker";
 
 type TnNoteViewerProps = {
   noteId: string;
+  directoryLoaded: boolean | undefined;
 
   onTitleUpdated?: (noteId: string, newTitle: string) => void;
 };
 
-const TnNoteViewer = ({ noteId, onTitleUpdated }: TnNoteViewerProps) => {
+const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerProps) => {
+  const [isDirLoaded, setIsDirLoaded] = useState<boolean | undefined>(directoryLoaded);
+  const [noteTags, setNoteTags] = useState<string[]>([]);
+
   const [note, setNote] = useState<Note>({
     id: noteId,
     title: "",
@@ -40,21 +42,30 @@ const TnNoteViewer = ({ noteId, onTitleUpdated }: TnNoteViewerProps) => {
     updatedAt: new Date(),
   });
   const [editingTitle, setEditingTitle] = useState(false);
-  const localMode = isLocalMode();
+
+  console.log('TnNoteViewer');
 
   useEffect(() => {
     let active = true;
     const fetchNote = async () => {
       try {
-        if (!localMode) return;
+        if (!isDirLoaded) return;
         const data = await getLocalNote(noteId);
         if (!active) return;
+        console.log('setNote from useEffect');
+
         setNote(data);
+
+        setNoteTags(data.tags);
       } catch { }
     };
     fetchNote();
     return () => { active = false; };
-  }, [noteId, localMode]);
+  }, [noteId, isDirLoaded]);
+
+  useEffect(() => {
+    setIsDirLoaded(directoryLoaded);
+  }, [directoryLoaded]);
 
   // Format date for display
   const formatDate = (date: Date) => {
@@ -65,16 +76,6 @@ const TnNoteViewer = ({ noteId, onTitleUpdated }: TnNoteViewerProps) => {
       minute: "2-digit",
     }).format(date);
   };
-
-  const handleAddTag = async (tag: string) => {
-     const updated = await addTagLocal(noteId, tag);
-     setNote(updated);
-  };
-
-  const handleRemoveTag = async (tag: string) => {
-     const updated = await removeTagLocal(noteId, tag);
-     setNote(updated);
-  }
 
   // Handle image paste
   const handleImagePaste = (noteId: string, event: ClipboardEvent) => {
@@ -215,7 +216,7 @@ const TnNoteViewer = ({ noteId, onTitleUpdated }: TnNoteViewerProps) => {
                 Updated {formatDate(note.updatedAt)}
               </p>
 
-              <TnTagsPicker note={note} onAddTag={handleAddTag} onRemoveTag={handleRemoveTag} />
+              <TnTagsPicker noteId={note.id} noteTags={noteTags} directoryLoaded={isDirLoaded} />
 
             </div>
           </div>
