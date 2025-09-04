@@ -1,14 +1,14 @@
-import { getNote, getPersistedDirectoryHandle, isLocalMode } from "@/lib/notesClient";
+import TnNoteViewer from "@/components/ui/tn-note-viewer";
+import { createNote, getPersistedDirectoryHandle, isLocalMode } from "@/lib/notesClient";
 import { Note } from "@/shared/models";
 import { useEffect, useState } from "react";
 
 export default function NewNote() {
 
     const [isDirLoaded, setIsDirLoaded] = useState<boolean | undefined>(undefined);
-    const [noteTags, setNoteTags] = useState<string[]>([]);
 
     const [note, setNote] = useState<Note>({
-        id: '85f6330c-05aa-4beb-9841-0fac893f573f',
+        id: '',
         title: "",
         tags: [],
         sections: [],
@@ -18,19 +18,16 @@ export default function NewNote() {
 
     useEffect(() => {
         let active = true;
-        const fetchNote = async () => {
+        const createNewNote = async () => {
             try {
                 if (!isDirLoaded) return;
-                const data = await getNote('85f6330c-05aa-4beb-9841-0fac893f573f');
-                if (!active) return;
-                console.log('setNote from useEffect');
 
-                setNote(data);
+                const newNote = await createNote({});                
 
-                setNoteTags(data.tags);
+                setNote(newNote);
             } catch { }
         };
-        fetchNote();
+        createNewNote();
         return () => { active = false; };
     }, [isDirLoaded]);
 
@@ -45,24 +42,16 @@ export default function NewNote() {
 
         if (!localMode) {
             tryGetPersistedDirectoryHandle();
-        }
-
-        setIsDirLoaded(localMode);
-
-        // Listen for directory selection changes -> refresh list immediately
-        const onDirChanged = async () => {
+        } else {
             setIsDirLoaded(true);
-        };
-
-        window.addEventListener('tagnotes:directoryChanged', onDirChanged as any);
+        }
     }, []);
 
     return (
         <div className="h-screen bg-background flex">
             <div className="flex-1 min-w-0">
                 {!isDirLoaded && <p>Directory is not loaded</p>}
-                {isDirLoaded && (<><pre>{JSON.stringify(noteTags, null, 2)}</pre>
-                    <pre>{JSON.stringify(note, null, 2)}</pre></>)}
+                {isDirLoaded && <TnNoteViewer noteId={note.id} directoryLoaded={isDirLoaded} />}
             </div>
         </div>
     );

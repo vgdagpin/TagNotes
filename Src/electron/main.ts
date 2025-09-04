@@ -16,6 +16,53 @@ function getTrayIconPath() {
   return path.join(__dirname, '..', 'public', 'favicon.ico');
 }
 
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    minWidth: 900,
+    minHeight: 600,
+    show: false,
+    icon: path.join(__dirname, '..', 'public', 'favicon.ico'),
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js'),
+      sandbox: true,
+      partition: 'persist:tagnotes',
+    },
+  });
+
+  // Start minimized to tray: do not auto-show on ready
+  // mainWindow.once('ready-to-show', () => mainWindow?.show());
+
+  if (isDev && process.env.VITE_DEV_SERVER_URL) {
+    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
+    // mainWindow.webContents.openDevTools({ mode: 'right' });
+  } else {
+    const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
+    mainWindow.loadFile(indexPath);
+  }
+
+  // Open external links in default browser
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: 'deny' };
+  });
+
+  // Hide to tray on minimize/close
+  (mainWindow as any).on('minimize', (e: Electron.Event) => {
+    e.preventDefault();
+    mainWindow?.hide();
+  });
+  mainWindow.on('close', (e) => {
+    if (!isQuitting) {
+      e.preventDefault();
+      mainWindow?.hide();
+    }
+  });
+}
+
 function openAddNoteWindow() {
   const viewer = new BrowserWindow({
     width: 900,
@@ -32,7 +79,7 @@ function openAddNoteWindow() {
   });
   if (isDev && process.env.VITE_DEV_SERVER_URL) {
     viewer.loadURL(`${process.env.VITE_DEV_SERVER_URL}/viewer/new`);
-    viewer.webContents.openDevTools({ mode: 'right' });
+    // viewer.webContents.openDevTools({ mode: 'right' });
   } else {
     const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
     // Use query param for BrowserRouter compatibility
@@ -78,52 +125,6 @@ function createTray() {
   return tray;
 }
 
-function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    minWidth: 900,
-    minHeight: 600,
-    show: false,
-    icon: path.join(__dirname, '..', 'public', 'favicon.ico'),
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js'),
-      sandbox: true,
-      partition: 'persist:tagnotes',
-    },
-  });
-
-  // Start minimized to tray: do not auto-show on ready
-  // mainWindow.once('ready-to-show', () => mainWindow?.show());
-
-  if (isDev && process.env.VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
-    mainWindow.webContents.openDevTools({ mode: 'right' });
-  } else {
-    const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
-    mainWindow.loadFile(indexPath);
-  }
-
-  // Open external links in default browser
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url);
-    return { action: 'deny' };
-  });
-
-  // Hide to tray on minimize/close
-  (mainWindow as any).on('minimize', (e: Electron.Event) => {
-    e.preventDefault();
-    mainWindow?.hide();
-  });
-  mainWindow.on('close', (e) => {
-    if (!isQuitting) {
-      e.preventDefault();
-      mainWindow?.hide();
-    }
-  });
-}
 
 app.whenReady().then(() => {
   createTray();
