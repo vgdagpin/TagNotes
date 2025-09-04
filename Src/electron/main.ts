@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, Tray, Menu } from 'electron';
+import { app, BrowserWindow, shell, Tray, Menu, globalShortcut } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -12,10 +12,32 @@ let tray: Tray | null = null;
 let isQuitting = false;
 
 function getTrayIconPath() {
-  // Use favicon from Vite public folder in dev, built dist in prod
-  const devIcon = path.join(__dirname, '..', 'public', 'favicon.ico');
-  const prodIcon = path.join(__dirname, '..', 'dist', 'favicon.ico');
-  return isDev ? devIcon : prodIcon;
+  // Use favicon.ico from public folder for Windows compatibility
+  return path.join(__dirname, '..', 'public', 'favicon.ico');
+}
+
+function openAddNoteWindow() {
+  const viewer = new BrowserWindow({
+    width: 900,
+    height: 700,
+    show: true,
+    icon: path.join(__dirname, '..', 'public', 'favicon.ico'),
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js'),
+      sandbox: true,
+      partition: 'persist:tagnotes',
+    },
+  });
+  if (isDev && process.env.VITE_DEV_SERVER_URL) {
+    viewer.loadURL(`${process.env.VITE_DEV_SERVER_URL}/viewer/new`);
+    viewer.webContents.openDevTools({ mode: 'right' });
+  } else {
+    const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
+    // Use query param for BrowserRouter compatibility
+    viewer.loadFile(indexPath, { search: '?route=/viewer/new' });
+  }
 }
 
 function createTray() {
@@ -25,7 +47,7 @@ function createTray() {
   tray.setToolTip('TagNotes');
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: 'Show',
+      label: 'TagNotes',
       click: () => {
         if (!mainWindow) createWindow();
         mainWindow?.show();
@@ -33,33 +55,7 @@ function createTray() {
     },
     {
       label: 'Add Note',
-      click: () => {
-        // Open a dedicated viewer window for creating a new note
-        const viewer = new BrowserWindow({
-          width: 900,
-          height: 700,
-          show: true,
-          webPreferences: {
-            nodeIntegration: false,
-            contextIsolation: true,
-            preload: path.join(__dirname, 'preload.js'),
-            sandbox: true,
-            partition: 'persist:tagnotes',
-          },
-        });
-        if (isDev && process.env.VITE_DEV_SERVER_URL) {
-          viewer.loadURL(`${process.env.VITE_DEV_SERVER_URL}/viewer/new`);
-          viewer.webContents.openDevTools({ mode: 'right' });
-        } else {
-          const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
-          // Use query param for BrowserRouter compatibility
-          viewer.loadFile(indexPath, { search: '?route=/viewer/new' });
-        }
-      }
-    },
-    {
-      label: 'Hide',
-      click: () => mainWindow?.hide(),
+      click: openAddNoteWindow
     },
     { type: 'separator' },
     {
@@ -89,6 +85,7 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     show: false,
+    icon: path.join(__dirname, '..', 'public', 'favicon.ico'),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -131,10 +128,18 @@ function createWindow() {
 app.whenReady().then(() => {
   createTray();
   createWindow();
+  // Register global shortcut CTRL+ALT+N
+  globalShortcut.register('Control+Alt+N', () => {
+    openAddNoteWindow();
+  });
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
     else mainWindow?.show();
   });
+});
+
+app.on('will-quit', () => {
+  globalShortcut.unregisterAll();
 });
 
 app.on('window-all-closed', () => {
