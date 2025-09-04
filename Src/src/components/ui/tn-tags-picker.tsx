@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 
 import {
-    addTag as addTagLocal,
-    removeTag as removeTagLocal,
-    createTag,
+    addTag,
+    removeTag,
     getTags,
 } from "@/lib/notesClient";
 
@@ -33,7 +32,7 @@ const TnTagsPicker = ({ noteId, noteTags, directoryLoaded }: TnTagsPickerProps) 
         setInputValue("");
 
         if (data.selectedOptions.includes(data.value)) {
-            await addTagLocal(noteId, data.value);
+            await addTag(noteId, data.value);
         } else {
             removeTagFromNote(data.value);
         }        
@@ -77,7 +76,7 @@ const TnTagsPicker = ({ noteId, noteTags, directoryLoaded }: TnTagsPickerProps) 
     const removeTagFromNote = async (tagToRemove: string) => {
         if (!isDirLoaded) return;
 
-        await removeTagLocal(noteId, tagToRemove);
+        await removeTag(noteId, tagToRemove);
     };
 
     useEffect(() => {
@@ -105,11 +104,9 @@ const TnTagsPicker = ({ noteId, noteTags, directoryLoaded }: TnTagsPickerProps) 
             // event.preventDefault();
             // event.stopPropagation();
 
-            const isAdded = await createTag(normalized);
+            // const isAdded = await createTag(normalized);
 
-            if (isAdded) {
-                setTags(prev => [...prev, normalized]);
-            }
+            setTags(prev => [...prev, normalized]);
 
             setSelectedTags((curr) =>
                 curr.includes(normalized) ? curr : [...curr, normalized]
@@ -117,7 +114,7 @@ const TnTagsPicker = ({ noteId, noteTags, directoryLoaded }: TnTagsPickerProps) 
 
             setInputValue("");
 
-            await addTagLocal(noteId, normalized);            
+            await addTag(noteId, normalized);            
         }
     };
 
