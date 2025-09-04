@@ -4,6 +4,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 import { Field, Textarea } from "@fluentui/react-components";
+import { Input } from "@/components/ui/input";
 
 import {
   Select,
@@ -22,7 +23,7 @@ type TnSectionCodeProps = {
   section: Section;
   isNew: boolean;
 
-  onSaveSection?: (content: string, language?: string) => void;
+  onSaveSection?: (content: string, language?: string, title?: string) => void;
   onDeleteSection?: (sectionId: string) => void;
 };
 
@@ -37,6 +38,7 @@ const TnSectionCode = ({
 
   const [language, setLanguage] = useState<string | undefined>(section.language || undefined);
   const [content, setContent] = useState(section.content);
+  const [title, setTitle] = useState(section.title || "");
 
   // Count lines and determine if folding is needed
   const codeLines = section.content.split("\n");
@@ -47,9 +49,9 @@ const TnSectionCode = ({
       : section.content;
 
   const handleSave = useCallback(() => {
-    onSaveSection?.call(null, content, language || undefined);
+    onSaveSection?.call(null, content, language || undefined, title);
     setSectionEdit(false);
-  }, [content, language]);
+  }, [content, language, title]);
 
   const handleDelete = () => {
     if (
@@ -103,6 +105,11 @@ const TnSectionCode = ({
       {/* Section Content */}
       {sectionEdit ? (
         <div className="space-y-2">
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Section title (optional)"
+          />
           <Select
             value={language || ''}
             onValueChange={(value) => setLanguage(value || undefined)}
@@ -141,6 +148,9 @@ const TnSectionCode = ({
         </div>
       ) : (
         <div className="prose max-w-none min-w-0 w-full">
+          {section.title?.trim() && (
+            <div className="font-semibold text-foreground mb-1">{section.title}</div>
+          )}
           <div className="relative min-w-0 w-full">
             <div className="min-w-0 w-full overflow-hidden">
               <SyntaxHighlighter

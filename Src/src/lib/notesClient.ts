@@ -209,9 +209,11 @@ export async function updateTitle(noteId: string, title: string) {
 }
 
 export async function addSection(noteId: string, sectionType: Section['type']) {
+    const defaultTitle = sectionType === 'image' ? 'Image' : sectionType.charAt(0).toUpperCase() + sectionType.slice(1);
     const newSection: Section = { 
             id: uuid(), 
             type: sectionType, 
+            title: defaultTitle,
             content: '', 
             createdAt: new Date(), 
             language: sectionType === 'code' ? 'javascript' : null
@@ -223,9 +225,16 @@ export async function addSection(noteId: string, sectionType: Section['type']) {
 }
 
 export async function addImageSection(noteId: string, imageData: string) {
-    return update(noteId, n => {
-        n.sections.push({ id: uuid(), type: 'image', content: 'Image', imageData, createdAt: new Date() });
-    });
+    const newImgSection: Section = { id: uuid(), 
+        type: 'image', 
+        content: 'Image', 
+        imageData, 
+        createdAt: new Date() 
+    };
+
+    await update(noteId, n => n.sections.push(newImgSection));
+
+    return newImgSection;
 }
 
 export async function updateSectionContent(noteId: string, sectionId: string, content: string, language?: string | null | undefined) {
@@ -241,6 +250,15 @@ export async function updateSectionContent(noteId: string, sectionId: string, co
                 }
             }
         }            
+    });
+}
+
+export async function updateSectionTitle(noteId: string, sectionId: string, title: string) {
+    return update(noteId, n => {
+        const s = n.sections.find(s => s.id === sectionId);
+        if (s) {
+            s.title = title;
+        }
     });
 }
 

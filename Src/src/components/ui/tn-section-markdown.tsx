@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 
 import { Edit, Save, Trash, Hash, } from '@/components/tn-icons'; 
 
@@ -12,7 +13,7 @@ type TnSectionMarkdownProps = {
   section: Section;
   isNew: boolean;
 
-  onSaveSection?: (content: string, language?: string) => void;
+  onSaveSection?: (content: string, language?: string, title?: string) => void;
   onDeleteSection?: (sectionId: string) => void;
 };
 
@@ -24,9 +25,10 @@ const TnSectionMarkdown = ({
 }: TnSectionMarkdownProps) => {
   const [sectionEdit, setSectionEdit] = useState(isNew);
   const [content, setContent] = useState(section.content);
+  const [title, setTitle] = useState(section.title || "");
 
   const handleSave = () => {
-  onSaveSection?.call(null, content, undefined);
+  onSaveSection?.call(null, content, undefined, title);
     setSectionEdit(false);
   };
 
@@ -92,6 +94,11 @@ const TnSectionMarkdown = ({
       {/* Section Content */}
       {sectionEdit ? (
         <div className="space-y-2">
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Section title (optional)"
+          />
           <Textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
@@ -102,6 +109,9 @@ const TnSectionMarkdown = ({
         </div>
       ) : (
         <div className="prose max-w-none min-w-0 w-full overflow-hidden">
+          {section.title?.trim() && (
+            <div className="font-semibold text-foreground mb-1">{section.title}</div>
+          )}
           <Markdown remarkPlugins={[remarkGfm]}>{content}</Markdown>
         </div>
       )}

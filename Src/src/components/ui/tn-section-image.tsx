@@ -1,20 +1,28 @@
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 
-import { Trash, Image } from '../tn-icons';
+import { Trash, Image, Edit, Save } from '../tn-icons';
 import { Section } from "@shared/models";
 import { DialogTitle } from "@radix-ui/react-dialog";
+import { useState } from "react";
 
 type TnSectionImageProps = {
   section: Section;
+  isNew: boolean;
+  onSaveSection?: (content: string, language?: string, title?: string) => void;
   onDeleteSection?: (sectionId: string) => void;
 };
 
-const TnSectionImage = ({
-  section,
-  // noteId removed
-  onDeleteSection,
-}: TnSectionImageProps) => {
+const TnSectionImage = ({ section, onSaveSection, onDeleteSection }: TnSectionImageProps) => {
+  const [sectionEdit, setSectionEdit] = useState(false);
+  const [title, setTitle] = useState(section.title || "");
+
+  const handleSave = () => {
+    onSaveSection?.call(null, section.content, undefined, title);
+    setSectionEdit(false);
+  };
+
   const handleDelete = () => {
     if (
       !window.confirm(
@@ -35,6 +43,19 @@ const TnSectionImage = ({
 
         {/* Hover controls */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {sectionEdit ? (
+            <Button variant="ghost" size="sm" onClick={() => handleSave()}>
+              <Save className="h-3 w-3" />
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSectionEdit(true)}
+            >
+              <Edit className="h-3 w-3" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"
@@ -47,6 +68,22 @@ const TnSectionImage = ({
       </div>
 
       {/* Section Content */}
+      {sectionEdit ? (
+        <div className="space-y-2">
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Section title (optional)"
+            className=""
+          />
+        </div>
+      ) : (
+        <>
+          {section.title?.trim() && (
+            <div className="font-semibold text-foreground mb-1">{section.title}</div>
+          )}
+        </>
+      )}
       {section.imageData && (
         <Dialog>
           <DialogTrigger asChild>

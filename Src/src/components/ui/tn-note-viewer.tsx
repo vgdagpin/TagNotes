@@ -12,6 +12,7 @@ import {
   addSection as addSectionLocal,
   addImageSection as addImageSectionLocal,
   updateSectionContent as updateSectionContentLocal,
+  updateSectionTitle as updateSectionTitleLocal,
   updateTitle as updateTitleLocal,
   deleteSection,
 } from "@/lib/notesClient";
@@ -98,13 +99,7 @@ const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerP
         break;
       }
     }
-  };
-
-  // Add image section
-  const addImageSection = (noteId: string, imageData: string) => {
-    if (!isDirLoaded) return;
-    addImageSectionLocal(noteId, imageData).then(updated => setNote(updated));
-  };
+  };  
 
   const handleSetTitle = (title: string) => {
     setNote((prev) => {
@@ -141,6 +136,19 @@ const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerP
     }
   }, [editingTitle]);
 
+  // Add image section
+  const addImageSection = async (noteId: string, imageData: string) => {
+    if (!isDirLoaded) return;
+    
+    const newImageSection = await addImageSectionLocal(noteId, imageData);
+    setNote((prev) => ({
+      ...prev,
+      sections: [...prev.sections, newImageSection],
+    }));
+
+    setNewSectionId(newImageSection.id);
+  };
+
   // Add new section to note
   const handleAddSection = async (noteId: string, sectionType: Section["type"]) => {
     if (!isDirLoaded) return;
@@ -156,10 +164,13 @@ const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerP
   };
 
   // Save section changes
-  const handleSaveSection = async (sectionId: string, content: string, language?: string | null) => {
+  const handleSaveSection = async (sectionId: string, content: string, language?: string | null, title?: string) => {
     if (!isDirLoaded) return;
 
-    const updated = await updateSectionContentLocal(note.id, sectionId, content, language);
+    let updated = await updateSectionContentLocal(note.id, sectionId, content, language);
+    if (typeof title === 'string') {
+      updated = await updateSectionTitleLocal(note.id, sectionId, title);
+    }
     setNote(updated);
     setNewSectionId(null);
   };
@@ -244,13 +255,13 @@ const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerP
             </div>
           ) : (
             note.sections.map((section) => {
-              if (section.type === "code") {
+      if (section.type === "code") {
                 return (
                   <TnSectionCode
                     key={section.id}
                     section={section}
                     isNew={section.id === newSectionId}
-                    onSaveSection={(content, language) => handleSaveSection(section.id, content, language)}
+        onSaveSection={(content, language, title) => handleSaveSection(section.id, content, language, title)}
                     onDeleteSection={(sectionId) => handleDeleteSection(sectionId)}
                   />
                 );
@@ -260,7 +271,7 @@ const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerP
                     key={section.id}
                     section={section}
                     isNew={section.id === newSectionId}
-                    onSaveSection={(content, language) => handleSaveSection(section.id, content, language)}
+        onSaveSection={(content, language, title) => handleSaveSection(section.id, content, language, title)}
                     onDeleteSection={(sectionId) => handleDeleteSection(sectionId)}
                   />
                 );
@@ -269,6 +280,8 @@ const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerP
                   <TnSectionImage
                     key={section.id}
                     section={section}
+                    isNew={section.id === newSectionId}
+                    onSaveSection={(content, language, title) => handleSaveSection(section.id, content, language, title)}
                     onDeleteSection={(sectionId) => handleDeleteSection(sectionId)}
                   />
                 );
@@ -278,7 +291,7 @@ const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerP
                     key={section.id}
                     section={section}
                     isNew={section.id === newSectionId}
-                    onSaveSection={(content, language) => handleSaveSection(section.id, content, language)}
+        onSaveSection={(content, language, title) => handleSaveSection(section.id, content, language, title)}
                     onDeleteSection={(sectionId) => handleDeleteSection(sectionId)}
                   />
                 );
