@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-  "target": "ES2022",
-  "module": "Node16",
-  "moduleResolution": "node16",
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "node",
     "outDir": "dist-electron",
     "rootDir": "electron",
     "allowJs": false,
@@ -13,6 +13,6 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["electron/main.ts"],
+  "include": ["electron/preload.ts"],
   "exclude": ["dist", "dist-electron"]
 }

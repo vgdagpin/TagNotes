@@ -51,8 +51,8 @@ function createTray() {
           viewer.webContents.openDevTools({ mode: 'detach' });
         } else {
           const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
-          // Load index.html and navigate to /viewer/new using hash or query workaround
-          viewer.loadFile(indexPath, { hash: '/viewer/new' });
+          // Use query param for BrowserRouter compatibility
+          viewer.loadFile(indexPath, { search: '?route=/viewer/new' });
         }
       }
     },
