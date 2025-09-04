@@ -209,10 +209,17 @@ export async function updateTitle(noteId: string, title: string) {
 }
 
 export async function addSection(noteId: string, sectionType: Section['type']) {
-    return update(noteId, n => {
-        const newSection: Section = { id: uuid(), type: sectionType, content: '', createdAt: new Date(), language: sectionType === 'code' ? 'javascript' : null };
-        n.sections.push(newSection);
-    });
+    const newSection: Section = { 
+            id: uuid(), 
+            type: sectionType, 
+            content: '', 
+            createdAt: new Date(), 
+            language: sectionType === 'code' ? 'javascript' : null
+        };
+
+    await update(noteId, n => n.sections.push(newSection));
+
+    return newSection;
 }
 
 export async function addImageSection(noteId: string, imageData: string) {

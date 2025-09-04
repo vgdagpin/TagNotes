@@ -1,24 +1,25 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
-import { Edit, Save, Trash, Type } from '@/components/tn-icons'; 
+import { Edit, Save, Trash, Type } from '@/components/tn-icons';
 import { Section } from "@shared/models";
 import { useState, useEffect } from "react";
 
 type TnSectionProps = {
   section: Section;
+  isNew: boolean;
+
   onSaveSection?: (content: string, language?: string | null) => void;
   onDeleteSection?: (sectionId: string) => void;
 };
 
 const TnSection = ({
   section,
-  // noteId removed (no remote calls)
+  isNew,
   onSaveSection,
   onDeleteSection,
 }: TnSectionProps) => {
-  const [sectionEdit, setSectionEdit] = useState(!section.content.trim());
-
+  const [sectionEdit, setSectionEdit] = useState(isNew);
   const [content, setContent] = useState(section.content);
 
   const handleSave = () => {

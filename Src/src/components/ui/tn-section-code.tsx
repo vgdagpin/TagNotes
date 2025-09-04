@@ -20,17 +20,19 @@ import { useState, useCallback } from "react";
 
 type TnSectionCodeProps = {
   section: Section;
+  isNew: boolean;
+
   onSaveSection?: (content: string, language?: string) => void;
   onDeleteSection?: (sectionId: string) => void;
 };
 
 const TnSectionCode = ({
   section,
-  // noteId removed
+  isNew,
   onSaveSection,
   onDeleteSection,
 }: TnSectionCodeProps) => {
-  const [sectionEdit, setSectionEdit] = useState(false);
+  const [sectionEdit, setSectionEdit] = useState(isNew);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const [language, setLanguage] = useState<string | undefined>(section.language || undefined);

@@ -10,18 +10,19 @@ import remarkGfm from 'remark-gfm'
 
 type TnSectionMarkdownProps = {
   section: Section;
+  isNew: boolean;
+
   onSaveSection?: (content: string, language?: string) => void;
   onDeleteSection?: (sectionId: string) => void;
 };
 
 const TnSectionMarkdown = ({
   section,
-  // noteId removed
+  isNew,
   onSaveSection,
   onDeleteSection,
 }: TnSectionMarkdownProps) => {
-  const [sectionEdit, setSectionEdit] = useState(!section.content.trim());
-
+  const [sectionEdit, setSectionEdit] = useState(isNew);
   const [content, setContent] = useState(section.content);
 
   const handleSave = () => {
