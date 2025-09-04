@@ -48,7 +48,7 @@ function createTray() {
         });
         if (isDev && process.env.VITE_DEV_SERVER_URL) {
           viewer.loadURL(`${process.env.VITE_DEV_SERVER_URL}/viewer/new`);
-          viewer.webContents.openDevTools({ mode: 'detach' });
+          viewer.webContents.openDevTools({ mode: 'right' });
         } else {
           const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
           // Use query param for BrowserRouter compatibility

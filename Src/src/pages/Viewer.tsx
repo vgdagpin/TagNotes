@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import TnNoteViewer from "@/components/ui/tn-note-viewer";
 import { createNote as createLocalNote, isLocalMode, getPersistedDirectoryHandle } from "@/lib/notesClient";
 
@@ -9,7 +9,7 @@ export default function Viewer() {
     const [isDirectoryLoaded, setIsDirectoryLoaded] = useState<boolean | undefined>(undefined);
     const [currentId, setCurrentId] = useState<string | null>(null);
 
-    console.log('test');
+    console.log('test', useLocation());
 
     // Ensure directory status is known
     useEffect(() => {
@@ -30,10 +30,17 @@ export default function Viewer() {
 
     // Create new note if route is /viewer/new
     useEffect(() => {
+        console.log('noteId', noteId);
+
+        if (noteId == null) {
+            navigate('/viewer/new', { replace: true });
+        }
+
         let active = true;
         const maybeCreate = async () => {
             if (noteId !== 'new') { setCurrentId(noteId || null); return; }
             try {
+                console.log('eh');
                 const note = await createLocalNote({});
                 if (!active) return;
                 setCurrentId(note.id);
