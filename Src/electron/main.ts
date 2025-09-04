@@ -44,6 +44,7 @@ function createTray() {
             contextIsolation: true,
             preload: path.join(__dirname, 'preload.js'),
             sandbox: true,
+            partition: 'persist:tagnotes',
           },
         });
         if (isDev && process.env.VITE_DEV_SERVER_URL) {
@@ -87,12 +88,13 @@ function createWindow() {
     height: 800,
     minWidth: 900,
     minHeight: 600,
-  show: false,
+    show: false,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js'),
       sandbox: true,
+      partition: 'persist:tagnotes',
     },
   });
 
@@ -101,7 +103,7 @@ function createWindow() {
 
   if (isDev && process.env.VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
-    // mainWindow.webContents.openDevTools({ mode: 'detach' });
+    mainWindow.webContents.openDevTools({ mode: 'right' });
   } else {
     const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
     mainWindow.loadFile(indexPath);
