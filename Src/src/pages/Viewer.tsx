@@ -1,0 +1,57 @@
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import TnNoteViewer from "@/components/ui/tn-note-viewer";
+import { createNote as createLocalNote, isLocalMode, getPersistedDirectoryHandle } from "@/lib/notesClient";
+
+export default function Viewer() {
+  const { noteId } = useParams();
+  const navigate = useNavigate();
+  const [isDirectoryLoaded, setIsDirectoryLoaded] = useState<boolean | undefined>(undefined);
+  const [currentId, setCurrentId] = useState<string | null>(null);
+
+  // Ensure directory status is known
+  useEffect(() => {
+    let mounted = true;
+    const init = async () => {
+      const local = isLocalMode();
+      if (!local) {
+        const dir = await getPersistedDirectoryHandle();
+        if (!mounted) return;
+        setIsDirectoryLoaded(!!dir);
+      } else {
+        setIsDirectoryLoaded(true);
+      }
+    };
+    init();
+    return () => { mounted = false; };
+  }, []);
+
+  // Create new note if route is /viewer/new
+  useEffect(() => {
+    let active = true;
+    const maybeCreate = async () => {
+      if (noteId !== 'new') { setCurrentId(noteId || null); return; }
+      try {
+        const note = await createLocalNote({});
+        if (!active) return;
+        setCurrentId(note.id);
+        navigate(`/viewer/${note.id}`, { replace: true });
+      } catch (err) {
+        // Likely no directory selected
+        alert('Please select a notes folder in the main window before creating a note.');
+      }
+    };
+    maybeCreate();
+    return () => { active = false; };
+  }, [noteId]);
+
+  if (!currentId) return null;
+
+  return (
+    <div className="h-screen bg-background flex">
+      <div className="flex-1 min-w-0"> Test
+        <TnNoteViewer noteId={currentId} directoryLoaded={isDirectoryLoaded} />
+      </div>
+    </div>
+  );
+}

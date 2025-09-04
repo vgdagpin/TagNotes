@@ -2,19 +2,44 @@ import "./global.css";
 // import { Toaster } from "@/components/ui/toaster";
 // import { Toaster as Sonner } from "@/components/ui/sonner";
 // import { TooltipProvider } from "@/components/ui/tooltip";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 import Index from "@/pages/Index";
+import Viewer from "@/pages/Viewer";
 import NotFound from "@/pages/NotFound";
+
+function RouteBootstrapper() {
+    const navigate = useNavigate();
+    const location = useLocation();
+    useEffect(() => {
+        try {
+            const url = new URL(window.location.href);
+            let desired = url.searchParams.get('route');
+            if (!desired && window.location.hash && window.location.hash.startsWith('#/')) {
+                desired = window.location.hash.substring(1);
+            }
+            if (desired && desired !== location.pathname) {
+                navigate(desired, { replace: true });
+            }
+        } catch {}
+        // run once on mount
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    return null;
+}
 
 const App = () => (
     //   <TooltipProvider>
     //     <Toaster />
     //     <Sonner />
     <BrowserRouter>
+        <RouteBootstrapper />
         <Routes>
             <Route path="/" element={<Index />} />
             <Route path=":noteId" element={<Index />} />
+            <Route path="/viewer/new" element={<Viewer />} />
+            <Route path="/viewer/:noteId" element={<Viewer />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
         </Routes>
