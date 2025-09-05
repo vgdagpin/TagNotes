@@ -56,6 +56,10 @@ export default function Viewer() {
 
     if (!currentId) return null;
 
+    if (isDirectoryLoaded === undefined) {
+        return (<>Loading..</>);
+    }
+
     return (
         <div className="h-screen bg-background flex">
             <div className="flex-1 min-w-0"> Test
