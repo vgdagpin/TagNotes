@@ -20,7 +20,7 @@ import { Hamburger } from "@fluentui/react-components";
 import './Index.css'
 import { NoteSummary } from "@/shared/models";
 import TnNavigation from "@/components/ui/tn-navigation";
-import { useDirectoryContext } from "@/contexts/DirectoryContext";
+import { useTagNotesContext } from "@/contexts/TagNotesContextProvider";
 
 export default function Index() {
   // Notes list (id/title only). Full note loaded in viewer.
@@ -35,11 +35,11 @@ export default function Index() {
   const navigate = useNavigate();
   const { noteId } = useParams();
 
-  const directoryContext = useDirectoryContext();
+  const tagNotesContext = useTagNotesContext();
 
   useEffect(() => {
     const checkIfHasSelectedDir = async () => {
-      const hasSelectedDir = await directoryContext.hasSelectedDirectory();
+      const hasSelectedDir = await tagNotesContext.hasSelectedDirectory();
 
       setIsDirectoryLoaded(hasSelectedDir);    
     }
@@ -49,7 +49,7 @@ export default function Index() {
     window.addEventListener('tagnotes:directoryChanged', () => {
       setIsDirectoryLoaded(true);
     });
-  }, [directoryContext]);
+  }, [tagNotesContext]);
 
   useEffect(() => {
     if (isDirectoryLoaded) {

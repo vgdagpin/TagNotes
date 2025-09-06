@@ -22,6 +22,7 @@ import TnSectionImage from "./tn-section-image";
 
 import "./tn-note-viewer.css";
 import TnTagsPicker from "./tn-tags-picker";
+import { useTagNotesContext } from "@/contexts/TagNotesContextProvider";
 
 type TnNoteViewerProps = {
   noteId: string;
@@ -31,9 +32,11 @@ type TnNoteViewerProps = {
 };
 
 const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerProps) => {
-  const [isDirLoaded, setIsDirLoaded] = useState<boolean | undefined>(directoryLoaded);
+  const [isDirLoaded, setIsDirLoaded] = useState<boolean | undefined>(undefined);
   const [noteTags, setNoteTags] = useState<string[]>([]);
   const [newSectionId, setNewSectionId] = useState<string | null>(null);
+
+  const tagNotesContext = useTagNotesContext();
 
   const [note, setNote] = useState<Note>({
     id: noteId,
@@ -46,6 +49,16 @@ const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerP
   const [editingTitle, setEditingTitle] = useState(false);
 
   console.log('TnNoteViewer');
+
+  useEffect(() => {
+    const checkIfHasSelectedDir = async () => {
+      const hasSelectedDir = await tagNotesContext.hasSelectedDirectory();
+
+      setIsDirLoaded(hasSelectedDir);    
+    }
+
+    checkIfHasSelectedDir();
+  }, [tagNotesContext]);
 
   useEffect(() => {
     let active = true;

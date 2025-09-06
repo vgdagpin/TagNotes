@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Settings, FileText } from "@/components/tn-icons";
 import { NotesSettings } from "@shared/models";
-import { browseDirectory, getCurrentDirectoryName } from '@/lib/notesClient';
+import { useTagNotesContext } from "@/contexts/TagNotesContextProvider";
 
 type TnSettingsProps = {
   onClose?: () => void;
@@ -14,18 +14,22 @@ type TnSettingsProps = {
 const TnSettings = ({ onClose, onDirectorySelected }: TnSettingsProps) => {
   const [settings, setSettings] = useState<NotesSettings | null>(null);
 
-  // Load settings on component mount
+  const tagNotesContext = useTagNotesContext();
+
   useEffect(() => {
-    // No server; initialize default settings in-memory
-    const current = getCurrentDirectoryName();
-    setSettings({ notesDirectory: current || '' });
-  }, []);
+    const tryFetchSelectedDirName = async () => {
+      const name = await tagNotesContext.selectedDirectoryName();
+      setSettings({ notesDirectory: name || '' });
+    }
+
+    tryFetchSelectedDirName();
+  }, [tagNotesContext]);
 
   // No explicit save: changing directory is immediate.
 
-  const handlePickDirectory = async () => {
+  const handlePickDirectory = useCallback(async () => {
     try {
-      const name = await browseDirectory();
+      const name = await tagNotesContext.browseDirectory();
       setSettings({ notesDirectory: name });
 
       onDirectorySelected?.call(null);
@@ -33,7 +37,7 @@ const TnSettings = ({ onClose, onDirectorySelected }: TnSettingsProps) => {
       console.error('Failed to switch directory', e);
       alert('Failed to switch directory');
     }
-  };
+  }, [tagNotesContext, onDirectorySelected]);
 
   return (
     <div className="h-full flex flex-col min-w-0 w-full">

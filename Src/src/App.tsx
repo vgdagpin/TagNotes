@@ -6,7 +6,7 @@ import Index from "@/pages/Index";
 import Viewer from "@/pages/Viewer";
 import NotFound from "@/pages/NotFound";
 import NewNote from "./pages/NewNote";
-import { DirectoryContextProvider } from "./contexts/DirectoryContext";
+import { TagNotesContextProvider } from "./contexts/TagNotesContextProvider";
 
 function RouteBootstrapper() {
     const navigate = useNavigate();
@@ -29,7 +29,7 @@ function RouteBootstrapper() {
 }
 
 const App = () => (
-    <DirectoryContextProvider>
+    <TagNotesContextProvider>
         <BrowserRouter>
             <RouteBootstrapper />
             <Routes>
@@ -41,7 +41,7 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
             </Routes>
         </BrowserRouter>
-    </DirectoryContextProvider>
+    </TagNotesContextProvider>
 );
 
 export default App;
