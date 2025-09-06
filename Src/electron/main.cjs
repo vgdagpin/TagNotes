@@ -13,44 +13,10 @@ const {
 
 const path = require("path");
 const isExplicitDev = process.env.NODE_ENV === "development" || process.env.ELECTRON_DEV === "true";
+const { registerIpcHandlers } = require('./ipcHandlers.cjs');
 
-// Shared ID for all windows
-let sharedId = null;
-
-let fsDirHandler = null;
-
-ipcMain.handle('get-directory-handle', () => {
-  console.log('>>>>>> main: get-directory-handle', fsDirHandler);
-  return fsDirHandler;
-});
-
-ipcMain.handle('set-directory-handle', (event, handle) => {
-  console.log('>>>>>> main: set-directory-handle');
-  fsDirHandler = handle;
-  return fsDirHandler;
-});
-
-ipcMain.handle('browse-directory', async (event, handle) => {
-  try {
-    console.log('>>>>>> main: browse-directory');
-    fsDirHandler = await window.showDirectoryPicker({ mode: 'readwrite' });
-    console.log('>>>>>> main: browse-directory', fsDirHandler.name);
-
-    return fsDirHandler.name;
-  } catch (err) {
-    console.error('>>>>>> main: browse-directory error', err);
-    return null;
-  }
-});
-
-ipcMain.handle('get-id', () => {
-  return sharedId;
-});
-
-ipcMain.handle('set-id', (event, id) => {
-  sharedId = id;
-  return sharedId;
-});
+// Register IPC handlers (encapsulated in separate module)
+registerIpcHandlers();
 
 let server;
 let tray = null;
