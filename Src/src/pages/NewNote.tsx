@@ -17,7 +17,6 @@ export default function NewNote() {
     });
 
     useEffect(() => {
-        let active = true;
         const createNewNote = async () => {
             try {
                 if (!isDirLoaded) return;
@@ -28,7 +27,6 @@ export default function NewNote() {
             } catch { }
         };
         createNewNote();
-        return () => { active = false; };
     }, [isDirLoaded]);
 
     useEffect(() => {

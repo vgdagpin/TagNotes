@@ -58,9 +58,15 @@ async function createTray() {
     tray = new Tray(iconPath);
     const trayMenu = Menu.buildFromTemplate([
       {
-        label: "Show",
+        label: "TagNotes",
         click: () => {
           BrowserWindow.getAllWindows().forEach((w) => w.show());
+        },
+      },
+      {
+        label: "Add New Note",
+        click: () => {
+          openAddNewWindow();
         },
       },
       {
@@ -216,7 +222,9 @@ async function start() {
   });
 
   // Serve the SPA entry for /new so React Router can render NewNote
-  expressApp.get("/new", (req, res) => {
+  expressApp.get("/Viewer/New", (req, res) => {
+    console.log('>> Serving /Viewer/New', req);
+
     res.sendFile(path.join(distPath, "index.html"));
   });
 
@@ -249,11 +257,11 @@ function openAddNewWindow() {
     // If mainWindowUrl is an http dev server, load dev route
     if (mainWindowUrl && mainWindowUrl.startsWith("http")) {
       const base = mainWindowUrl.replace(/\/$/, "");
-      target = `${base}/new`;
+      target = `${base}/Viewer/New`;
     } else {
       // production: load built index.html and use hash routing to reach the route
       const indexPath = path.join(__dirname, "..", "dist", "index.html");
-      target = `file://${indexPath}/new`;
+      target = `file://${indexPath}/Viewer/New`;
     }
 
     console.log('Opening Add New window at', target);
