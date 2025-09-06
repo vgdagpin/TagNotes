@@ -1,18 +1,22 @@
 {
   "compilerOptions": {
-  "target": "ES2022",
-  "module": "Node16",
-  "moduleResolution": "node16",
+    "target": "ES2022",
+    "module": "Node16",
+    "moduleResolution": "node16",
     "outDir": "dist-electron",
     "rootDir": "electron",
-    "allowJs": false,
+    "allowJs": true,
+    "checkJs": false,
     "resolveJsonModule": true,
     "isolatedModules": false,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "sourceMap": true
   },
-  "include": ["electron/main.ts"],
+  "include": [
+    "electron/**/*.cjs"
+  ],
   "exclude": ["dist", "dist-electron"]
 }
