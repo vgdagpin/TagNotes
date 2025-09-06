@@ -1,4 +1,5 @@
 import TnNoteViewer from "@/components/ui/tn-note-viewer";
+import TnSettings from "@/components/ui/tn-settings";
 import { createNote, getPersistedDirectoryHandle, isLocalMode } from "@/lib/notesClient";
 import { Note } from "@/shared/models";
 import { useEffect, useState } from "react";
@@ -45,12 +46,15 @@ export default function NewNote() {
         }
     }, []);
 
-    return (
-        <div className="h-screen bg-background flex">
+    if (isDirLoaded === undefined) {
+        return (<div className="h-screen bg-background flex">
             <div className="flex-1 min-w-0">
-                {!isDirLoaded && <p>Directory is not loaded</p>}
-                {isDirLoaded && <TnNoteViewer noteId={note.id} directoryLoaded={isDirLoaded} />}
+                <p>Loading...</p>
             </div>
-        </div>
-    );
+        </div>);
+    } else if (isDirLoaded === false) {
+        return (<TnSettings />);
+    } else {
+        return (<TnNoteViewer noteId={note.id} directoryLoaded={isDirLoaded} />);
+    }
 }

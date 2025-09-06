@@ -1,7 +1,9 @@
 {
   "name": "tagnotes",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "TagNotes - tag-based note taking app",
+  "author": "vgdagpin",
   "main": "dist-electron/main.cjs",
   "type": "module",
   "scripts": {
@@ -87,12 +89,18 @@
   },
   "build": {
     "appId": "com.tagnotes.app",
+    "productName": "TagNotes",
+    "buildVersion": "1.0.0.1",
     "files": [
       "dist/**",
       "dist-electron/**"
     ],
     "directories": {
       "buildResources": "build"
+    },
+    "win": {
+      "executableName": "TagNotes",
+      "artifactName": "${productName}-${version}.${ext}"
     }
   },
   "optionalDependencies": {

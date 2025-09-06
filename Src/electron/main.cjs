@@ -93,7 +93,7 @@ async function createTray() {
     tray.setContextMenu(trayMenu);
     tray.setToolTip("TagNote");
     tray.on("click", () => {
-      BrowserWindow.getAllWindows().forEach((w) => w.show());
+      openAddNewWindow();
     });
   } catch (e) {
     console.error("Failed to create tray", e);
@@ -124,6 +124,7 @@ function createMainWindow(url) {
   const win = new BrowserWindow({
     width: 1024,
     height: 768,
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
@@ -233,8 +234,6 @@ async function start() {
 
   // Serve the SPA entry for /new so React Router can render NewNote
   expressApp.get("/Viewer/New", (req, res) => {
-    console.log('>> Serving /Viewer/New', req);
-
     res.sendFile(path.join(distPath, "index.html"));
   });
 
@@ -251,6 +250,7 @@ async function start() {
 function openAddNewWindow() {
   try {
     const parent = mainWindow && !mainWindow.isDestroyed() ? mainWindow : null;
+
     const modal = new BrowserWindow({
       width: 1024,
       height: 768,
@@ -283,12 +283,9 @@ function openAddNewWindow() {
     }
 
     // forward console messages from modal to main process for easier debugging
-    modal.webContents.on(
-      "console-message",
-      (e, level, message, line, sourceId) => {
+    modal.webContents.on("console-message", (e, level, message, line, sourceId) => {
         console.log("[modal]", message, sourceId, line);
-      }
-    );
+      });
     
     modal.on("closed", () => {
       // noop
