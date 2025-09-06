@@ -1,6 +1,6 @@
 "use strict";
 
-const { ipcMain } = require('electron');
+const { ipcMain, dialog } = require('electron');
 
 // Internal shared state (encapsulated within this module)
 let sharedId = null;
@@ -19,19 +19,15 @@ function registerIpcHandlers() {
     return fsDirHandler;
   });
 
-  // NOTE: "window.showDirectoryPicker" cannot be used in the main process.
-  // This handler currently mirrors existing logic but will always fail since
-  // 'window' is undefined in the main process. Consider replacing with
-  // dialog.showOpenDialog in main or moving picking logic to renderer.
   ipcMain.handle('browse-directory', async () => {
     try {
-      console.log('>>>>>> ipc: browse-directory invoked in main (window API not available)');
+      console.log('>>>>>> ipc: browse-directory invoked in main');
       // Placeholder: keep behavior consistent (will throw) until refactored.
-      // const result = await dialog.showOpenDialog({ properties: ['openDirectory', 'createDirectory'] });
-      // if (result.canceled || !result.filePaths[0]) return null;
-      // fsDirHandler = result.filePaths[0];
+      const result = await dialog.showOpenDialog({ properties: ['openDirectory', 'createDirectory'] });
+      if (result.canceled || !result.filePaths[0]) return null;
+
+      return result.filePaths[0]; // absolute path
       // return fsDirHandler;
-      throw new Error('window.showDirectoryPicker not available in main process');
     } catch (err) {
       console.error('>>>>>> ipc: browse-directory error', err);
       return null;
