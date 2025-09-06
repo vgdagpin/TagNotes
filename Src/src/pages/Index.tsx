@@ -10,8 +10,6 @@ import {
   listNotes as listNotesLocal,
   createNote as createLocalNote,
   getNote as getLocalNote,
-  isLocalMode,
-  hasSelectedDirectory,
   deleteNote as deleteLocalNote
 } from "@/lib/notesClient";
 
@@ -22,6 +20,7 @@ import { Hamburger } from "@fluentui/react-components";
 import './Index.css'
 import { NoteSummary } from "@/shared/models";
 import TnNavigation from "@/components/ui/tn-navigation";
+import { useDirectoryContext } from "@/contexts/DirectoryContext";
 
 export default function Index() {
   // Notes list (id/title only). Full note loaded in viewer.
@@ -36,28 +35,21 @@ export default function Index() {
   const navigate = useNavigate();
   const { noteId } = useParams();
 
+  const directoryContext = useDirectoryContext();
+
   useEffect(() => {
-    let localMode = isLocalMode();
+    const checkIfHasSelectedDir = async () => {
+      const hasSelectedDir = await directoryContext.hasSelectedDirectory();
 
-    const tryGetPersistedDirectoryHandle = async () => {
-      const dir = await hasSelectedDirectory();
-
-      setIsDirectoryLoaded(dir);
+      setIsDirectoryLoaded(hasSelectedDir);    
     }
 
-    if (!localMode) {
-      tryGetPersistedDirectoryHandle();
-    }
+    checkIfHasSelectedDir();
 
-    setIsDirectoryLoaded(localMode);
-
-    // Listen for directory selection changes -> refresh list immediately
-    const onDirChanged = async () => {
+    window.addEventListener('tagnotes:directoryChanged', () => {
       setIsDirectoryLoaded(true);
-    };
-
-    window.addEventListener('tagnotes:directoryChanged', onDirChanged as any);
-  }, []);
+    });
+  }, [directoryContext]);
 
   useEffect(() => {
     if (isDirectoryLoaded) {

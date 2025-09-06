@@ -10,8 +10,21 @@ const {
   ipcMain,
   globalShortcut,
 } = require("electron");
+
 const path = require("path");
 const isExplicitDev = process.env.NODE_ENV === "development" || process.env.ELECTRON_DEV === "true";
+
+// Shared ID for all windows
+let sharedId = null;
+
+ipcMain.handle('get-id', () => {
+  return sharedId;
+});
+
+ipcMain.handle('set-id', (event, id) => {
+  sharedId = id;
+  return sharedId;
+});
 
 let server;
 let tray = null;
@@ -136,8 +149,9 @@ function createMainWindow(url) {
   // track main window and its base URL
   mainWindow = win;
   mainWindowUrl = url;
+
   // In dev, open devtools so HMR errors are visible
-  if (url.includes("localhost") || url.includes("127.0.0.1")) {
+  if (!app.isPackaged) {
     win.webContents.openDevTools({ mode: "right" });
 
     // forward console messages from renderer to main's console
@@ -282,10 +296,11 @@ function openAddNewWindow() {
     console.log('Opening Add New window at', target);
 
     modal.loadURL(target);
+
     // open devtools for modal if in dev
-    if (target.includes("localhost") || target.includes("127.0.0.1")) {
+    //if (!app.isPackaged) {
       modal.webContents.openDevTools({ mode: "right" });
-    }
+    //}
 
     // forward console messages from modal to main process for easier debugging
     modal.webContents.on("console-message", (e, level, message, line, sourceId) => {
