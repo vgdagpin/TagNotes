@@ -37,7 +37,7 @@ app.on("window-all-closed", () => {
     // Unregister global shortcuts
     try {
       globalShortcut.unregisterAll();
-    } catch (e) {}
+    } catch (e) { }
     app.quit();
   }
 });
@@ -68,15 +68,15 @@ async function createTray() {
     tray = new Tray(iconPath);
     const trayMenu = Menu.buildFromTemplate([
       {
-        label: "TagNotes",
-        click: () => {
-          BrowserWindow.getAllWindows().forEach((w) => w.show());
-        },
-      },
-      {
         label: "Add New Note",
         click: () => {
           openAddNewWindow();
+        },
+      },
+      {
+        label: "TagNotes",
+        click: () => {
+          BrowserWindow.getAllWindows().forEach((w) => w.show());
         },
       },
       {
@@ -218,7 +218,7 @@ async function start() {
   if (isExplicitDev) {
     createMainWindow("http://localhost:8080");
     return;
-  }  
+  }
 
   // In production/fallback, serve the built files from dist using express
   const express = require("express");
@@ -250,10 +250,13 @@ async function start() {
 function openAddNewWindow() {
   try {
     const parent = mainWindow && !mainWindow.isDestroyed() ? mainWindow : null;
+    const iconPath = getTrayIconPath();
+
 
     const modal = new BrowserWindow({
       width: 1024,
       height: 768,
+      icon: nativeImage.createFromPath(iconPath),
       parent,
       modal: false,
       show: true,
@@ -262,6 +265,8 @@ function openAddNewWindow() {
         contextIsolation: true,
       },
     });
+
+    modal.setMenu(null);
 
     let target;
     // If mainWindowUrl is an http dev server, load dev route
@@ -284,9 +289,9 @@ function openAddNewWindow() {
 
     // forward console messages from modal to main process for easier debugging
     modal.webContents.on("console-message", (e, level, message, line, sourceId) => {
-        console.log("[modal]", message, sourceId, line);
-      });
-    
+      console.log("[modal]", message, sourceId, line);
+    });
+
     modal.on("closed", () => {
       // noop
     });
