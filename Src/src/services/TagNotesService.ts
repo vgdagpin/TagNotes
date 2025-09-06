@@ -1,17 +1,17 @@
-export interface ITagNotesService {
-	hasSelectedDirectory(): Promise<boolean>;
-	selectedDirectoryName(): Promise<string | null>;
-
-	browseDirectory(): Promise<string>;
-}
-
 import { 
 	hasSelectedDirectory as ncHasSelectedDirectory, 
 	browseDirectory as ncBrowseDirectory,
-	getCurrentDirectoryName as ncGetCurrentDirectoryName
+	getCurrentDirectoryName as ncGetCurrentDirectoryName,
+	createNote as ncCreateNote
  } from "@/lib/notesClient";
 
+import { ITagNotesService } from "@/shared/ITagNotesService";
+import { Note } from "@/shared/models";
+
 export class TagNotesService implements ITagNotesService {
+	async createNote(initial?: Partial<Note>): Promise<Note> {
+		return await ncCreateNote(initial);
+	}
 	async selectedDirectoryName(): Promise<string | null> {
 		return await ncGetCurrentDirectoryName();
 	}

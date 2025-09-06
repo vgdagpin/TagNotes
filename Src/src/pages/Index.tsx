@@ -8,7 +8,6 @@ import { Plus, FileText } from "@/components/tn-icons";
 
 import {
   listNotes as listNotesLocal,
-  createNote as createLocalNote,
   getNote as getLocalNote,
   deleteNote as deleteLocalNote
 } from "@/lib/notesClient";
@@ -83,7 +82,7 @@ export default function Index() {
       alert('Select a local folder first');
       return;
     }
-    const note = await createLocalNote({});
+    const note = await tagNotesContext.createNote({});
 
     setAllNotes(prev => [{
       id: note.id,

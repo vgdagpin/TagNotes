@@ -1,7 +1,6 @@
-import { TagNotesService, ITagNotesService } from "@/shared/TagNotesService";
+import { ITagNotesService } from "@/shared/ITagNotesService";
+import { TagNotesService } from "@/services/TagNotesService";
 import { createContext, ReactNode, useContext } from "react";
-
-
 
 export const TagNotesContext = createContext<ITagNotesService | undefined>(undefined);
 
