@@ -1,8 +1,19 @@
 import type { Note, NoteSummary, Section } from '@/shared/models';
-import { pickNotesDirectory, getPersistedDirectoryHandle, writeNoteFile, writeNoteFileAtPath, readAllNoteFiles, deleteNoteFile, upsertIndexEntry, removeIndexEntry, loadTags, writeTag } from './fs-access';
-import { v4 as uuid } from 'uuid';
 
-export { getPersistedDirectoryHandle } from './fs-access';
+import {
+    pickNotesDirectory,
+    getPersistedDirectoryHandle,
+    writeNoteFile,
+    writeNoteFileAtPath,
+    readAllNoteFiles,
+    deleteNoteFile,
+    upsertIndexEntry,
+    removeIndexEntry,
+    loadTags,
+    writeTag
+} from './directoryHelper';
+
+import { v4 as uuid } from 'uuid';
 
 let dirHandle: FileSystemDirectoryHandle | null = null;
 let loadedIndex: NoteSummary[] = [];
@@ -17,8 +28,14 @@ async function ensureHandleLoaded() {
     }
 }
 
-export function isLocalMode() { 
+export function isLocalMode() {
     return dirHandle != null;
+}
+
+export async function hasSelectedDirectory(): Promise<boolean> {
+    const handle = await getPersistedDirectoryHandle();
+
+    return handle != null;
 }
 
 export async function enableLocalMode() {
@@ -27,7 +44,7 @@ export async function enableLocalMode() {
     try {
         const name = (dirHandle as any)?.name || '';
         window.dispatchEvent(new CustomEvent('tagnotes:directoryChanged', { detail: { name } }));
-    } catch {}
+    } catch { }
 }
 
 // Attempt to restore previously persisted directory handle silently.
@@ -42,12 +59,20 @@ export async function disableLocalMode() {
 }
 
 // Switch to a new local directory (user picks). Returns directory name.
-export async function switchLocalDirectory(): Promise<string> {
+export async function browseDirectory(): Promise<string> {
     dirHandle = await pickNotesDirectory();
     indexLoaded = false;
     await refreshIndex();
     const name = (dirHandle as any)?.name || '';
-    try { window.dispatchEvent(new CustomEvent('tagnotes:directoryChanged', { detail: { name } })); } catch {}
+
+    try {
+        window.dispatchEvent(new CustomEvent('tagnotes:directoryChanged', {
+            detail: {
+                name
+            }
+        }));
+    } catch { }
+
     return name;
 }
 
@@ -177,7 +202,7 @@ async function update(noteId: string, mutator: (n: Note) => void): Promise<Note>
         idx.tags = note.tags;
     }
     if (loc) {
-    await upsertIndexEntry(dirHandle, { id: note.id, title: note.title, createdAt: note.createdAt, updatedAt: note.updatedAt, location: loc, tags: note.tags } as any);
+        await upsertIndexEntry(dirHandle, { id: note.id, title: note.title, createdAt: note.createdAt, updatedAt: note.updatedAt, location: loc, tags: note.tags } as any);
     } else {
         await refreshIndex();
     }
@@ -203,21 +228,21 @@ export async function updateTitle(noteId: string, title: string) {
         await writeNoteFile(dirHandle, serialize(full));
     }
     if (entry.location) {
-    await upsertIndexEntry(dirHandle, { id: full.id, title: full.title, createdAt: full.createdAt, updatedAt: full.updatedAt, location: entry.location, tags: full.tags } as any);
+        await upsertIndexEntry(dirHandle, { id: full.id, title: full.title, createdAt: full.createdAt, updatedAt: full.updatedAt, location: entry.location, tags: full.tags } as any);
     }
     return full;
 }
 
 export async function addSection(noteId: string, sectionType: Section['type']) {
     const defaultTitle = sectionType === 'image' ? 'Image' : sectionType.charAt(0).toUpperCase() + sectionType.slice(1);
-    const newSection: Section = { 
-            id: uuid(), 
-            type: sectionType, 
-            title: defaultTitle,
-            content: '', 
-            createdAt: new Date(), 
-            language: sectionType === 'code' ? 'javascript' : null
-        };
+    const newSection: Section = {
+        id: uuid(),
+        type: sectionType,
+        title: defaultTitle,
+        content: '',
+        createdAt: new Date(),
+        language: sectionType === 'code' ? 'javascript' : null
+    };
 
     await update(noteId, n => n.sections.push(newSection));
 
@@ -225,11 +250,12 @@ export async function addSection(noteId: string, sectionType: Section['type']) {
 }
 
 export async function addImageSection(noteId: string, imageData: string) {
-    const newImgSection: Section = { id: uuid(), 
-        type: 'image', 
-        content: 'Image', 
-        imageData, 
-        createdAt: new Date() 
+    const newImgSection: Section = {
+        id: uuid(),
+        type: 'image',
+        content: 'Image',
+        imageData,
+        createdAt: new Date()
     };
 
     await update(noteId, n => n.sections.push(newImgSection));
@@ -240,8 +266,8 @@ export async function addImageSection(noteId: string, imageData: string) {
 export async function updateSectionContent(noteId: string, sectionId: string, content: string, language?: string | null | undefined) {
 
     return update(noteId, n => {
-        const s = n.sections.find(s => s.id === sectionId); 
-        if (s)  {
+        const s = n.sections.find(s => s.id === sectionId);
+        if (s) {
             s.content = content;
 
             if (language) {
@@ -249,7 +275,7 @@ export async function updateSectionContent(noteId: string, sectionId: string, co
                     s.language = language;
                 }
             }
-        }            
+        }
     });
 }
 

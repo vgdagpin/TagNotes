@@ -4,28 +4,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Settings, FileText } from "@/components/tn-icons";
 import { NotesSettings } from "@shared/models";
-import { switchLocalDirectory, getCurrentDirectoryName } from '@/lib/notesClient';
+import { browseDirectory, getCurrentDirectoryName } from '@/lib/notesClient';
 
 type TnSettingsProps = {
   onClose?: () => void;
+  onDirectorySelected?: () => void;
 };
 
-const TnSettings = ({ onClose }: TnSettingsProps) => {
+const TnSettings = ({ onClose, onDirectorySelected }: TnSettingsProps) => {
   const [settings, setSettings] = useState<NotesSettings | null>(null);
 
   // Load settings on component mount
   useEffect(() => {
     // No server; initialize default settings in-memory
-  const current = getCurrentDirectoryName();
-  setSettings({ notesDirectory: current || '' });
+    const current = getCurrentDirectoryName();
+    setSettings({ notesDirectory: current || '' });
   }, []);
 
   // No explicit save: changing directory is immediate.
 
   const handlePickDirectory = async () => {
     try {
-      const name = await switchLocalDirectory();
+      const name = await browseDirectory();
       setSettings({ notesDirectory: name });
+
+      onDirectorySelected?.call(null);
     } catch (e) {
       console.error('Failed to switch directory', e);
       alert('Failed to switch directory');
@@ -73,7 +76,7 @@ const TnSettings = ({ onClose }: TnSettingsProps) => {
           <p>If you need to remember the full path, rename the folder in your OS or add it to bookmarks.</p>
         </div>
       </div>
-  </div>
+    </div>
   );
 };
 

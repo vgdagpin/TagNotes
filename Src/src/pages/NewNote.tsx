@@ -1,12 +1,14 @@
 import TnNoteViewer from "@/components/ui/tn-note-viewer";
 import TnSettings from "@/components/ui/tn-settings";
-import { createNote, getPersistedDirectoryHandle, isLocalMode } from "@/lib/notesClient";
+import { createNote, hasSelectedDirectory } from "@/lib/notesClient";
 import { Note } from "@/shared/models";
 import { useEffect, useState } from "react";
 
 export default function NewNote() {
 
     const [isDirLoaded, setIsDirLoaded] = useState<boolean | undefined>(undefined);
+
+    console.log('test');
 
     const [note, setNote] = useState<Note>({
         id: '',
@@ -25,26 +27,32 @@ export default function NewNote() {
                 const newNote = await createNote({});                
 
                 setNote(newNote);
-            } catch { }
+            } catch {
+                console.log('Error creating new note');
+             }
         };
         createNewNote();
     }, [isDirLoaded]);
 
     useEffect(() => {
-        let localMode = isLocalMode();
+        const tryCheckIfDirectoryIsLoaded = async () => {
+            try {
+                const hasDir = await hasSelectedDirectory();
 
-        const tryGetPersistedDirectoryHandle = async () => {
-            const dir = await getPersistedDirectoryHandle();
-
-            setIsDirLoaded(!!dir);
+                console.log('localMode persisted', hasDir);
+                setIsDirLoaded(hasDir);
+            } catch {
+                console.log('Error getting persisted directory handle');
+                setIsDirLoaded(false);
+            }
         }
 
-        if (!localMode) {
-            tryGetPersistedDirectoryHandle();
-        } else {
-            setIsDirLoaded(true);
-        }
-    }, []);
+        tryCheckIfDirectoryIsLoaded();
+    }, []);    
+
+    const handleDirectorySelected = () => {
+        setIsDirLoaded(true);
+    }
 
     if (isDirLoaded === undefined) {
         return (<div className="h-screen bg-background flex">
@@ -53,7 +61,7 @@ export default function NewNote() {
             </div>
         </div>);
     } else if (isDirLoaded === false) {
-        return (<TnSettings />);
+        return (<TnSettings onDirectorySelected={handleDirectorySelected} />);
     } else {
         return (<TnNoteViewer noteId={note.id} directoryLoaded={isDirLoaded} />);
     }

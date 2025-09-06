@@ -11,7 +11,7 @@ import {
   createNote as createLocalNote,
   getNote as getLocalNote,
   isLocalMode,
-  getPersistedDirectoryHandle,
+  hasSelectedDirectory,
   deleteNote as deleteLocalNote
 } from "@/lib/notesClient";
 
@@ -40,9 +40,9 @@ export default function Index() {
     let localMode = isLocalMode();
 
     const tryGetPersistedDirectoryHandle = async () => {
-      const dir = await getPersistedDirectoryHandle();
+      const dir = await hasSelectedDirectory();
 
-      setIsDirectoryLoaded(!!dir);
+      setIsDirectoryLoaded(dir);
     }
 
     if (!localMode) {

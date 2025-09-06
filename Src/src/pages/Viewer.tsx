@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import TnNoteViewer from "@/components/ui/tn-note-viewer";
-import { createNote as createLocalNote, isLocalMode, getPersistedDirectoryHandle } from "@/lib/notesClient";
+import { createNote as createLocalNote, isLocalMode, hasSelectedDirectory } from "@/lib/notesClient";
 
 export default function Viewer() {
     const { noteId } = useParams();
@@ -17,7 +17,7 @@ export default function Viewer() {
         const init = async () => {
             const local = isLocalMode();
             if (!local) {
-                const dir = await getPersistedDirectoryHandle();
+                const dir = await hasSelectedDirectory();
                 if (!mounted) return;
                 setIsDirectoryLoaded(!!dir);
             } else {
