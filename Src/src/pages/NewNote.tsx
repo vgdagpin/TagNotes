@@ -2,13 +2,31 @@
 // import TnSettings from "@/components/ui/tn-settings";
 // import { createNote, hasSelectedDirectory } from "@/lib/notesClient";
 // import { Note } from "@/shared/models";
+import { useTagNotesContext } from "@/contexts/TagNotesContextProvider";
+import { Button } from "@fluentui/react-components";
 import { useEffect, useState } from "react";
 
 export default function NewNote() {
-    const [tempId, setTempId] = useState<string>('');
+    const [isDirLoaded, setIsDirLoaded] = useState<boolean | undefined>(undefined);
 
+    const tagNotesContext = useTagNotesContext();
 
-    // const [isDirLoaded, setIsDirLoaded] = useState<boolean | undefined>(undefined);
+    useEffect(() => {
+        const tryCheckIfDirectoryIsLoaded = async () => {
+            try {
+                const hasDir = await tagNotesContext.hasSelectedDirectory();
+
+                console.log('localMode persisted', hasDir);
+                setIsDirLoaded(hasDir);
+            } catch {
+                console.log('Error getting persisted directory handle');
+                setIsDirLoaded(false);
+            }
+        }
+
+        tryCheckIfDirectoryIsLoaded();
+    }, [tagNotesContext]);
+
 
     console.log('test');
 
@@ -56,35 +74,38 @@ export default function NewNote() {
     //     setIsDirLoaded(true);
     // }
 
-    useEffect(() => {
-        const fetchId = async () => {
-            const elApi = (window as any).electronAPI;
+    // useEffect(() => {
+    //     const fetchId = async () => {
+    //         const elApi = (window as any).electronAPI;
 
-            if (elApi) {
-                const currentId = await elApi.getId();
-                setTempId(currentId);
-            }
-        };
+    //         if (elApi) {
+    //             const currentId = await elApi.getId();
+    //             setTempId(currentId);
+    //         }
+    //     };
 
-        fetchId();
+    //     fetchId();
 
-    }, []);
+    // }, []);
 
-    const handleSetRandomId = async () => {
-        const randomId = Math.random().toString(36).substring(2, 10);
+    const handleSelectDirectory = async () => {
+        try {
+            const dirName = await tagNotesContext.browseDirectory();
+            console.log('Selected directory:', dirName);
 
-        const elApi = (window as any).electronAPI;
-
-        console.log('setting id to', elApi);
-
-        if (elApi) {
-            await elApi.setId(randomId);
+            setIsDirLoaded(true);
+        } catch (error) {
+            console.error('Error selecting directory:', error);
         }
     }
 
     return (<>
-        <div>id: {tempId}</div>
-        <button onClick={handleSetRandomId}>Set RandomID</button>
+        <Button onClick={handleSelectDirectory}>Select Directory</Button>
+        <br />
+        { isDirLoaded === undefined && <p>Loading...</p> }
+        { isDirLoaded === false && <p>No directory selected</p> }
+        { isDirLoaded === true && <p>Directory selected</p> }
+
     </>)
 
     // if (isDirLoaded === undefined) {

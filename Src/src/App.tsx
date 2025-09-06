@@ -6,7 +6,6 @@ import Index from "@/pages/Index";
 import Viewer from "@/pages/Viewer";
 import NotFound from "@/pages/NotFound";
 import NewNote from "./pages/NewNote";
-import { TagNotesContextProvider } from "./contexts/TagNotesContextProvider";
 
 function RouteBootstrapper() {
     const navigate = useNavigate();
@@ -29,19 +28,17 @@ function RouteBootstrapper() {
 }
 
 const App = () => (
-    <TagNotesContextProvider>
-        <BrowserRouter>
-            <RouteBootstrapper />
-            <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path=":noteId" element={<Index />} />
-                <Route path="/viewer/new" element={<NewNote />} />
-                <Route path="/viewer/:noteId" element={<Viewer />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-            </Routes>
-        </BrowserRouter>
-    </TagNotesContextProvider>
+    <BrowserRouter>
+        <RouteBootstrapper />
+        <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path=":noteId" element={<Index />} />
+            <Route path="/viewer/new" element={<NewNote />} />
+            <Route path="/viewer/:noteId" element={<Viewer />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+        </Routes>
+    </BrowserRouter>
 );
 
 export default App;
