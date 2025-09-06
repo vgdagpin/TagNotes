@@ -39,8 +39,10 @@ app.on('window-all-closed', () => {
 
 
 function getTrayIconPath() {
-  // Use favicon.ico from public folder for Windows compatibility
-  return path.join(__dirname, '..', 'public', 'favicon.ico');
+  // Dev: public/favicon.ico. Prod: dist/favicon.ico (public gets copied to dist by Vite)
+  const devPath = path.join(__dirname, '..', 'public', 'favicon.ico');
+  const prodPath = path.join(__dirname, '..', 'dist', 'favicon.ico');
+  return app.isPackaged ? prodPath : devPath;
 }
 
 function createWindow() {

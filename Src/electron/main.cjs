@@ -47,8 +47,18 @@ app.on("activate", () => {
 });
 
 function getTrayIconPath() {
-  // Use favicon.ico from public folder for Windows compatibility
-  return path.join(__dirname, "..", "public", "favicon.ico");
+  // In dev we can load directly from /public. In production the contents of /public
+  // are copied by Vite into /dist, which IS packaged (see build.files in package.json).
+  // So prefer dist/favicon.ico when app is packaged.
+  try {
+    const devPath = path.join(__dirname, "..", "public", "favicon.ico");
+    const prodPath = path.join(__dirname, "..", "dist", "favicon.ico");
+    const target = app.isPackaged ? prodPath : devPath;
+    return target;
+  } catch (e) {
+    // Fallback (should rarely happen)
+    return path.join(__dirname, "..", "dist", "favicon.ico");
+  }
 }
 
 async function createTray() {
