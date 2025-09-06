@@ -1,6 +1,7 @@
 import { app, BrowserWindow, shell, Tray, Menu, globalShortcut } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { v4 as uuid } from 'uuid';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -9,7 +10,33 @@ const isDev = !app.isPackaged || !!process.env.VITE_DEV_SERVER_URL;
 
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
+let newNoteWindow: BrowserWindow | null = null;
 let isQuitting = false;
+
+app.whenReady().then(() => {
+  createTray();
+  createWindow();
+  // Register global shortcut CTRL+ALT+N
+  globalShortcut.register('Control+Alt+N', () => {
+    openAddNoteWindow();
+  });
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    else mainWindow?.show();
+  });
+});
+
+app.on('will-quit', () => {
+  globalShortcut.unregisterAll();
+});
+
+app.on('window-all-closed', () => {
+  // Keep the app running in tray even when windows are closed
+  if (process.platform === 'darwin') {
+    // on macOS typical behavior is to keep app running; do nothing
+  }
+});
+
 
 function getTrayIconPath() {
   // Use favicon.ico from public folder for Windows compatibility
@@ -64,27 +91,47 @@ function createWindow() {
 }
 
 function openAddNoteWindow() {
-  const viewer = new BrowserWindow({
-    width: 900,
-    height: 700,
-    show: true,
-    icon: path.join(__dirname, '..', 'public', 'favicon.ico'),
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js'),
-      sandbox: true,
-      partition: 'persist:tagnotes',
-    },
-  });
-  if (isDev && process.env.VITE_DEV_SERVER_URL) {
-    viewer.loadURL(`${process.env.VITE_DEV_SERVER_URL}/viewer/new`);
-    // viewer.webContents.openDevTools({ mode: 'right' });
-  } else {
-    const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
-    // Use query param for BrowserRouter compatibility
-    viewer.loadFile(indexPath, { search: '?route=/viewer/new' });
+  if (!newNoteWindow) {
+    newNoteWindow = new BrowserWindow({
+      width: 900,
+      height: 700,
+      show: false,
+      icon: path.join(__dirname, '..', 'public', 'favicon.ico'),
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+        preload: path.join(__dirname, 'preload.js'),
+        sandbox: true,
+        partition: 'persist:tagnotes',
+      },
+    });
+
+    newNoteWindow.on('close', (e) => {
+      e.preventDefault();
+      newNoteWindow?.hide();
+    });
+
+    // Always reload /viewer/new when triggered
+    if (isDev && process.env.VITE_DEV_SERVER_URL) {
+      newNoteWindow.loadURL(`${process.env.VITE_DEV_SERVER_URL}/viewer/new`);
+      newNoteWindow.webContents.openDevTools({ mode: 'right' });
+    } else {
+      const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
+      newNoteWindow.loadFile(indexPath, { search: '?route=/viewer/new' });
+    }
   }
+
+  newNoteWindow.show();
+  newNoteWindow.focus();
+  // Notify renderer that Add Note window is shown
+  newNoteWindow.webContents.send('viewer-window-shown');
+
+  const uid = uuid();
+
+  console.log('uuid', uid);
+
+
+  newNoteWindow.webContents.executeJavaScript(`window.location.hash = '${uid}'`);
 }
 
 function createTray() {
@@ -115,8 +162,9 @@ function createTray() {
   ]);
   tray.setContextMenu(contextMenu);
   tray.on('click', () => {
-    if (!mainWindow) createWindow();
-    mainWindow?.isVisible() ? mainWindow?.hide() : mainWindow?.show();
+    // if (!mainWindow) createWindow();
+    // mainWindow?.isVisible() ? mainWindow?.hide() : mainWindow?.show();
+    openAddNoteWindow();
   });
   tray.on('double-click', () => {
     if (!mainWindow) createWindow();
@@ -126,26 +174,3 @@ function createTray() {
 }
 
 
-app.whenReady().then(() => {
-  createTray();
-  createWindow();
-  // Register global shortcut CTRL+ALT+N
-  globalShortcut.register('Control+Alt+N', () => {
-    openAddNoteWindow();
-  });
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-    else mainWindow?.show();
-  });
-});
-
-app.on('will-quit', () => {
-  globalShortcut.unregisterAll();
-});
-
-app.on('window-all-closed', () => {
-  // Keep the app running in tray even when windows are closed
-  if (process.platform === 'darwin') {
-    // on macOS typical behavior is to keep app running; do nothing
-  }
-});

@@ -215,6 +215,11 @@ async function start() {
     res.sendFile(path.join(distPath, "index.html"));
   });
 
+  // Serve the SPA entry for /new so React Router can render NewNote
+  expressApp.get("/new", (req, res) => {
+    res.sendFile(path.join(distPath, "index.html"));
+  });
+
   const listener = expressApp.listen(0, () => {
     const port = listener.address().port;
     const url = `http://127.0.0.1:${port}`;
@@ -229,9 +234,8 @@ function openAddNewWindow() {
   try {
     const parent = mainWindow && !mainWindow.isDestroyed() ? mainWindow : null;
     const modal = new BrowserWindow({
-      width: 480,
-      height: 420,
-      resizable: false,
+      width: 1024,
+      height: 768,
       parent,
       modal: false,
       show: true,
