@@ -1,6 +1,5 @@
 import { ITagNotesService } from "@/shared/ITagNotesService";
-import { TagNotesService } from "@/services/TagNotesService";
-import { createContext, ReactNode, useContext } from "react";
+import { createContext, ReactNode, useContext, useMemo } from "react";
 
 export const TagNotesContext = createContext<ITagNotesService | undefined>(undefined);
 
@@ -14,8 +13,13 @@ export const useTagNotesContext = () => {
 	return context;
 }
 
-export const TagNotesContextProvider = ({ children }: { children: ReactNode }) => {
-	const tagNotesService = new TagNotesService();
+interface TagNotesContextProviderProps {
+	children: ReactNode;
+	service: ITagNotesService;
+}
+
+export const TagNotesContextProvider = ({ children, service }: TagNotesContextProviderProps) => {
+	const tagNotesService = useMemo<ITagNotesService>(() => service, [service]);
 
 	return (
 		<TagNotesContext.Provider value={tagNotesService}>
