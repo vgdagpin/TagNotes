@@ -9,7 +9,7 @@ import { ITagNotesService } from "@/shared/ITagNotesService";
 import { Note, NoteSummary } from "@/shared/models";
 
 export class TagNotesService implements ITagNotesService {
-	listNotes(search?: string): Promise<NoteSummary[]> {
+	listNotes(_search?: string): Promise<NoteSummary[]> {
 		throw new Error("Method not implemented.");
 	}
 	async createNote(initial?: Partial<Note>): Promise<Note> {

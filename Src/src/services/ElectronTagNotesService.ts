@@ -1,6 +1,6 @@
 import { ITagNotesService } from "@/shared/ITagNotesService";
 import { Note, NoteSummary } from "@/shared/models";
-import { set, get, del } from 'idb-keyval';
+import { set, get } from 'idb-keyval';
 
 //import { ipcRenderer } from 'electron';
 
@@ -13,7 +13,7 @@ export class ElectronTagNotesService implements ITagNotesService {
     constructor(api: any) {
         this.api = api;
     }
-	listNotes(search?: string): Promise<NoteSummary[]> {
+	listNotes(_search?: string): Promise<NoteSummary[]> {
 		throw new Error("Method not implemented.");
 	}
     async hasSelectedDirectory(): Promise<boolean> {
