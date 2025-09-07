@@ -8,4 +8,5 @@ export interface ITagNotesService {
 	browseDirectory(): Promise<string>;
 
 	createNote(initial?: Partial<Note>): Promise<Note>;
+	getNote(noteId: string): Promise<Note>;
 }

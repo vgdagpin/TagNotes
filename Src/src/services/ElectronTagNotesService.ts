@@ -13,6 +13,9 @@ export class ElectronTagNotesService implements ITagNotesService {
     constructor(api: any) {
         this.api = api;
     }
+	getNote(_noteId: string): Promise<Note> {
+		throw new Error("Method not implemented.");
+	}
 	listNotes(_search?: string): Promise<NoteSummary[]> {
 		throw new Error("Method not implemented.");
 	}

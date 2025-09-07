@@ -7,8 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Plus, FileText } from "@/components/tn-icons";
 
 import {
-  listNotes as listNotesLocal,
-  getNote as getLocalNote,
   deleteNote as deleteLocalNote
 } from "@/lib/notesClient";
 
@@ -40,7 +38,7 @@ export default function Index() {
     const checkIfHasSelectedDir = async () => {
       const hasSelectedDir = await tagNotesContext.hasSelectedDirectory();
 
-      setIsDirectoryLoaded(hasSelectedDir);    
+      setIsDirectoryLoaded(hasSelectedDir);
     }
 
     checkIfHasSelectedDir();
@@ -53,8 +51,7 @@ export default function Index() {
   useEffect(() => {
     if (isDirectoryLoaded) {
       const list = async () => {
-        const list = await listNotesLocal();
-        list.sort((a, b) => (b.createdAt as any).getTime() - (a.createdAt as any).getTime());
+        const list = await tagNotesContext.listNotes();
         setAllNotes(list);
       };
 
@@ -101,9 +98,9 @@ export default function Index() {
   const openNote = async (noteId: string) => {
     setActiveView(noteId);
     navigate(`/${noteId}`);
-    if (isDirectoryLoaded) {
-      try { await getLocalNote(noteId); } catch { }
-    }
+    // if (isDirectoryLoaded) {
+    //   try { await tagNotesContext.getNote(noteId); } catch { }
+    // }
   };
 
   // Close tab
