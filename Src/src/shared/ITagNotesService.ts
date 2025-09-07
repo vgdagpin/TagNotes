@@ -1,4 +1,4 @@
-import { Note, NoteSummary } from "./models";
+import { Note, NoteSummary, Section } from "./models";
 
 export interface ITagNotesService {
 	hasSelectedDirectory(): Promise<boolean>;
@@ -9,4 +9,17 @@ export interface ITagNotesService {
 
 	createNote(initial?: Partial<Note>): Promise<Note>;
 	getNote(noteId: string): Promise<Note>;
+
+	addSection(noteId: string, sectionType: Section['type']): Promise<Section>;
+	addImageSection(noteId: string, imageData: string): Promise<Section>;
+
+	updateSectionContent(noteId: string, sectionId: string, content: string, language?: string | null | undefined): Promise<void>;
+	updateSectionTitle(noteId: string, sectionId: string, title: string): Promise<void>;
+	updateTitle(noteId: string, title: string): Promise<void>;
+	deleteSection(noteId: string, sectionId: string): Promise<void>;
+	deleteNote(noteId: string): Promise<void>;
+
+	getTags(): Promise<string[]>;
+	addTag(noteId: string, tag: string): Promise<void>;
+	removeTag(noteId: string, tag: string): Promise<void>;
 }

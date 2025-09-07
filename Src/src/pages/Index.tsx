@@ -6,10 +6,6 @@ import { Button } from "@/components/ui/button";
 
 import { Plus, FileText } from "@/components/tn-icons";
 
-import {
-  deleteNote as deleteLocalNote
-} from "@/lib/notesClient";
-
 import TnNoteViewer from "@/components/ui/tn-note-viewer";
 import TnSettings from "@/components/ui/tn-settings";
 import { Hamburger } from "@fluentui/react-components";
@@ -116,7 +112,7 @@ export default function Index() {
   const deleteNote = async (noteId: string) => {
     if (!window.confirm("Are you sure you want to delete this note? This action cannot be undone.")) return;
     if (!isDirectoryLoaded) return;
-    await deleteLocalNote(noteId);
+    await tagNotesContext.deleteNote(noteId);
     setAllNotes(prev => prev.filter(n => n.id !== noteId));
     if (activeView === noteId) { setActiveView(null); navigate('/'); }
   };

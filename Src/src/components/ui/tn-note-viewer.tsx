@@ -7,14 +7,7 @@ import { Edit, Plus, FileText, Hash, Type, Code } from '@/components/tn-icons';
 
 import TnSection from "@/components/ui/tn-section";
 import { Note, Section } from "@shared/models";
-import {
-  addSection as addSectionLocal,
-  addImageSection as addImageSectionLocal,
-  updateSectionContent as updateSectionContentLocal,
-  updateSectionTitle as updateSectionTitleLocal,
-  updateTitle as updateTitleLocal,
-  deleteSection,
-} from "@/lib/notesClient";
+
 import TnSectionCode from "./tn-section-code";
 import TnSectionMarkdown from "@/components/ui/tn-section-markdown";
 import TnSectionImage from "./tn-section-image";
@@ -123,13 +116,20 @@ const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerP
     });
   };
 
-  const saveTitle = () => {
+  const saveTitle = async () => {
     if (!isDirLoaded) return;
     const newTitle = note.title;
-    updateTitleLocal(note.id, newTitle).then(updated => {
-      setNote(updated);
-      onTitleUpdated?.(updated.id, updated.title);
-    });
+
+    await tagNotesContext.updateTitle(note.id, newTitle);
+
+    setNote((prev) => ({
+      ...prev,
+      title: newTitle,
+      updatedAt: new Date(),
+    }));
+
+    onTitleUpdated?.(note.id, newTitle);
+
     setEditingTitle(false);
   };
 
@@ -152,7 +152,7 @@ const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerP
   const addImageSection = async (noteId: string, imageData: string) => {
     if (!isDirLoaded) return;
 
-    const newImageSection = await addImageSectionLocal(noteId, imageData);
+    const newImageSection = await tagNotesContext.addImageSection(noteId, imageData);
     setNote((prev) => ({
       ...prev,
       sections: [...prev.sections, newImageSection],
@@ -165,7 +165,7 @@ const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerP
   const handleAddSection = async (noteId: string, sectionType: Section["type"]) => {
     if (!isDirLoaded) return;
 
-    const newSection = await addSectionLocal(noteId, sectionType);
+    const newSection = await tagNotesContext.addSection(noteId, sectionType);
 
     setNote((prev) => ({
       ...prev,
@@ -179,11 +179,23 @@ const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerP
   const handleSaveSection = async (sectionId: string, content: string, language?: string | null, title?: string) => {
     if (!isDirLoaded) return;
 
-    let updated = await updateSectionContentLocal(note.id, sectionId, content, language);
+    await tagNotesContext.updateSectionContent(note.id, sectionId, content, language);
+
+    setNote((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec) => (sec.id === sectionId ? { ...sec, content, language } : sec)),
+    }));
+
+
     if (typeof title === 'string') {
-      updated = await updateSectionTitleLocal(note.id, sectionId, title);
+      await tagNotesContext.updateSectionTitle(note.id, sectionId, title);
+
+      setNote((prev) => ({
+        ...prev,
+        sections: prev.sections.map((sec) => (sec.id === sectionId ? { ...sec, title } : sec)),
+      }));
     }
-    setNote(updated);
+
     setNewSectionId(null);
   };
 
@@ -191,8 +203,13 @@ const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerP
   const handleDeleteSection = async (sectionId: string) => {
     if (!isDirLoaded) return;
 
-    const updated = await deleteSection(note.id, sectionId);
-    setNote(updated);
+    await tagNotesContext.deleteSection(note.id, sectionId);
+
+    setNote((prev) => ({
+      ...prev,
+      sections: prev.sections.filter((sec) => sec.id !== sectionId),
+    }));
+
     setNewSectionId(null);
   };
 

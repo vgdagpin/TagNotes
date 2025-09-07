@@ -1,12 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-
-import {
-    addTag,
-    removeTag,
-    getTags,
-} from "@/lib/notesClient";
-
 import { Tag, TagPicker, TagPickerControl, TagPickerGroup, TagPickerInput, TagPickerList, TagPickerOption, TagPickerProps, useTagPickerFilter } from "@fluentui/react-components";
+import { useTagNotesContext } from "@/contexts/TagNotesContextProvider";
 
 type TnTagsPickerProps = {
     noteId: string;
@@ -20,6 +14,8 @@ const TnTagsPicker = ({ noteId, noteTags, directoryLoaded }: TnTagsPickerProps) 
     const [tags, setTags] = useState<string[]>([]);
     const [inputValue, setInputValue] = useState("");
     const [selectedTags, setSelectedTags] = useState<string[]>(noteTags);
+    const tagNotesContext = useTagNotesContext();
+
     const onOptionSelect: TagPickerProps["onOptionSelect"] = async (_, data) => {
         if (data.value === "no-matches") {
             return;
@@ -32,7 +28,7 @@ const TnTagsPicker = ({ noteId, noteTags, directoryLoaded }: TnTagsPickerProps) 
         setInputValue("");
 
         if (data.selectedOptions.includes(data.value)) {
-            await addTag(noteId, data.value);
+            await tagNotesContext.addTag(noteId, data.value);
         } else {
             removeTagFromNote(data.value);
         }        
@@ -65,7 +61,7 @@ const TnTagsPicker = ({ noteId, noteTags, directoryLoaded }: TnTagsPickerProps) 
 
     useEffect(() => {
         const fetchTags = async () => {
-            const tags = await getTags();
+            const tags = await tagNotesContext.getTags();
 
             setTags(tags);
         };
@@ -76,7 +72,7 @@ const TnTagsPicker = ({ noteId, noteTags, directoryLoaded }: TnTagsPickerProps) 
     const removeTagFromNote = async (tagToRemove: string) => {
         if (!isDirLoaded) return;
 
-        await removeTag(noteId, tagToRemove);
+        await tagNotesContext.removeTag(noteId, tagToRemove);
     };
 
     useEffect(() => {
@@ -114,7 +110,7 @@ const TnTagsPicker = ({ noteId, noteTags, directoryLoaded }: TnTagsPickerProps) 
 
             setInputValue("");
 
-            await addTag(noteId, normalized);            
+            await tagNotesContext.addTag(noteId, normalized);            
         }
     };
 

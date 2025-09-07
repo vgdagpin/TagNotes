@@ -1,5 +1,5 @@
 import { ITagNotesService } from "@/shared/ITagNotesService";
-import { Note, NoteSummary } from "@/shared/models";
+import { Note, NoteSummary, Section } from "@/shared/models";
 import { set, get } from 'idb-keyval';
 
 //import { ipcRenderer } from 'electron';
@@ -13,6 +13,9 @@ export class ElectronTagNotesService implements ITagNotesService {
     constructor(api: any) {
         this.api = api;
     }
+	getTags(): Promise<string[]> {
+		throw new Error("Method not implemented.");
+	}
 	getNote(_noteId: string): Promise<Note> {
 		throw new Error("Method not implemented.");
 	}
@@ -72,6 +75,35 @@ export class ElectronTagNotesService implements ITagNotesService {
     async createNote(_initial?: Partial<Note>): Promise<Note> {
         throw new Error('Not implemented exception');
     }
+
+	addSection(_noteId: string, _sectionType: Section["type"]): Promise<Section> {
+		throw new Error("Method not implemented.");
+	}
+	addImageSection(_noteId: string, _imageData: string): Promise<Section> {
+		throw new Error("Method not implemented.");
+	}
+	updateSectionContent(_noteId: string, _sectionId: string, _content: string, _language?: string | null | undefined): Promise<void> {
+		throw new Error("Method not implemented.");
+	}
+
+	updateSectionTitle(_noteId: string, _sectionId: string, _title: string): Promise<void> {
+		throw new Error("Method not implemented.");
+	}
+	updateTitle(_noteId: string, _title: string): Promise<void> {
+		throw new Error("Method not implemented.");
+	}
+	deleteSection(_noteId: string, _sectionId: string): Promise<void> {
+		throw new Error("Method not implemented.");
+	}
+	deleteNote(_noteId: string): Promise<void> {
+		throw new Error("Method not implemented.");
+	}
+	addTag(_noteId: string, _tag: string): Promise<void> {
+		throw new Error("Method not implemented.");
+	}
+	removeTag(_noteId: string, _tag: string): Promise<void> {
+		throw new Error("Method not implemented.");
+	}
 
 
 	async verifyPermission(handle: any, requestWrite: boolean, promptIfNeeded: boolean) {
