@@ -112,7 +112,19 @@ function registerIpcHandlers() {
         fs.writeFileSync(indexPath, JSON.stringify(indexData, null, 2), 'utf-8');
         
         return note;
-    });    
+    }); 
+    
+    ipcMain.handle('get-default-tags', (event, dirPath) => {
+        return new Promise((resolve, reject) => {
+            try {
+                const tags = fs.readFileSync(path.join(dirPath, 'tags.txt'), 'utf-8');
+                resolve(tags.split('\n').filter(tag => tag.trim() !== ''));
+            } catch (error) {
+                reject(error);
+            }
+        });
+    });
+
 }
 
 function formatDateFolder(d) {

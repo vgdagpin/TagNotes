@@ -80,7 +80,7 @@ export class TagNotesService implements ITagNotesService {
 	}
 
 	// --- Tag logic ---
-	async getTags(): Promise<string[]> {
+	async getDefaultTags(): Promise<string[]> {
 		if (!this.dirHandle) return [];
 		return await this.loadTags(this.dirHandle);
 	}

@@ -249,6 +249,15 @@ async function start() {
     res.sendFile(path.join(distPath, "index.html"));
   });
 
+  expressApp.get("/electron/Viewer/:noteId", (req, res) => {
+    res.sendFile(path.join(distPath, "index.html"));
+  });
+
+  expressApp.get("/electron/Settings", (req, res) => {
+    res.sendFile(path.join(distPath, "index.html"));
+  });
+
+
   const listener = expressApp.listen(0, () => {
     const port = listener.address().port;
     const url = `http://127.0.0.1:${port}`;

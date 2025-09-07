@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { Tag, TagPicker, TagPickerControl, TagPickerGroup, TagPickerInput, TagPickerList, TagPickerOption, TagPickerProps, useTagPickerFilter } from "@fluentui/react-components";
+import {
+    Tag,
+    TagPicker,
+    TagPickerControl,
+    TagPickerGroup,
+    TagPickerInput,
+    TagPickerList,
+    TagPickerOption,
+    TagPickerProps,
+    useTagPickerFilter
+} from "@fluentui/react-components";
 import { useTagNotesContext } from "@/contexts/TagNotesContextProvider";
 
 type TnTagsPickerProps = {
@@ -11,7 +21,7 @@ type TnTagsPickerProps = {
 const TnTagsPicker = ({ noteId, noteTags, directoryLoaded }: TnTagsPickerProps) => {
     const [isDirLoaded, setIsDirLoaded] = useState<boolean | undefined>(directoryLoaded);
 
-    const [tags, setTags] = useState<string[]>([]);
+    const [defaultTags, setDefaultTags] = useState<string[]>([]);
     const [inputValue, setInputValue] = useState("");
     const [selectedTags, setSelectedTags] = useState<string[]>(noteTags);
     const tagNotesContext = useTagNotesContext();
@@ -31,12 +41,12 @@ const TnTagsPicker = ({ noteId, noteTags, directoryLoaded }: TnTagsPickerProps) 
             await tagNotesContext.addTag(noteId, data.value);
         } else {
             removeTagFromNote(data.value);
-        }        
+        }
     };
 
     const children = useTagPickerFilter({
         query: inputValue,
-        options: tags,
+        options: defaultTags,
         noOptionsElement: (
             <TagPickerOption value="no-matches">{inputValue}</TagPickerOption>
         ),
@@ -50,10 +60,10 @@ const TnTagsPicker = ({ noteId, noteTags, directoryLoaded }: TnTagsPickerProps) 
     // Locally compute filtered options to control Enter key behavior
     const filteredOptions = useMemo(() => {
         const q = inputValue.toLowerCase();
-        return tags.filter(
+        return defaultTags.filter(
             (option) => !selectedTags.includes(option) && option.toLowerCase().includes(q)
         );
-    }, [tags, selectedTags, inputValue]);
+    }, [defaultTags, selectedTags, inputValue]);
 
     useEffect(() => {
         setIsDirLoaded(directoryLoaded);
@@ -61,9 +71,9 @@ const TnTagsPicker = ({ noteId, noteTags, directoryLoaded }: TnTagsPickerProps) 
 
     useEffect(() => {
         const fetchTags = async () => {
-            const tags = await tagNotesContext.getTags();
+            const tags = await tagNotesContext.getDefaultTags();
 
-            setTags(tags);
+            setDefaultTags(tags);
         };
         fetchTags();
     }, []);
@@ -102,7 +112,7 @@ const TnTagsPicker = ({ noteId, noteTags, directoryLoaded }: TnTagsPickerProps) 
 
             // const isAdded = await createTag(normalized);
 
-            setTags(prev => [...prev, normalized]);
+            setDefaultTags(prev => [...prev, normalized]);
 
             setSelectedTags((curr) =>
                 curr.includes(normalized) ? curr : [...curr, normalized]
@@ -110,7 +120,7 @@ const TnTagsPicker = ({ noteId, noteTags, directoryLoaded }: TnTagsPickerProps) 
 
             setInputValue("");
 
-            await tagNotesContext.addTag(noteId, normalized);            
+            await tagNotesContext.addTag(noteId, normalized);
         }
     };
 

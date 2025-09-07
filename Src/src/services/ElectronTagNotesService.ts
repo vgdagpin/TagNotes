@@ -14,8 +14,10 @@ export class ElectronTagNotesService implements ITagNotesService {
     constructor(api: any) {
         this.api = api;
     }
-	getTags(): Promise<string[]> {
-		throw new Error("Method not implemented.");
+	async getDefaultTags(): Promise<string[]> {
+		const dirPath = await get(DIR_HANDLE_KEY);
+
+		return await this.api?.getDefaultTags(dirPath);
 	}
 	getNote(_noteId: string): Promise<Note> {
 		throw new Error("Method not implemented.");
@@ -86,7 +88,7 @@ export class ElectronTagNotesService implements ITagNotesService {
 		const dirPath = await get(DIR_HANDLE_KEY);
 
 		await this.api?.createNote(dirPath, newNote);
-		
+
 		return newNote;
     }
 

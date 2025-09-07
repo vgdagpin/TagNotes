@@ -10,31 +10,33 @@ export default function NewNote() {
 
     const tagNotesContext = useTagNotesContext();
 
-    useEffect(() => {
-        const tryCheckIfDirectoryIsLoaded = async () => {
-            try {
-                const hasDir = await tagNotesContext.hasSelectedDirectory();
+    const tryCheckIfDirectoryIsLoaded = async () => {
+        try {
+            const hasDir = await tagNotesContext.hasSelectedDirectory();
 
-                if (hasDir) {
-                    const newNote = await tagNotesContext.createNote({});
+            if (hasDir) {
+                const newNote = await tagNotesContext.createNote({});
 
-                    setNote(newNote);
-                }
-
-                console.log('localMode persisted', hasDir);
-                setIsDirLoaded(hasDir);
-            } catch {
-                console.log('Error getting persisted directory handle');
-                setIsDirLoaded(false);
+                setNote(newNote);
             }
-        }
 
-        if (!isDirLoaded) {
-            tryCheckIfDirectoryIsLoaded();
+            console.log('localMode persisted', hasDir);
+            setIsDirLoaded(hasDir);
+        } catch {
+            console.log('Error getting persisted directory handle');
+            setIsDirLoaded(false);
         }
-    }, [tagNotesContext, isDirLoaded]);
+    }
 
-    const handleDirectorySelected = () => {
+    useEffect(() => {
+        tryCheckIfDirectoryIsLoaded();
+    }, [tagNotesContext]);
+
+    const handleDirectorySelected = async () => {
+        const newNote = await tagNotesContext.createNote({});
+
+        setNote(newNote);
+
         setIsDirLoaded(true);
     }
 

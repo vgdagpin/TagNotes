@@ -19,7 +19,7 @@ export interface ITagNotesService {
 	deleteSection(noteId: string, sectionId: string): Promise<void>;
 	deleteNote(noteId: string): Promise<void>;
 
-	getTags(): Promise<string[]>;
+	getDefaultTags(): Promise<string[]>;
 	addTag(noteId: string, tag: string): Promise<void>;
 	removeTag(noteId: string, tag: string): Promise<void>;
 }

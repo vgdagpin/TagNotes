@@ -24,5 +24,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
 	createNote: async (dirPath, note) => {
 		return await ipcRenderer.invoke('create-note', dirPath, note);
+	},
+
+	getDefaultTags: async (dirPath) => {
+		return await ipcRenderer.invoke('get-default-tags', dirPath);
 	}
 });
