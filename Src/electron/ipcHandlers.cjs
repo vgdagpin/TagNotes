@@ -37,12 +37,33 @@ function registerIpcHandlers() {
     ipcMain.handle('browse-directory', async () => {
         try {
             console.log('>>>>>> ipc: browse-directory invoked in main');
-            // Placeholder: keep behavior consistent (will throw) until refactored.
             const result = await dialog.showOpenDialog({ properties: ['openDirectory', 'createDirectory'] });
-            if (result.canceled || !result.filePaths[0]) return null;
+            
+            if (result.canceled || !result.filePaths[0]) {
+                return null;
+            }
 
-            return result.filePaths[0]; // absolute path
-            // return fsDirHandler;
+            const dirPath = result.filePaths[0];
+
+            const noteDir = path.join(dirPath, 'Notes');
+
+            if (!fs.existsSync(noteDir)) {
+                fs.mkdirSync(noteDir);
+            }
+
+            const indexPath = path.join(dirPath, 'index.json');
+
+            if (!fs.existsSync(indexPath)) {
+                fs.writeFileSync(indexPath, JSON.stringify({ notes: [] }, null, 2), 'utf-8');
+            }
+
+            const tagsPath = path.join(dirPath, 'tags.txt');
+
+            if (!fs.existsSync(tagsPath)) {
+                fs.writeFileSync(tagsPath, '', 'utf-8');
+            }
+
+            return dirPath;
         } catch (err) {
             console.error('>>>>>> ipc: browse-directory error', err);
             return null;
@@ -60,8 +81,45 @@ function registerIpcHandlers() {
     });
 
     ipcMain.handle('create-note', (event, dirPath, note) => {
-        // Logic to create a note in the specified directory
-    });
+        const fileDir = path.join(dirPath, 'Notes', formatDateFolder(new Date()));
+
+        if (!fs.existsSync(fileDir)) {
+            fs.mkdirSync(fileDir, { recursive: true });
+        }
+
+        const filePath = path.join(fileDir, `${note.id}.json`);
+
+        fs.writeFileSync(filePath, JSON.stringify(note, null, 2), 'utf-8');
+
+        note.location = filePath;
+
+        const indexPath = path.join(dirPath, 'index.json');
+
+        if (!fs.existsSync(indexPath)) {
+            fs.writeFileSync(indexPath, JSON.stringify({ notes: [] }, null, 2), 'utf-8');
+        }
+
+        const indexData = JSON.parse(fs.readFileSync(indexPath, 'utf-8'));
+
+        indexData.notes.push({ 
+            id: note.id, 
+            title: note.title, 
+            createdAt: note.createdAt, 
+            updatedAt: note.updatedAt, 
+            location: note.location 
+        });
+
+        fs.writeFileSync(indexPath, JSON.stringify(indexData, null, 2), 'utf-8');
+        
+        return note;
+    });    
+}
+
+function formatDateFolder(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
 }
 
 module.exports = { registerIpcHandlers };
