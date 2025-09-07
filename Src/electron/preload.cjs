@@ -20,5 +20,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
 	},
 	getId: async () => {
 		return await ipcRenderer.invoke('get-id');
+	},
+
+	createNote: async (dirPath, note) => {
+		return await ipcRenderer.invoke('create-note', dirPath, note);
 	}
 });

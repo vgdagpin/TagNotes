@@ -17,27 +17,20 @@ import TnTagsPicker from "./tn-tags-picker";
 import { useTagNotesContext } from "@/contexts/TagNotesContextProvider";
 
 type TnNoteViewerProps = {
-  noteId: string;
+  note: Note;
   directoryLoaded: boolean | undefined;
 
   onTitleUpdated?: (noteId: string, newTitle: string) => void;
 };
 
-const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerProps) => {
+const TnNoteViewer = ({ note, directoryLoaded, onTitleUpdated }: TnNoteViewerProps) => {
   const [isDirLoaded, setIsDirLoaded] = useState<boolean | undefined>(undefined);
-  const [noteTags, setNoteTags] = useState<string[]>([]);
+  const [noteTags] = useState<string[]>(note.tags);
   const [newSectionId, setNewSectionId] = useState<string | null>(null);
 
   const tagNotesContext = useTagNotesContext();
 
-  const [note, setNote] = useState<Note>({
-    id: noteId,
-    title: "",
-    tags: [],
-    sections: [],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  });
+  const [selectedNote, setSelectedNote] = useState<Note>(note);
   const [editingTitle, setEditingTitle] = useState(false);
 
   console.log('TnNoteViewer');
@@ -51,24 +44,6 @@ const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerP
 
     checkIfHasSelectedDir();
   }, [tagNotesContext]);
-
-  useEffect(() => {
-    let active = true;
-    const fetchNote = async () => {
-      try {
-        if (!isDirLoaded) return;
-        const data = await tagNotesContext.getNote(noteId);
-        if (!active) return;
-        console.log('setNote from useEffect');
-
-        setNote(data);
-
-        setNoteTags(data.tags);
-      } catch { }
-    };
-    fetchNote();
-    return () => { active = false; };
-  }, [noteId, isDirLoaded]);
 
   useEffect(() => {
     setIsDirLoaded(directoryLoaded);
@@ -107,7 +82,7 @@ const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerP
   };
 
   const handleSetTitle = (title: string) => {
-    setNote((prev) => {
+    setSelectedNote((prev) => {
       return {
         ...prev,
         title: title,
@@ -122,7 +97,7 @@ const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerP
 
     await tagNotesContext.updateTitle(note.id, newTitle);
 
-    setNote((prev) => ({
+    setSelectedNote((prev) => ({
       ...prev,
       title: newTitle,
       updatedAt: new Date(),
@@ -153,7 +128,7 @@ const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerP
     if (!isDirLoaded) return;
 
     const newImageSection = await tagNotesContext.addImageSection(noteId, imageData);
-    setNote((prev) => ({
+    setSelectedNote((prev) => ({
       ...prev,
       sections: [...prev.sections, newImageSection],
     }));
@@ -167,7 +142,7 @@ const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerP
 
     const newSection = await tagNotesContext.addSection(noteId, sectionType);
 
-    setNote((prev) => ({
+    setSelectedNote((prev) => ({
       ...prev,
       sections: [...prev.sections, newSection],
     }));
@@ -181,7 +156,7 @@ const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerP
 
     await tagNotesContext.updateSectionContent(note.id, sectionId, content, language);
 
-    setNote((prev) => ({
+    setSelectedNote((prev) => ({
       ...prev,
       sections: prev.sections.map((sec) => (sec.id === sectionId ? { ...sec, content, language } : sec)),
     }));
@@ -190,7 +165,7 @@ const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerP
     if (typeof title === 'string') {
       await tagNotesContext.updateSectionTitle(note.id, sectionId, title);
 
-      setNote((prev) => ({
+      setSelectedNote((prev) => ({
         ...prev,
         sections: prev.sections.map((sec) => (sec.id === sectionId ? { ...sec, title } : sec)),
       }));
@@ -205,7 +180,7 @@ const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerP
 
     await tagNotesContext.deleteSection(note.id, sectionId);
 
-    setNote((prev) => ({
+    setSelectedNote((prev) => ({
       ...prev,
       sections: prev.sections.filter((sec) => sec.id !== sectionId),
     }));
@@ -215,9 +190,9 @@ const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerP
 
   return (
     <div
-      key={noteId}
+      key={selectedNote.id}
       className="h-full flex flex-col min-w-0 w-full"
-      onPaste={(e) => handleImagePaste(noteId, e.nativeEvent)}
+      onPaste={(e) => handleImagePaste(selectedNote.id, e.nativeEvent)}
     >
       <div className="note-viewer-container">
         {/* Note Header */}
@@ -338,7 +313,7 @@ const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerP
               <Button
                 variant="outline"
                 className="flex-1 flex items-center gap-2"
-                onClick={() => handleAddSection(noteId, "text")}
+                onClick={() => handleAddSection(selectedNote.id, "text")}
               >
                 <Type className="h-4 w-4" />
                 Plain Text
@@ -346,7 +321,7 @@ const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerP
               <Button
                 variant="outline"
                 className="flex-1 flex items-center gap-2"
-                onClick={() => handleAddSection(noteId, "markdown")}
+                onClick={() => handleAddSection(selectedNote.id, "markdown")}
               >
                 <Hash className="h-4 w-4" />
                 Markdown
@@ -354,7 +329,7 @@ const TnNoteViewer = ({ noteId, directoryLoaded, onTitleUpdated }: TnNoteViewerP
               <Button
                 variant="outline"
                 className="flex-1 flex items-center gap-2"
-                onClick={() => handleAddSection(noteId, "code")}
+                onClick={() => handleAddSection(selectedNote.id, "code")}
               >
                 <Code className="h-4 w-4" />
                 Code

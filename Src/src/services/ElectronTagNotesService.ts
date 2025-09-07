@@ -1,6 +1,7 @@
 import { ITagNotesService } from "@/shared/ITagNotesService";
 import { Note, NoteSummary, Section } from "@/shared/models";
 import { set, get } from 'idb-keyval';
+import { v4 as uuid } from 'uuid';
 
 //import { ipcRenderer } from 'electron';
 
@@ -72,8 +73,21 @@ export class ElectronTagNotesService implements ITagNotesService {
 		return result;
 	}
 
-    async createNote(_initial?: Partial<Note>): Promise<Note> {
-        throw new Error('Not implemented exception');
+    async createNote(initial?: Partial<Note>): Promise<Note> {
+        const newNote: Note = {
+			id: initial?.id || uuid(),
+			title: initial?.title || 'New Note',
+			sections: initial?.sections || [],
+			tags: initial?.tags || [],
+			createdAt: new Date(),
+			updatedAt: new Date()
+		};
+
+		const dirPath = await get(DIR_HANDLE_KEY);
+
+		await this.api?.createNote(dirPath, newNote);
+		
+		return newNote;
     }
 
 	addSection(_noteId: string, _sectionType: Section["type"]): Promise<Section> {

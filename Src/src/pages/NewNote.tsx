@@ -2,13 +2,15 @@
 // import TnSettings from "@/components/ui/tn-settings";
 // import { createNote, hasSelectedDirectory } from "@/lib/notesClient";
 // import { Note } from "@/shared/models";
+import TnSettings from "@/components/ui/tn-settings";
 import { useTagNotesContext } from "@/contexts/TagNotesContextProvider";
+import { Note } from "@/shared/models";
 import { Button } from "@fluentui/react-components";
 import { useEffect, useState } from "react";
 
 export default function NewNote() {
     const [isDirLoaded, setIsDirLoaded] = useState<boolean | undefined>(undefined);
-    const [dirName, setDirName] = useState<string | null>(null);
+    const [note, setNote] = useState<Note | undefined>(undefined);
 
     const tagNotesContext = useTagNotesContext();
 
@@ -18,8 +20,9 @@ export default function NewNote() {
                 const hasDir = await tagNotesContext.hasSelectedDirectory();
 
                 if (hasDir) {
-                    const name = await tagNotesContext.getDirectoryName();
-                    setDirName(name);
+                    const newNote = await tagNotesContext.createNote({});
+
+                    setNote(newNote);
                 }
 
                 console.log('localMode persisted', hasDir);
@@ -30,8 +33,10 @@ export default function NewNote() {
             }
         }
 
-        tryCheckIfDirectoryIsLoaded();
-    }, [tagNotesContext]);
+        if (!isDirLoaded) {
+            tryCheckIfDirectoryIsLoaded();
+        }
+    }, [tagNotesContext, isDirLoaded]);
 
 
     console.log('test');
@@ -76,9 +81,9 @@ export default function NewNote() {
     //     tryCheckIfDirectoryIsLoaded();
     // }, []);
 
-    // const handleDirectorySelected = () => {
-    //     setIsDirLoaded(true);
-    // }
+    const handleDirectorySelected = () => {
+        setIsDirLoaded(true);
+    }
 
     // useEffect(() => {
     //     const fetchId = async () => {
@@ -108,9 +113,9 @@ export default function NewNote() {
     return (<>
         <Button onClick={handleSelectDirectory}>Select Directory</Button>
         <br />
-        { isDirLoaded === undefined && <></> }
-        { isDirLoaded === false && <p>No directory selected</p> }
-        { isDirLoaded === true && <p>{dirName}</p> }
+        {isDirLoaded === undefined && <></>}
+        {isDirLoaded === false && <TnSettings onDirectorySelected={handleDirectorySelected} />}
+        {isDirLoaded === true && <pre>{JSON.stringify(note, null, 4)}</pre>}
 
     </>)
 

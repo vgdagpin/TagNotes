@@ -58,6 +58,10 @@ function registerIpcHandlers() {
         sharedId = id;
         return sharedId;
     });
+
+    ipcMain.handle('create-note', (event, dirPath, note) => {
+        // Logic to create a note in the specified directory
+    });
 }
 
 module.exports = { registerIpcHandlers };

@@ -2,31 +2,39 @@ import { useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import TnNoteViewer from "@/components/ui/tn-note-viewer";
 import { useTagNotesContext } from "@/contexts/TagNotesContextProvider";
+import { Note } from "@/shared/models";
 
 export default function Viewer() {
     const { noteId } = useParams();
+    const [note, setNote] = useState<Note | undefined>(undefined);
+
     const [isDirectoryLoaded, setIsDirectoryLoaded] = useState<boolean | undefined>(undefined);
 
     console.log('test', useLocation());
 
     const tagNotesContext = useTagNotesContext();
-    
-        useEffect(() => {
-            const tryCheckIfDirectoryIsLoaded = async () => {
-                try {
-                    const hasDir = await tagNotesContext.hasSelectedDirectory();
-    
-    
-                    console.log('localMode persisted', hasDir);
-                    setIsDirectoryLoaded(hasDir);
-                } catch {
-                    console.log('Error getting persisted directory handle');
-                    setIsDirectoryLoaded(false);
+
+    useEffect(() => {
+        const tryCheckIfDirectoryIsLoaded = async () => {
+            try {
+                const hasDir = await tagNotesContext.hasSelectedDirectory();
+
+                if (hasDir && noteId) {
+                    const n = await tagNotesContext.getNote(noteId);
+                    setNote(n);
                 }
+
+
+                console.log('localMode persisted', hasDir);
+                setIsDirectoryLoaded(hasDir);
+            } catch {
+                console.log('Error getting persisted directory handle');
+                setIsDirectoryLoaded(false);
             }
-    
-            tryCheckIfDirectoryIsLoaded();
-        }, [tagNotesContext]);
+        }
+
+        tryCheckIfDirectoryIsLoaded();
+    }, [tagNotesContext, noteId]);
 
     // Ensure directory status is known
     // useEffect(() => {
@@ -53,7 +61,7 @@ export default function Viewer() {
     return (
         <div className="h-screen bg-background flex">
             <div className="flex-1 min-w-0"> Test
-                <TnNoteViewer noteId={noteId || ''} directoryLoaded={isDirectoryLoaded} />
+                {note && <TnNoteViewer note={note} directoryLoaded={isDirectoryLoaded} />}
             </div>
         </div>
     );

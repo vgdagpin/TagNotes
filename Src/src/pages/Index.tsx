@@ -11,7 +11,7 @@ import TnSettings from "@/components/ui/tn-settings";
 import { Hamburger } from "@fluentui/react-components";
 
 import './Index.css'
-import { NoteSummary } from "@/shared/models";
+import { Note, NoteSummary } from "@/shared/models";
 import TnNavigation from "@/components/ui/tn-navigation";
 import { useTagNotesContext } from "@/contexts/TagNotesContextProvider";
 
@@ -24,9 +24,11 @@ export default function Index() {
   const [allNotes, setAllNotes] = useState<NoteSummary[]>([]);
 
   const [activeView, setActiveView] = useState<string | null>(null); // note id or 'settings'
-  const [missingNote, setMissingNote] = useState<boolean | undefined>(undefined);
+  const [isMissingNote, setIsMissingNote] = useState<boolean | undefined>(undefined);
   const navigate = useNavigate();
   const { noteId } = useParams();
+
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
 
   const tagNotesContext = useTagNotesContext();
 
@@ -62,7 +64,7 @@ export default function Index() {
       if (!isDirectoryLoaded) return; // wait for local mode (don't mark missing yet)
       const exists = allNotes.some(n => n.id === noteId);
 
-      setMissingNote(!exists);
+      setIsMissingNote(!exists);
     };
 
     preload();
@@ -87,6 +89,8 @@ export default function Index() {
     }, ...prev]);
 
     setActiveView(note.id);
+    setSelectedNote(note);
+
     navigate(`/${note.id}`);
   };
 
@@ -94,9 +98,13 @@ export default function Index() {
   const openNote = async (noteId: string) => {
     setActiveView(noteId);
     navigate(`/${noteId}`);
-    // if (isDirectoryLoaded) {
-    //   try { await tagNotesContext.getNote(noteId); } catch { }
-    // }
+    if (isDirectoryLoaded) {
+      try {
+        const note = await tagNotesContext.getNote(noteId);
+
+        setSelectedNote(note);
+      } catch { }
+    }
   };
 
   // Close tab
@@ -123,14 +131,14 @@ export default function Index() {
     if (noteId) {
       if (noteId === 'settings') {
         if (activeView !== 'settings') setActiveView('settings');
-        setMissingNote(false);
+        setIsMissingNote(false);
       } else if (activeView !== noteId) {
         setActiveView(noteId);
         // optimistic reset; actual existence checked in preload effect
-        setMissingNote(false);
+        setIsMissingNote(false);
       }
     } else {
-      setMissingNote(false);
+      setIsMissingNote(false);
     }
   }, [noteId, activeView]);
 
@@ -151,7 +159,7 @@ export default function Index() {
         <Hamburger onClick={() => setNavOpen(!navOpen)} />
         {
           isDirectoryLoaded ? (
-            !activeView ? (
+            !selectedNote ? (
               <div className="flex-1 flex items-center justify-center text-center">
                 <div>
                   <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -169,11 +177,11 @@ export default function Index() {
               </div>
             ) : activeView === 'settings' ? (
               <TnSettings onClose={closeSettings} />
-            ) : missingNote === true ? (
+            ) : isMissingNote === true ? (
               <NotFound />
             ) : (
               <TnNoteViewer
-                noteId={activeView}
+                note={selectedNote}
                 directoryLoaded={isDirectoryLoaded}
                 onTitleUpdated={(id, newTitle) => {
                   setAllNotes(prev => prev.map(n => n.id === id ? { ...n, title: newTitle } : n));
