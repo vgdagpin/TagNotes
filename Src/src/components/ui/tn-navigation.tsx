@@ -7,8 +7,6 @@ import { Input } from "./input";
 import { NoteSummary } from "@/shared/models";
 import { cn, formatDateTimeShort } from "@/lib/utils";
 
-import { tryRestoreLocalMode } from "@/lib/notesClient";
-
 type TnNavigationProps = {
     openNavigation: boolean;
     directoryLoaded: boolean | undefined;
@@ -44,10 +42,10 @@ const TnNavigation = ({ openNavigation, directoryLoaded, notes, currentActiveVie
     useEffect(() => {
         let active = true;
         const run = async () => {
-            // First attempt silent restore once (only on initial mount or when no local mode yet)
-            if (isDirectoryLoaded === undefined) {
-                try { await tryRestoreLocalMode(); } catch { /* ignore */ }
-            }
+            // // First attempt silent restore once (only on initial mount or when no local mode yet)
+            // if (isDirectoryLoaded === undefined) {
+            //     try { await tryRestoreLocalMode(); } catch { /* ignore */ }
+            // }
 
             try {
                 if (isDirectoryLoaded) {
