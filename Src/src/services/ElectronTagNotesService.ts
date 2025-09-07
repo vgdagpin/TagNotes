@@ -1,59 +1,39 @@
 import { ITagNotesService } from "@/shared/ITagNotesService";
-import { Note } from "@/shared/models";
+import { Note, NoteSummary } from "@/shared/models";
+import { set, get, del } from 'idb-keyval';
 
 //import { ipcRenderer } from 'electron';
 
+const DIR_HANDLE_KEY = 'tagnotes:electron.dirHandle';
+
 // Electron-specific service that delegates to exposed preload APIs if available.
 export class ElectronTagNotesService implements ITagNotesService {
+
     private api: any;
     constructor(api: any) {
         this.api = api;
     }
+	listNotes(search?: string): Promise<NoteSummary[]> {
+		throw new Error("Method not implemented.");
+	}
     async hasSelectedDirectory(): Promise<boolean> {
-		const getDirHandle = this.api?.getDirectoryHandle;
+		const isValidDir = this.api?.isValidDirectory;
 
-        if (getDirHandle) {
-			const handle:FileSystemDirectoryHandle = await getDirHandle();
-
-			// if no handle stored, or not a directory handle, return null
-			if (!handle) {
-				console.log('ElectronTagNotesService: No valid directory handle found.', handle);
-
-				return false;
-			}
-
-			// Only query permission; do NOT prompt user automatically on load
-			const hasPerm = await this.verifyPermission(handle, false, false).catch(() => false);
-
-			if (!hasPerm) {
-				console.log('ElectronTagNotesService: No permission for stored directory handle.');
-			}
-
-			return hasPerm;
-        }
-
-        return false;
-    }
-
-    async selectedDirectoryName(): Promise<string | null> {
-        const getDirHandle = this.api?.getDirectoryHandle;
-
-		if (getDirHandle === undefined) {
-			throw new Error('browseDirectory api not available');
+		if (isValidDir === undefined) {
+			throw new Error('isValidDirectory api not available');
 		}
 
-		if (getDirHandle) {
-			const handle:FileSystemDirectoryHandle = await getDirHandle();
+		const dirPath = await get(DIR_HANDLE_KEY);
 
-			// if no handle stored, or not a directory handle, return null
-			if (!handle) {
-				return null;
-			}
+        const isValid:boolean = await isValidDir(dirPath);
 
-			return handle.name;
-        }
+		return isValid;
+    }
 
-        return null;
+    async getDirectoryName(): Promise<string | null> {
+        const dirPath = await get(DIR_HANDLE_KEY);
+
+        return dirPath;
     }
 
 	async browseDirectory(): Promise<string> {
@@ -64,6 +44,8 @@ export class ElectronTagNotesService implements ITagNotesService {
 		}
 
 		const result = await setDirHandle();
+
+		await set(DIR_HANDLE_KEY, result);
 
 		// if (!(window as any).showDirectoryPicker) {
 		// 	throw new Error('File System Access API not supported in this browser.');

@@ -9,8 +9,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 		console.log('>>>>> preload: Setting directory handle', handle);
 		return await ipcRenderer.invoke('set-directory-handle', handle);
 	},
-	getDirectoryHandle: async () => {
-		return await ipcRenderer.invoke('get-directory-handle');
+	isValidDirectory: async (dirPath) => {
+		return await ipcRenderer.invoke('is-valid-directory', dirPath);
 	},
 	browseDirectory: async () => {
 		return await ipcRenderer.invoke('browse-directory');

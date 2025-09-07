@@ -6,13 +6,16 @@ import {
  } from "@/lib/notesClient";
 
 import { ITagNotesService } from "@/shared/ITagNotesService";
-import { Note } from "@/shared/models";
+import { Note, NoteSummary } from "@/shared/models";
 
 export class TagNotesService implements ITagNotesService {
+	listNotes(search?: string): Promise<NoteSummary[]> {
+		throw new Error("Method not implemented.");
+	}
 	async createNote(initial?: Partial<Note>): Promise<Note> {
 		return await ncCreateNote(initial);
 	}
-	async selectedDirectoryName(): Promise<string | null> {
+	async getDirectoryName(): Promise<string | null> {
 		return await ncGetCurrentDirectoryName();
 	}
 	async hasSelectedDirectory(): Promise<boolean> {

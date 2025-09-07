@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 
 export default function NewNote() {
     const [isDirLoaded, setIsDirLoaded] = useState<boolean | undefined>(undefined);
+    const [dirName, setDirName] = useState<string | null>(null);
 
     const tagNotesContext = useTagNotesContext();
 
@@ -15,6 +16,11 @@ export default function NewNote() {
         const tryCheckIfDirectoryIsLoaded = async () => {
             try {
                 const hasDir = await tagNotesContext.hasSelectedDirectory();
+
+                if (hasDir) {
+                    const name = await tagNotesContext.getDirectoryName();
+                    setDirName(name);
+                }
 
                 console.log('localMode persisted', hasDir);
                 setIsDirLoaded(hasDir);
@@ -102,9 +108,9 @@ export default function NewNote() {
     return (<>
         <Button onClick={handleSelectDirectory}>Select Directory</Button>
         <br />
-        { isDirLoaded === undefined && <p>Loading...</p> }
+        { isDirLoaded === undefined && <></> }
         { isDirLoaded === false && <p>No directory selected</p> }
-        { isDirLoaded === true && <p>Directory selected</p> }
+        { isDirLoaded === true && <p>{dirName}</p> }
 
     </>)
 

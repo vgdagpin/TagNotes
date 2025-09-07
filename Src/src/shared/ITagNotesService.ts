@@ -1,8 +1,9 @@
-import { Note } from "./models";
+import { Note, NoteSummary } from "./models";
 
 export interface ITagNotesService {
 	hasSelectedDirectory(): Promise<boolean>;
-	selectedDirectoryName(): Promise<string | null>;
+	getDirectoryName(): Promise<string | null>;
+	listNotes(search?: string): Promise<NoteSummary[]>;
 
 	browseDirectory(): Promise<string>;
 

@@ -18,7 +18,7 @@ const TnSettings = ({ onClose, onDirectorySelected }: TnSettingsProps) => {
 
   useEffect(() => {
     const tryFetchSelectedDirName = async () => {
-      const name = await tagNotesContext.selectedDirectoryName();
+      const name = await tagNotesContext.getDirectoryName();
       setSettings({ notesDirectory: name || '' });
     }
 
