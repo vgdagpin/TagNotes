@@ -85,6 +85,12 @@ async function createTray() {
         },
       },
       {
+        label: "Settings",
+        click: () => {
+          openSettingsWindow();
+        },
+      },
+      {
         type: "separator",
       },
       {
@@ -239,7 +245,7 @@ async function start() {
   });
 
   // Serve the SPA entry for /new so React Router can render NewNote
-  expressApp.get("/Viewer/New", (req, res) => {
+  expressApp.get("/electron/NewNote", (req, res) => {
     res.sendFile(path.join(distPath, "index.html"));
   });
 
@@ -278,11 +284,11 @@ function openAddNewWindow() {
     // If mainWindowUrl is an http dev server, load dev route
     if (mainWindowUrl && mainWindowUrl.startsWith("http")) {
       const base = mainWindowUrl.replace(/\/$/, "");
-      target = `${base}/Viewer/New`;
+      target = `${base}/electron/NewNote`;
     } else {
       // production: load built index.html and use hash routing to reach the route
       const indexPath = path.join(__dirname, "..", "dist", "index.html");
-      target = `file://${indexPath}/Viewer/New`;
+      target = `file://${indexPath}/electron/NewNote`;
     }
 
     console.log('Opening Add New window at', target);
@@ -291,7 +297,7 @@ function openAddNewWindow() {
 
     // open devtools for modal if in dev
     //if (!app.isPackaged) {
-      modal.webContents.openDevTools({ mode: "right" });
+    modal.webContents.openDevTools({ mode: "right" });
     //}
 
     // forward console messages from modal to main process for easier debugging
@@ -304,6 +310,60 @@ function openAddNewWindow() {
     });
   } catch (err) {
     console.error("Failed to open Add Entry modal", err);
+  }
+}
+
+function openSettingsWindow() {
+  try {
+    const parent = mainWindow && !mainWindow.isDestroyed() ? mainWindow : null;
+    const iconPath = getTrayIconPath();
+
+
+    const modal = new BrowserWindow({
+      width: 1024,
+      height: 768,
+      icon: nativeImage.createFromPath(iconPath),
+      parent,
+      modal: false,
+      show: true,
+      webPreferences: {
+        preload: path.join(__dirname, "preload.cjs"),
+        contextIsolation: true,
+      },
+    });
+
+    modal.setMenu(null);
+
+    let target;
+    // If mainWindowUrl is an http dev server, load dev route
+    if (mainWindowUrl && mainWindowUrl.startsWith("http")) {
+      const base = mainWindowUrl.replace(/\/$/, "");
+      target = `${base}/electron/Settings`;
+    } else {
+      // production: load built index.html and use hash routing to reach the route
+      const indexPath = path.join(__dirname, "..", "dist", "index.html");
+      target = `file://${indexPath}/electron/Settings`;
+    }
+
+    console.log('Opening Settings window at', target);
+
+    modal.loadURL(target);
+
+    // open devtools for modal if in dev
+    //if (!app.isPackaged) {
+    modal.webContents.openDevTools({ mode: "right" });
+    //}
+
+    // forward console messages from modal to main process for easier debugging
+    modal.webContents.on("console-message", (e, level, message, line, sourceId) => {
+      console.log("[modal]", message, sourceId, line);
+    });
+
+    modal.on("closed", () => {
+      // noop
+    });
+  } catch (err) {
+    console.error("Failed to open Settings modal", err);
   }
 }
 

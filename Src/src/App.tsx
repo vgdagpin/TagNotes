@@ -3,9 +3,10 @@ import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-ro
 import { useEffect } from "react";
 
 import Index from "@/pages/Index";
-import Viewer from "@/pages/Viewer";
+import Viewer from "@/pages/electron/Viewer";
 import NotFound from "@/pages/NotFound";
-import NewNote from "./pages/NewNote";
+import NewNote from "@/pages/electron/NewNote";
+import Settings from "@/pages/electron/Settings";
 
 function RouteBootstrapper() {
     const navigate = useNavigate();
@@ -33,8 +34,9 @@ const App = () => (
         <Routes>
             <Route path="/" element={<Index />} />
             <Route path=":noteId" element={<Index />} />
-            <Route path="/viewer/new" element={<NewNote />} />
-            <Route path="/viewer/:noteId" element={<Viewer />} />
+            <Route path="/electron/NewNote" element={<NewNote />} />
+            <Route path="/electron/Viewer/:noteId" element={<Viewer />} />
+            <Route path="/electron/Settings" element={<Settings />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
         </Routes>
