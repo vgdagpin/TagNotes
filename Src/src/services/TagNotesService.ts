@@ -152,19 +152,17 @@ export class TagNotesService implements ITagNotesService {
 		return note;
 	}
 
-	async addSection(noteId: string, sectionType: Section['type']): Promise<Section> {
-		const defaultTitle = sectionType === 'image' ? 'Image' : sectionType.charAt(0).toUpperCase() + sectionType.slice(1);
-		const newSection: Section = {
-			id: uuid(),
-			type: sectionType,
-			title: defaultTitle,
-			content: '',
-			createdAt: new Date(),
-			language: sectionType === 'code' ? 'javascript' : null
-		};
-		await this.update(noteId, n => n.sections.push(newSection));
-		return newSection;
-	}
+async addSection(noteId: string, sectionType: Section['type']): Promise<Section> {
+	const newSection: Section = {
+		id: uuid(),
+		type: sectionType,
+		content: '',
+		createdAt: new Date(),
+		language: sectionType === 'code' ? 'javascript' : null
+	};
+	await this.update(noteId, n => n.sections.push(newSection));
+	return newSection;
+}
 
 	async addImageSection(noteId: string, imageData: string): Promise<Section> {
 		const newImgSection: Section = {
@@ -192,14 +190,7 @@ export class TagNotesService implements ITagNotesService {
 		});
 	}
 
-	async updateSectionTitle(noteId: string, sectionId: string, title: string): Promise<void> {
-		await this.update(noteId, n => {
-			const s = n.sections.find(s => s.id === sectionId);
-			if (s) {
-				s.title = title;
-			}
-		});
-	}
+// Title update removed (titles deprecated)
 
 	async updateSectionPosition(noteId: string, sectionId: string, x: number, y: number): Promise<void> {
 		await this.update(noteId, n => {

@@ -12,7 +12,7 @@ interface CanvasViewerProps {
   note: Note;
   newSectionId: string | null;
   onAddSection: (x: number, y: number, type: Section['type']) => void;
-  onSaveSection: (sectionId: string, content: string, language?: string | null, title?: string) => void;
+  onSaveSection: (sectionId: string, content: string, language?: string | null) => void;
   onDeleteSection: (sectionId: string) => void;
   onPositionChange: (sectionId: string, x: number, y: number) => void;
   onDimensionChange: (sectionId: string, width: number, height: number) => void;
@@ -82,7 +82,7 @@ const TnCanvasViewer: React.FC<CanvasViewerProps> = ({
             <TnSectionCode
               section={section}
               isNew={isNew}
-              onSaveSection={(content, language, title) => onSaveSection(section.id, content, language, title)}
+              onSaveSection={(content, language) => onSaveSection(section.id, content, language)}
               onDeleteSection={() => onDeleteSection(section.id)}
             />
           );
@@ -91,7 +91,7 @@ const TnCanvasViewer: React.FC<CanvasViewerProps> = ({
             <TnSectionMarkdown
               section={section}
               isNew={isNew}
-              onSaveSection={(content, language, title) => onSaveSection(section.id, content, language, title)}
+              onSaveSection={(content, language) => onSaveSection(section.id, content, language)}
               onDeleteSection={() => onDeleteSection(section.id)}
             />
           );
@@ -100,7 +100,7 @@ const TnCanvasViewer: React.FC<CanvasViewerProps> = ({
             <TnSectionImage
               section={section}
               isNew={isNew}
-              onSaveSection={(content, language, title) => onSaveSection(section.id, content, language, title)}
+              onSaveSection={(content, language) => onSaveSection(section.id, content, language)}
               onDeleteSection={() => onDeleteSection(section.id)}
             />
           );
@@ -109,7 +109,7 @@ const TnCanvasViewer: React.FC<CanvasViewerProps> = ({
             <TnSection
               section={section}
               isNew={isNew}
-              onSaveSection={(content, language, title) => onSaveSection(section.id, content, language, title)}
+              onSaveSection={(content, language) => onSaveSection(section.id, content, language)}
               onDeleteSection={() => onDeleteSection(section.id)}
             />
           );
@@ -144,7 +144,7 @@ const TnCanvasViewer: React.FC<CanvasViewerProps> = ({
           `,
           backgroundSize: '20px 20px',
         }}
-        onClick={handleCanvasClick}
+        onDoubleClick={handleCanvasClick}
       >
         {/* Render all sections */}
         {sectionsWithPositions.map(renderSection)}

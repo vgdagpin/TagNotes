@@ -204,7 +204,7 @@ const TnNoteViewer = ({ note, directoryLoaded, onTitleUpdated }: TnNoteViewerPro
   };
 
   // Save section changes
-  const handleSaveSection = async (sectionId: string, content: string, language?: string | null, title?: string) => {
+  const handleSaveSection = async (sectionId: string, content: string, language?: string | null) => {
     if (!isDirLoaded) return;
 
     await tagNotesContext.updateSectionContent(note.id, sectionId, content, language);
@@ -215,14 +215,7 @@ const TnNoteViewer = ({ note, directoryLoaded, onTitleUpdated }: TnNoteViewerPro
     }));
 
 
-    if (typeof title === 'string') {
-      await tagNotesContext.updateSectionTitle(note.id, sectionId, title);
-
-      setSelectedNote((prev) => ({
-        ...prev,
-        sections: prev.sections.map((sec) => (sec.id === sectionId ? { ...sec, title } : sec)),
-      }));
-    }
+  // Title handling removed
 
     setNewSectionId(null);
   };

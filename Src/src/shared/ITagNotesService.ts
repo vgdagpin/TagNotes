@@ -14,7 +14,6 @@ export interface ITagNotesService {
 	addImageSection(noteId: string, imageData: string): Promise<Section>;
 
 	updateSectionContent(noteId: string, sectionId: string, content: string, language?: string | null | undefined): Promise<void>;
-	updateSectionTitle(noteId: string, sectionId: string, title: string): Promise<void>;
 	updateSectionPosition(noteId: string, sectionId: string, x: number, y: number): Promise<void>;
 	updateSectionDimensions(noteId: string, sectionId: string, width: number, height: number): Promise<void>;
 	convertSectionType(noteId: string, sectionId: string, newType: Section['type']): Promise<void>;

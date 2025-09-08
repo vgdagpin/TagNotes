@@ -9,7 +9,6 @@
 export interface Section {
   id: string;
   type: "markdown" | "text" | "code" | "image";
-  title?: string; // optional title for the section
   content: string;
   language?: string | null | undefined; // for code sections
   imageData?: string; // for image sections (base64)

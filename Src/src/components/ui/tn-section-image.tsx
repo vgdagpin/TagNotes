@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 
 import { Trash, Image, Edit, Save } from '../tn-icons';
@@ -10,16 +9,16 @@ import { useState } from "react";
 type TnSectionImageProps = {
   section: Section;
   isNew: boolean;
-  onSaveSection?: (content: string, language?: string, title?: string) => void;
+  onSaveSection?: (content: string, language?: string) => void;
   onDeleteSection?: (sectionId: string) => void;
 };
 
 const TnSectionImage = ({ section, onSaveSection, onDeleteSection }: TnSectionImageProps) => {
   const [sectionEdit, setSectionEdit] = useState(false);
-  const [title, setTitle] = useState(section.title || "");
+  // Title removed
 
   const handleSave = () => {
-    onSaveSection?.call(null, section.content, undefined, title);
+  onSaveSection?.call(null, section.content, undefined);
     setSectionEdit(false);
   };
 
@@ -70,18 +69,11 @@ const TnSectionImage = ({ section, onSaveSection, onDeleteSection }: TnSectionIm
       {/* Section Content */}
       {sectionEdit ? (
         <div className="space-y-2">
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Section title (optional)"
-            className=""
-          />
+          {/* Title input removed */}
         </div>
       ) : (
         <>
-          {section.title?.trim() && (
-            <div className="font-semibold text-foreground mb-1">{section.title}</div>
-          )}
+          {/* Title display removed */}
         </>
       )}
       {section.imageData && (
