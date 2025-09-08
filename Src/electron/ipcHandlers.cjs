@@ -9,6 +9,7 @@ function registerIpcHandlers() {
     // Directory handle getters/setters
     const fs = require('fs');
     const path = require('path');
+    const { v4: uuid } = require('uuid');
     ipcMain.handle('is-valid-directory', (event, dirPath) => {
         console.log('>>>>>> ipc: is-valid-directory', dirPath);
         try {
@@ -78,10 +79,31 @@ function registerIpcHandlers() {
     ipcMain.handle('set-id', (event, id) => {
         sharedId = id;
         return sharedId;
-    });
+    });    
 
+    // ---- Helper functions ----
+    function indexPath(dirPath){ return path.join(dirPath, 'index.json'); }
+    function notesDir(dirPath){ return path.join(dirPath, 'Notes'); }
+    function ensureIndex(dirPath){
+        if(!fs.existsSync(indexPath(dirPath))){
+            fs.writeFileSync(indexPath(dirPath), JSON.stringify({ notes: [] }, null, 2), 'utf-8');
+        }
+    }
+    function loadIndex(dirPath){
+        ensureIndex(dirPath);
+        try { return JSON.parse(fs.readFileSync(indexPath(dirPath), 'utf-8')); } catch { return { notes: [] }; }
+    }
+    function saveIndex(dirPath, data){ fs.writeFileSync(indexPath(dirPath), JSON.stringify(data, null, 2), 'utf-8'); }
+    function loadNote(location){ return JSON.parse(fs.readFileSync(location, 'utf-8')); }
+    function saveNote(location, note){ fs.writeFileSync(location, JSON.stringify(note, null, 2), 'utf-8'); }
+    function touchUpdated(indexData, id, updatedAt){
+        const entry = indexData.notes.find(n => n.id === id); if(entry){ entry.updatedAt = updatedAt; }
+    }
+
+    // ---- Notes operations ----
     ipcMain.handle('create-note', (event, dirPath, note) => {
-        const fileDir = path.join(dirPath, 'Notes', formatDateFolder(new Date()));
+        const notesPath = notesDir(dirPath);
+        const fileDir = path.join(notesPath, formatDateFolder(new Date()));
 
         if (!fs.existsSync(fileDir)) {
             fs.mkdirSync(fileDir, { recursive: true });
@@ -123,6 +145,145 @@ function registerIpcHandlers() {
                 reject(error);
             }
         });
+    });
+
+    ipcMain.handle('list-notes', (event, dirPath, search) => {
+        try {
+            const idx = loadIndex(dirPath);
+            let notes = idx.notes;
+            if(search){
+                const s = search.toLowerCase();
+                notes = notes.filter(n => (n.title || '').toLowerCase().includes(s));
+            }
+            // Sort by createdAt desc
+            notes.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            return notes;
+        } catch (e){
+            console.error('list-notes error', e); return [];
+        }
+    });
+
+    ipcMain.handle('get-note', (event, dirPath, noteId) => {
+        try {
+            const idx = loadIndex(dirPath);
+            const entry = idx.notes.find(n => n.id === noteId);
+            if(!entry) return null;
+            const note = loadNote(entry.location);
+            return note;
+        } catch (e){ console.error('get-note error', e); return null; }
+    });
+
+    ipcMain.handle('add-section', (event, dirPath, noteId, sectionType) => {
+        const idx = loadIndex(dirPath);
+        const entry = idx.notes.find(n => n.id === noteId);
+        if(!entry) return null;
+        const note = loadNote(entry.location);
+        const section = { id: uuid(), type: sectionType, content: '', createdAt: new Date(), title: sectionType === 'image' ? 'Image' : undefined };
+        note.sections.push(section);
+        note.updatedAt = new Date();
+        touchUpdated(idx, noteId, note.updatedAt);
+        saveNote(entry.location, note); saveIndex(dirPath, idx);
+        return section;
+    });
+
+    ipcMain.handle('add-image-section', (event, dirPath, noteId, imageData) => {
+        const idx = loadIndex(dirPath);
+        const entry = idx.notes.find(n => n.id === noteId);
+        if(!entry) return null;
+        const note = loadNote(entry.location);
+        const section = { id: uuid(), type: 'image', content: '', imageData, createdAt: new Date(), title: 'Image' };
+        note.sections.push(section);
+        note.updatedAt = new Date();
+        touchUpdated(idx, noteId, note.updatedAt);
+        saveNote(entry.location, note); saveIndex(dirPath, idx);
+        return section;
+    });
+
+    ipcMain.handle('update-section-content', (event, dirPath, noteId, sectionId, content, language) => {
+        const idx = loadIndex(dirPath);
+        const entry = idx.notes.find(n => n.id === noteId); if(!entry) return false;
+        const note = loadNote(entry.location);
+        const section = note.sections.find(s => s.id === sectionId); if(!section) return false;
+        section.content = content;
+        if(language !== undefined) section.language = language;
+        note.updatedAt = new Date();
+        touchUpdated(idx, noteId, note.updatedAt);
+        saveNote(entry.location, note); saveIndex(dirPath, idx);
+        return true;
+    });
+
+    ipcMain.handle('update-section-title', (event, dirPath, noteId, sectionId, title) => {
+        const idx = loadIndex(dirPath);
+        const entry = idx.notes.find(n => n.id === noteId); if(!entry) return false;
+        const note = loadNote(entry.location);
+        const section = note.sections.find(s => s.id === sectionId); if(!section) return false;
+        section.title = title;
+        note.updatedAt = new Date();
+        touchUpdated(idx, noteId, note.updatedAt);
+        saveNote(entry.location, note); saveIndex(dirPath, idx);
+        return true;
+    });
+
+    ipcMain.handle('update-title', (event, dirPath, noteId, title) => {
+        const idx = loadIndex(dirPath);
+        const entry = idx.notes.find(n => n.id === noteId); if(!entry) return false;
+        const note = loadNote(entry.location);
+        note.title = title;
+        note.updatedAt = new Date();
+        entry.title = title; entry.updatedAt = note.updatedAt;
+        saveNote(entry.location, note); saveIndex(dirPath, idx);
+        return true;
+    });
+
+    ipcMain.handle('delete-section', (event, dirPath, noteId, sectionId) => {
+        const idx = loadIndex(dirPath);
+        const entry = idx.notes.find(n => n.id === noteId); if(!entry) return false;
+        const note = loadNote(entry.location);
+        const before = note.sections.length;
+        note.sections = note.sections.filter(s => s.id !== sectionId);
+        if(note.sections.length === before){ return false; }
+        note.updatedAt = new Date(); touchUpdated(idx, noteId, note.updatedAt);
+        saveNote(entry.location, note); saveIndex(dirPath, idx);
+        return true;
+    });
+
+    ipcMain.handle('delete-note', (event, dirPath, noteId) => {
+        const idx = loadIndex(dirPath);
+        const i = idx.notes.findIndex(n => n.id === noteId); if(i === -1) return false;
+        const entry = idx.notes[i];
+        try { if(entry.location && fs.existsSync(entry.location)) fs.unlinkSync(entry.location); } catch {}
+        idx.notes.splice(i,1);
+        saveIndex(dirPath, idx);
+        return true;
+    });
+
+    ipcMain.handle('add-tag', (event, dirPath, noteId, tag) => {
+        const idx = loadIndex(dirPath);
+        const entry = idx.notes.find(n => n.id === noteId); if(!entry) return false;
+        const note = loadNote(entry.location);
+        if(!note.tags) note.tags = [];
+        if(!note.tags.includes(tag)) note.tags.push(tag);
+        note.updatedAt = new Date(); touchUpdated(idx, noteId, note.updatedAt);
+        saveNote(entry.location, note); saveIndex(dirPath, idx);
+
+        entry.tags = note.tags;
+        saveIndex(dirPath, idx);
+
+        return true;
+    });
+
+    ipcMain.handle('remove-tag', (event, dirPath, noteId, tag) => {
+        const idx = loadIndex(dirPath);
+        const entry = idx.notes.find(n => n.id === noteId); if(!entry) return false;
+        const note = loadNote(entry.location);
+        if(note.tags) note.tags = note.tags.filter(t => t !== tag);
+        note.updatedAt = new Date(); touchUpdated(idx, noteId, note.updatedAt);
+        saveNote(entry.location, note); saveIndex(dirPath, idx);
+
+        entry.tags = note.tags;
+        saveIndex(dirPath, idx);
+        
+        return true;
     });
 
 }

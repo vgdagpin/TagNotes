@@ -19,12 +19,7 @@ export class ElectronTagNotesService implements ITagNotesService {
 
 		return await this.api?.getDefaultTags(dirPath);
 	}
-	getNote(_noteId: string): Promise<Note> {
-		throw new Error("Method not implemented.");
-	}
-	listNotes(_search?: string): Promise<NoteSummary[]> {
-		throw new Error("Method not implemented.");
-	}
+
     async hasSelectedDirectory(): Promise<boolean> {
 		const isValidDir = this.api?.isValidDirectory;
 
@@ -56,22 +51,6 @@ export class ElectronTagNotesService implements ITagNotesService {
 
 		await set(DIR_HANDLE_KEY, result);
 
-		// if (!(window as any).showDirectoryPicker) {
-		// 	throw new Error('File System Access API not supported in this browser.');
-		// }
-
-		// const handle: FileSystemDirectoryHandle = await (window as any).showDirectoryPicker({ mode: 'readwrite' });
-
-		// // Request write permission explicitly now
-		// const granted = await this.verifyPermission(handle, true, true);
-
-		// if (!granted) throw new Error('Permission denied for selected directory.');
-
-		// console.log('browseDirectory: Selected directory', handle.name, handle);
-
-		// await setDirHandle(handle);
-		//await ipcRenderer.invoke('set-directory-handle', handle);
-
 		return result;
 	}
 
@@ -92,33 +71,54 @@ export class ElectronTagNotesService implements ITagNotesService {
 		return newNote;
     }
 
-	addSection(_noteId: string, _sectionType: Section["type"]): Promise<Section> {
-		throw new Error("Method not implemented.");
-	}
-	addImageSection(_noteId: string, _imageData: string): Promise<Section> {
-		throw new Error("Method not implemented.");
-	}
-	updateSectionContent(_noteId: string, _sectionId: string, _content: string, _language?: string | null | undefined): Promise<void> {
-		throw new Error("Method not implemented.");
+	async getNote(noteId: string): Promise<Note> {
+		const dirPath = await get(DIR_HANDLE_KEY);
+		const note = await this.api?.getNote(dirPath, noteId);
+		return note;
 	}
 
-	updateSectionTitle(_noteId: string, _sectionId: string, _title: string): Promise<void> {
-		throw new Error("Method not implemented.");
+	async listNotes(search?: string): Promise<NoteSummary[]> {
+		const dirPath = await get(DIR_HANDLE_KEY);
+		const notes = await this.api?.listNotes(dirPath, search);
+		return notes || [];
 	}
-	updateTitle(_noteId: string, _title: string): Promise<void> {
-		throw new Error("Method not implemented.");
+
+	async addSection(noteId: string, sectionType: Section["type"]): Promise<Section> {
+		const dirPath = await get(DIR_HANDLE_KEY);
+		return await this.api?.addSection(dirPath, noteId, sectionType);
 	}
-	deleteSection(_noteId: string, _sectionId: string): Promise<void> {
-		throw new Error("Method not implemented.");
+	async addImageSection(noteId: string, imageData: string): Promise<Section> {
+		const dirPath = await get(DIR_HANDLE_KEY);
+		return await this.api?.addImageSection(dirPath, noteId, imageData);
 	}
-	deleteNote(_noteId: string): Promise<void> {
-		throw new Error("Method not implemented.");
+	async updateSectionContent(noteId: string, sectionId: string, content: string, language?: string | null | undefined): Promise<void> {
+		const dirPath = await get(DIR_HANDLE_KEY);
+		await this.api?.updateSectionContent(dirPath, noteId, sectionId, content, language);
 	}
-	addTag(_noteId: string, _tag: string): Promise<void> {
-		throw new Error("Method not implemented.");
+
+	async updateSectionTitle(noteId: string, sectionId: string, title: string): Promise<void> {
+		const dirPath = await get(DIR_HANDLE_KEY);
+		await this.api?.updateSectionTitle(dirPath, noteId, sectionId, title);
 	}
-	removeTag(_noteId: string, _tag: string): Promise<void> {
-		throw new Error("Method not implemented.");
+	async updateTitle(noteId: string, title: string): Promise<void> {
+		const dirPath = await get(DIR_HANDLE_KEY);
+		await this.api?.updateTitle(dirPath, noteId, title);
+	}
+	async deleteSection(noteId: string, sectionId: string): Promise<void> {
+		const dirPath = await get(DIR_HANDLE_KEY);
+		await this.api?.deleteSection(dirPath, noteId, sectionId);
+	}
+	async deleteNote(noteId: string): Promise<void> {
+		const dirPath = await get(DIR_HANDLE_KEY);
+		await this.api?.deleteNote(dirPath, noteId);
+	}
+	async addTag(noteId: string, tag: string): Promise<void> {
+		const dirPath = await get(DIR_HANDLE_KEY);
+		await this.api?.addTag(dirPath, noteId, tag);
+	}
+	async removeTag(noteId: string, tag: string): Promise<void> {
+		const dirPath = await get(DIR_HANDLE_KEY);
+		await this.api?.removeTag(dirPath, noteId, tag);
 	}
 
 

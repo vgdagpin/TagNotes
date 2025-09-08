@@ -28,5 +28,38 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
 	getDefaultTags: async (dirPath) => {
 		return await ipcRenderer.invoke('get-default-tags', dirPath);
+	},
+	listNotes: async (dirPath, search) => {
+		return await ipcRenderer.invoke('list-notes', dirPath, search);
+	},
+	getNote: async (dirPath, noteId) => {
+		return await ipcRenderer.invoke('get-note', dirPath, noteId);
+	},
+	addSection: async (dirPath, noteId, sectionType) => {
+		return await ipcRenderer.invoke('add-section', dirPath, noteId, sectionType);
+	},
+	addImageSection: async (dirPath, noteId, imageData) => {
+		return await ipcRenderer.invoke('add-image-section', dirPath, noteId, imageData);
+	},
+	updateSectionContent: async (dirPath, noteId, sectionId, content, language) => {
+		return await ipcRenderer.invoke('update-section-content', dirPath, noteId, sectionId, content, language);
+	},
+	updateSectionTitle: async (dirPath, noteId, sectionId, title) => {
+		return await ipcRenderer.invoke('update-section-title', dirPath, noteId, sectionId, title);
+	},
+	updateTitle: async (dirPath, noteId, title) => {
+		return await ipcRenderer.invoke('update-title', dirPath, noteId, title);
+	},
+	deleteSection: async (dirPath, noteId, sectionId) => {
+		return await ipcRenderer.invoke('delete-section', dirPath, noteId, sectionId);
+	},
+	deleteNote: async (dirPath, noteId) => {
+		return await ipcRenderer.invoke('delete-note', dirPath, noteId);
+	},
+	addTag: async (dirPath, noteId, tag) => {
+		return await ipcRenderer.invoke('add-tag', dirPath, noteId, tag);
+	},
+	removeTag: async (dirPath, noteId, tag) => {
+		return await ipcRenderer.invoke('remove-tag', dirPath, noteId, tag);
 	}
 });
