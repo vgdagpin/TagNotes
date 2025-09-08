@@ -176,19 +176,20 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
       {(isDragging || isResizing) && (
         <div
           ref={ghostRef}
-          className={`absolute pointer-events-none border-2 border-dashed ${isSelected ? 'border-blue-500' : 'border-gray-400'} ${(isDragging || isResizing) ? 'z-50' : ''}`}
+          className={`absolute pointer-events-none border-2 border-dashed ${isSelected ? 'border-blue-500' : 'border-gray-400'} ${(isDragging || isResizing) ? 'z-50' : ''} transition-opacity duration-75`}
           style={{
             left: ghostDataRef.current.x,
             top: ghostDataRef.current.y,
             width: ghostDataRef.current.width,
             height: ghostDataRef.current.height,
             background: 'rgba(59,130,246,0.05)',
+            opacity: 1,
           }}
         />
       )}
       <div
         ref={sectionRef}
-        className={`absolute transition-all duration-150 ${
+        className={`absolute ${
           isSelected ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
         } group`}
         style={{
@@ -196,7 +197,8 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
           top: `${y}px`,
           width: typeof width === 'number' ? `${width}px` : width,
           height: typeof height === 'number' ? `${height}px` : height,
-          visibility: (isDragging || isResizing) ? 'hidden' : 'visible',
+          opacity: (isDragging || isResizing) ? 0 : 1,
+          transition: 'opacity 80ms ease-in-out',
           userSelect: isDragging || isResizing ? 'none' : 'auto',
         }}
         onMouseDown={handleContainerMouseDown}
