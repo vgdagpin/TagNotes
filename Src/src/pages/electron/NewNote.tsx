@@ -32,6 +32,18 @@ export default function NewNote() {
         tryCheckIfDirectoryIsLoaded();
     }, [tagNotesContext]);
 
+    // Close window on ESC key
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                // Attempt to close the current browser window (Electron modal)
+                window.close();
+            }
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, []);
+
     const handleDirectorySelected = async () => {
         const newNote = await tagNotesContext.createNote({});
 
