@@ -37,22 +37,23 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
   const width = section.width ?? 400;
   const height = section.height ?? 200;
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (target.classList.contains('resize-handle') || target.tagName === 'BUTTON' || target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') {
-      return;
-    }
+  // Drag only when using explicit handle
+  const handleDragHandleMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setIsDragging(true);
-    // Helper: handle type change
     onSelect?.(section.id);
     const rect = sectionRef.current?.getBoundingClientRect();
     if (rect) {
-      setDragOffset({
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      });
+      setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
     }
     e.preventDefault();
+  };
+
+  // Container click just selects
+  const handleContainerMouseDown = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('.drag-handle') || target.classList.contains('resize-handle')) return; // handled elsewhere
+    onSelect?.(section.id);
   };
 
   const handleResizeMouseDown = (handle: ResizeHandle, e: React.MouseEvent) => {
@@ -148,7 +149,7 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
   return (
     <div
       ref={sectionRef}
-      className={`absolute cursor-move transition-all duration-200 ${
+  className={`absolute transition-all duration-200 ${
         isDragging ? 'z-50 shadow-2xl scale-105' : 'z-10'
       } ${
         isSelected ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
@@ -160,39 +161,51 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
         height: typeof height === 'number' ? `${height}px` : height,
         willChange: isDragging || isResizing ? 'transform' : undefined,
         userSelect: isDragging || isResizing ? 'none' : 'auto',
-        cursor: isDragging ? 'grabbing' : 'grab',
+        cursor: isDragging ? 'grabbing' : 'default',
       }}
-      onMouseDown={handleMouseDown}
+      onMouseDown={handleContainerMouseDown}
     >
+      {/* Drag handle (only visible on hover) */}
+      <div
+        className="drag-handle absolute top-1 left-1 w-4 h-4 rounded-sm bg-blue-500/70 hover:bg-blue-500 cursor-move opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[10px] text-white select-none"
+        onMouseDown={handleDragHandleMouseDown}
+        title="Drag section"
+      >
+        ⋮
+      </div>
       {/* Resize handles */}
-      {(['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] as ResizeHandle[]).map((handle) => (
-        <div
-          key={handle}
-          className={`resize-handle resize-handle-${handle}`}
-          style={{
-            position: 'absolute',
-            width: handle.length === 2 ? 12 : 8,
-            height: handle.length === 2 ? 12 : 8,
-            background: '#007bff',
-            borderRadius: 4,
-            zIndex: 20,
-            cursor:
-              handle === 'n' ? 'ns-resize' :
-              handle === 's' ? 'ns-resize' :
-              handle === 'e' ? 'ew-resize' :
-              handle === 'w' ? 'ew-resize' :
-              handle === 'ne' ? 'nesw-resize' :
-              handle === 'nw' ? 'nwse-resize' :
-              handle === 'se' ? 'nwse-resize' :
-              handle === 'sw' ? 'nesw-resize' : 'pointer',
-            top:
-              handle.includes('n') ? -6 : handle.includes('s') ? height - 6 : (height / 2) - 4,
-            left:
-              handle.includes('w') ? -6 : handle.includes('e') ? width - 6 : (width / 2) - 4,
-          }}
-          onMouseDown={(e) => handleResizeMouseDown(handle, e)}
-        />
-      ))}
+      {(['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] as ResizeHandle[]).map((handle) => {
+        const size = handle.length === 2 ? 12 : 8;
+        return (
+          <div
+            key={handle}
+            className={`resize-handle resize-handle-${handle} ${isResizing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}
+            style={{
+              position: 'absolute',
+              width: size,
+              height: size,
+              background: '#2563eb', // tailwind blue-600 equivalent
+              borderRadius: 4,
+              zIndex: 20,
+              boxShadow: '0 0 0 1px #fff',
+              cursor:
+                handle === 'n' ? 'ns-resize' :
+                handle === 's' ? 'ns-resize' :
+                handle === 'e' ? 'ew-resize' :
+                handle === 'w' ? 'ew-resize' :
+                handle === 'ne' ? 'nesw-resize' :
+                handle === 'nw' ? 'nwse-resize' :
+                handle === 'se' ? 'nwse-resize' :
+                handle === 'sw' ? 'nesw-resize' : 'pointer',
+              top:
+                handle.includes('n') ? -6 : handle.includes('s') ? height - 6 : (height / 2) - 4,
+              left:
+                handle.includes('w') ? -6 : handle.includes('e') ? width - 6 : (width / 2) - 4,
+            }}
+            onMouseDown={(e) => handleResizeMouseDown(handle, e)}
+          />
+        );
+      })}
   {/* ...removed type selector UI... */}
       {/* Section content */}
       <div style={{ width: '100%', height: '100%' }}>{children}</div>
