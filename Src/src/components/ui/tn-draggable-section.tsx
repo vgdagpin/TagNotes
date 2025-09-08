@@ -28,6 +28,9 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const sectionRef = useRef<HTMLDivElement>(null);
   const animationFrameRef = useRef<number | null>(null);
+  // Ghost (skeleton) element and data (mutable, no re-render during interaction)
+  const ghostRef = useRef<HTMLDivElement | null>(null);
+  const ghostDataRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
 
   // Default positioning for sections without coordinates
     // Helper: icon for section type
@@ -45,6 +48,7 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
     const rect = sectionRef.current?.getBoundingClientRect();
     if (rect) {
       setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+  ghostDataRef.current = { x: x, y: y, width: width as number, height: height as number };
     }
     e.preventDefault();
   };
@@ -68,6 +72,7 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
         width: rect.width,
         height: rect.height,
       });
+  ghostDataRef.current = { x: x, y: y, width: rect.width, height: rect.height };
     }
     onSelect?.(section.id);
   };
@@ -104,7 +109,12 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
         const newY = e.clientY - canvasRect.top - dragOffset.y;
         const constrainedX = Math.max(0, Math.min(newX, canvasRect.width - (sectionRef.current?.offsetWidth || 400)));
         const constrainedY = Math.max(0, Math.min(newY, canvasRect.height - (sectionRef.current?.offsetHeight || 200)));
-        updatePosition(constrainedX, constrainedY);
+        ghostDataRef.current.x = constrainedX;
+        ghostDataRef.current.y = constrainedY;
+        if (ghostRef.current) {
+          ghostRef.current.style.left = constrainedX + 'px';
+          ghostRef.current.style.top = constrainedY + 'px';
+        }
       }
       if (isResizing && resizeHandle) {
         const dx = e.clientX - resizeStart.x;
@@ -127,13 +137,28 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
           newHeight = Math.max(50, resizeStart.height - dy);
           newY = y + dy;
         }
-        updateDimension(newWidth, newHeight);
-        if (resizeHandle.includes('w') || resizeHandle.includes('n')) {
-          updatePosition(newX, newY);
+        ghostDataRef.current.width = newWidth;
+        ghostDataRef.current.height = newHeight;
+        ghostDataRef.current.x = newX;
+        ghostDataRef.current.y = newY;
+        if (ghostRef.current) {
+          ghostRef.current.style.width = newWidth + 'px';
+          ghostRef.current.style.height = newHeight + 'px';
+          ghostRef.current.style.left = newX + 'px';
+          ghostRef.current.style.top = newY + 'px';
         }
       }
     };
     const handleMouseUp = () => {
+      if (isDragging) {
+        updatePosition(ghostDataRef.current.x, ghostDataRef.current.y);
+      }
+      if (isResizing) {
+        updateDimension(ghostDataRef.current.width, ghostDataRef.current.height);
+        if (ghostDataRef.current.x !== x || ghostDataRef.current.y !== y) {
+          updatePosition(ghostDataRef.current.x, ghostDataRef.current.y);
+        }
+      }
       setIsDragging(false);
       setIsResizing(false);
       setResizeHandle(null);
@@ -147,24 +172,35 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
   }, [isDragging, dragOffset, updatePosition, isResizing, resizeHandle, resizeStart, x, y, updateDimension]);
 
   return (
-    <div
-      ref={sectionRef}
-  className={`absolute transition-all duration-200 ${
-        isDragging ? 'z-50 shadow-2xl scale-105' : 'z-10'
-      } ${
-        isSelected ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
-      } hover:shadow-lg group`}
-      style={{
-        left: `${x}px`,
-        top: `${y}px`,
-        width: typeof width === 'number' ? `${width}px` : width,
-        height: typeof height === 'number' ? `${height}px` : height,
-        willChange: isDragging || isResizing ? 'transform' : undefined,
-        userSelect: isDragging || isResizing ? 'none' : 'auto',
-        cursor: isDragging ? 'grabbing' : 'default',
-      }}
-      onMouseDown={handleContainerMouseDown}
-    >
+    <>
+      {(isDragging || isResizing) && (
+        <div
+          ref={ghostRef}
+          className={`absolute pointer-events-none border-2 border-dashed ${isSelected ? 'border-blue-500' : 'border-gray-400'} ${(isDragging || isResizing) ? 'z-50' : ''}`}
+          style={{
+            left: ghostDataRef.current.x,
+            top: ghostDataRef.current.y,
+            width: ghostDataRef.current.width,
+            height: ghostDataRef.current.height,
+            background: 'rgba(59,130,246,0.05)',
+          }}
+        />
+      )}
+      <div
+        ref={sectionRef}
+        className={`absolute transition-all duration-150 ${
+          isSelected ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
+        } group`}
+        style={{
+          left: `${x}px`,
+          top: `${y}px`,
+          width: typeof width === 'number' ? `${width}px` : width,
+          height: typeof height === 'number' ? `${height}px` : height,
+          visibility: (isDragging || isResizing) ? 'hidden' : 'visible',
+          userSelect: isDragging || isResizing ? 'none' : 'auto',
+        }}
+        onMouseDown={handleContainerMouseDown}
+      >
       {/* Drag handle (only visible on hover) */}
       <div
         className="drag-handle absolute top-1 left-1 w-4 h-4 rounded-sm bg-blue-500/70 hover:bg-blue-500 cursor-move opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[10px] text-white select-none"
@@ -209,7 +245,8 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
   {/* ...removed type selector UI... */}
       {/* Section content */}
       <div style={{ width: '100%', height: '100%' }}>{children}</div>
-    </div>
+      </div>
+    </>
   );
 };
 

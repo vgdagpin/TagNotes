@@ -71,7 +71,7 @@ const TnCanvasViewer: React.FC<CanvasViewerProps> = ({
     setShowCreateMenu(false);
   }, []);
 
-  const renderSection = (section: Section) => {
+  const renderSection = useCallback((section: Section) => {
     const isNew = section.id === newSectionId;
     const isSelected = section.id === selectedSectionId;
 
@@ -129,7 +129,7 @@ const TnCanvasViewer: React.FC<CanvasViewerProps> = ({
         {sectionComponent}
       </TnDraggableSection>
     );
-  };
+  }, [newSectionId, selectedSectionId, onSaveSection, onDeleteSection, onPositionChange, onDimensionChange, handleSectionSelect]);
 
   return (
     <div className="relative w-full h-full overflow-hidden">
@@ -207,7 +207,7 @@ const TnCanvasViewer: React.FC<CanvasViewerProps> = ({
         <div className="space-y-1">
           <div>• Click empty space to create sections</div>
           <div>• Drag sections to move them</div>
-          <div>• Hover sections for type conversion</div>
+          <div>• Hover sections for controls</div>
         </div>
       </div>
     </div>

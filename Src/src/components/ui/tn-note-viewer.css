@@ -54,12 +54,6 @@
     height: 100%;
 }
 
-/* Selection indicator */
-.draggable-section.selected {
-    ring: 2px solid #3b82f6;
-    ring-opacity: 0.5;
-}
-
 /* Create menu styling */
 .create-menu {
     background: white;
