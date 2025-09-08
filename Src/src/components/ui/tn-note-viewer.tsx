@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { Edit, Plus, FileText, Hash, Type, Code } from '@/components/tn-icons';
+import { Edit } from '@/components/tn-icons';
 
 import { Note, Section } from "@shared/models";
 import TnCanvasViewer from "./tn-canvas-viewer";

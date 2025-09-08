@@ -27,7 +27,7 @@ const TnCanvasViewer: React.FC<CanvasViewerProps> = ({
   onDeleteSection,
   onPositionChange,
   onDimensionChange,
-  onTypeChange,
+  // ...removed onTypeChange...
 }) => {
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [showCreateMenu, setShowCreateMenu] = useState(false);
@@ -122,7 +122,7 @@ const TnCanvasViewer: React.FC<CanvasViewerProps> = ({
         section={section}
         onPositionChange={onPositionChange}
         onDimensionChange={onDimensionChange}
-        onTypeChange={onTypeChange}
+  // ...removed onTypeChange prop...
         isSelected={isSelected}
         onSelect={handleSectionSelect}
       >

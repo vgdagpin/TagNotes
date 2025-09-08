@@ -1,21 +1,12 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Section } from '@shared/models';
-import { Button } from '@/components/ui/button';
-import { Type, Hash, Code, Image } from '@/components/tn-icons';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+// ...existing code...
 
 interface DraggableSectionProps {
   section: Section;
   children: React.ReactNode;
   onPositionChange: (sectionId: string, x: number, y: number) => void;
   onDimensionChange: (sectionId: string, width: number, height: number) => void;
-  onTypeChange: (sectionId: string, newType: Section['type']) => void;
   isSelected?: boolean;
   onSelect?: (sectionId: string) => void;
 }
@@ -27,34 +18,33 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
   children,
   onPositionChange,
   onDimensionChange,
-  onTypeChange,
   isSelected = false,
   onSelect,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [resizeHandle, setResizeHandle] = useState<ResizeHandle | null>(null);
-  const [showTypeSelector, setShowTypeSelector] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const sectionRef = useRef<HTMLDivElement>(null);
+  const animationFrameRef = useRef<number | null>(null);
 
   // Default positioning for sections without coordinates
+    // Helper: icon for section type
+    // ...existing code...
   const x = section.x ?? 50;
   const y = section.y ?? 50;
   const width = section.width ?? 400;
   const height = section.height ?? 200;
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    // Don't start dragging if clicking on interactive elements or resize handles
     const target = e.target as HTMLElement;
-    if (target.tagName === 'BUTTON' || target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.classList.contains('resize-handle')) {
+    if (target.classList.contains('resize-handle') || target.tagName === 'BUTTON' || target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') {
       return;
     }
-
     setIsDragging(true);
+    // Helper: handle type change
     onSelect?.(section.id);
-
     const rect = sectionRef.current?.getBoundingClientRect();
     if (rect) {
       setDragOffset({
@@ -62,17 +52,13 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
         y: e.clientY - rect.top,
       });
     }
-
     e.preventDefault();
   };
 
-  const handleResizeStart = (e: React.MouseEvent) => {
+  const handleResizeMouseDown = (handle: ResizeHandle, e: React.MouseEvent) => {
     e.stopPropagation();
-    e.preventDefault();
-    
     setIsResizing(true);
-    onSelect?.(section.id);
-
+    setResizeHandle(handle);
     const rect = sectionRef.current?.getBoundingClientRect();
     if (rect) {
       setResizeStart({
@@ -82,75 +68,82 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
         height: rect.height,
       });
     }
+    onSelect?.(section.id);
   };
 
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!isDragging || !sectionRef.current) return;
-
-    const canvas = sectionRef.current.parentElement;
-    if (!canvas) return;
-
-    const canvasRect = canvas.getBoundingClientRect();
-    const newX = e.clientX - canvasRect.left - dragOffset.x;
-    const newY = e.clientY - canvasRect.top - dragOffset.y;
-
-    // Constrain to canvas bounds
-    const constrainedX = Math.max(0, Math.min(newX, canvasRect.width - (sectionRef.current.offsetWidth || 400)));
-    const constrainedY = Math.max(0, Math.min(newY, canvasRect.height - (sectionRef.current.offsetHeight || 200)));
-
-    // Update position immediately for smooth dragging
-    sectionRef.current.style.left = `${constrainedX}px`;
-    sectionRef.current.style.top = `${constrainedY}px`;
-  };
-
-  const handleMouseUp = (e: MouseEvent) => {
-    if (!isDragging || !sectionRef.current) return;
-
-    const canvas = sectionRef.current.parentElement;
-    if (!canvas) return;
-
-    const canvasRect = canvas.getBoundingClientRect();
-    const finalX = e.clientX - canvasRect.left - dragOffset.x;
-    const finalY = e.clientY - canvasRect.top - dragOffset.y;
-
-    // Constrain to canvas bounds
-    const constrainedX = Math.max(0, Math.min(finalX, canvasRect.width - (sectionRef.current.offsetWidth || 400)));
-    const constrainedY = Math.max(0, Math.min(finalY, canvasRect.height - (sectionRef.current.offsetHeight || 200)));
-
-    onPositionChange(section.id, constrainedX, constrainedY);
-    setIsDragging(false);
-  };
+  // Drag and resize logic with requestAnimationFrame
+  const dragPositionRef = useRef({ x, y });
+  const resizeDimensionRef = useRef({ width, height });
+  const updatePosition = useCallback((newX: number, newY: number) => {
+    dragPositionRef.current = { x: newX, y: newY };
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+    animationFrameRef.current = requestAnimationFrame(() => {
+      onPositionChange(section.id, newX, newY);
+    });
+  }, [onPositionChange, section.id]);
+  const updateDimension = useCallback((newWidth: number, newHeight: number) => {
+    resizeDimensionRef.current = { width: newWidth, height: newHeight };
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+    animationFrameRef.current = requestAnimationFrame(() => {
+      onDimensionChange(section.id, newWidth, newHeight);
+    });
+  }, [onDimensionChange, section.id]);
 
   useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = 'grabbing';
-      document.body.style.userSelect = 'none';
-
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
-      };
-    }
-  }, [isDragging, dragOffset]);
-
-  const getSectionTypeIcon = (type: Section['type']) => {
-    switch (type) {
-      case 'text': return <Type className="h-3 w-3" />;
-      case 'markdown': return <Hash className="h-3 w-3" />;
-      case 'code': return <Code className="h-3 w-3" />;
-      case 'image': return <Image className="h-3 w-3" />;
-      default: return <Type className="h-3 w-3" />;
-    }
-  };
-
-  const handleTypeChange = (newType: Section['type']) => {
-    onTypeChange(section.id, newType);
-    setShowTypeSelector(false);
-  };
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDragging) {
+        const canvas = sectionRef.current?.parentElement;
+        if (!canvas) return;
+        const canvasRect = canvas.getBoundingClientRect();
+        const newX = e.clientX - canvasRect.left - dragOffset.x;
+        const newY = e.clientY - canvasRect.top - dragOffset.y;
+        const constrainedX = Math.max(0, Math.min(newX, canvasRect.width - (sectionRef.current?.offsetWidth || 400)));
+        const constrainedY = Math.max(0, Math.min(newY, canvasRect.height - (sectionRef.current?.offsetHeight || 200)));
+        updatePosition(constrainedX, constrainedY);
+      }
+      if (isResizing && resizeHandle) {
+        const dx = e.clientX - resizeStart.x;
+        const dy = e.clientY - resizeStart.y;
+        let newWidth = resizeStart.width;
+        let newHeight = resizeStart.height;
+        let newX = x;
+        let newY = y;
+        if (resizeHandle.includes('e')) {
+          newWidth = Math.max(100, resizeStart.width + dx);
+        }
+        if (resizeHandle.includes('s')) {
+          newHeight = Math.max(50, resizeStart.height + dy);
+        }
+        if (resizeHandle.includes('w')) {
+          newWidth = Math.max(100, resizeStart.width - dx);
+          newX = x + dx;
+        }
+        if (resizeHandle.includes('n')) {
+          newHeight = Math.max(50, resizeStart.height - dy);
+          newY = y + dy;
+        }
+        updateDimension(newWidth, newHeight);
+        if (resizeHandle.includes('w') || resizeHandle.includes('n')) {
+          updatePosition(newX, newY);
+        }
+      }
+    };
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      setIsResizing(false);
+      setResizeHandle(null);
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, dragOffset, updatePosition, isResizing, resizeHandle, resizeStart, x, y, updateDimension]);
 
   return (
     <div
@@ -165,74 +158,44 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
         top: `${y}px`,
         width: typeof width === 'number' ? `${width}px` : width,
         height: typeof height === 'number' ? `${height}px` : height,
+        willChange: isDragging || isResizing ? 'transform' : undefined,
+        userSelect: isDragging || isResizing ? 'none' : 'auto',
+        cursor: isDragging ? 'grabbing' : 'grab',
       }}
       onMouseDown={handleMouseDown}
     >
-      {/* Type conversion controls - top right corner */}
-      <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-        {showTypeSelector ? (
-          <Select value={section.type} onValueChange={handleTypeChange}>
-            <SelectTrigger className="w-8 h-8 p-0 border-2 border-white bg-white shadow-lg">
-              <SelectValue>
-                {getSectionTypeIcon(section.type)}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="text">
-                <div className="flex items-center gap-2">
-                  <Type className="h-3 w-3" />
-                  Text
-                </div>
-              </SelectItem>
-              <SelectItem value="markdown">
-                <div className="flex items-center gap-2">
-                  <Hash className="h-3 w-3" />
-                  Markdown
-                </div>
-              </SelectItem>
-              <SelectItem value="code">
-                <div className="flex items-center gap-2">
-                  <Code className="h-3 w-3" />
-                  Code
-                </div>
-              </SelectItem>
-              {section.type === 'image' && (
-                <SelectItem value="image">
-                  <div className="flex items-center gap-2">
-                    <Image className="h-3 w-3" />
-                    Image
-                  </div>
-                </SelectItem>
-              )}
-            </SelectContent>
-          </Select>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-8 h-8 p-0 border-2 border-white bg-white shadow-lg hover:bg-gray-50"
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowTypeSelector(true);
-            }}
-          >
-            {getSectionTypeIcon(section.type)}
-          </Button>
-        )}
-      </div>
-
-      {/* Resize handle */}
-      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* Resize handles */}
+      {(['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] as ResizeHandle[]).map((handle) => (
         <div
-          className="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-blue-500 cursor-nw-resize rounded-tl-md"
-          onMouseDown={handleResizeStart}
+          key={handle}
+          className={`resize-handle resize-handle-${handle}`}
+          style={{
+            position: 'absolute',
+            width: handle.length === 2 ? 12 : 8,
+            height: handle.length === 2 ? 12 : 8,
+            background: '#007bff',
+            borderRadius: 4,
+            zIndex: 20,
+            cursor:
+              handle === 'n' ? 'ns-resize' :
+              handle === 's' ? 'ns-resize' :
+              handle === 'e' ? 'ew-resize' :
+              handle === 'w' ? 'ew-resize' :
+              handle === 'ne' ? 'nesw-resize' :
+              handle === 'nw' ? 'nwse-resize' :
+              handle === 'se' ? 'nwse-resize' :
+              handle === 'sw' ? 'nesw-resize' : 'pointer',
+            top:
+              handle.includes('n') ? -6 : handle.includes('s') ? height - 6 : (height / 2) - 4,
+            left:
+              handle.includes('w') ? -6 : handle.includes('e') ? width - 6 : (width / 2) - 4,
+          }}
+          onMouseDown={(e) => handleResizeMouseDown(handle, e)}
         />
-      </div>
-
+      ))}
+  {/* ...removed type selector UI... */}
       {/* Section content */}
-      <div className="relative w-full h-full overflow-hidden">
-        {children}
-      </div>
+      <div style={{ width: '100%', height: '100%' }}>{children}</div>
     </div>
   );
 };
