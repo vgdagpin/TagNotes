@@ -314,9 +314,14 @@ function openAddNewWindow() {
       console.log("[modal]", message, sourceId, line);
     });
 
-    modal.on("closed", () => {
-      // noop
+    // Close on ESC key from within modal (renderer may not need its own listener now)
+    modal.webContents.on('before-input-event', (event, input) => {
+      if (input.type === 'keyDown' && input.key === 'Escape') {
+        modal.close();
+      }
     });
+
+    modal.on("closed", () => { /* noop */ });
   } catch (err) {
     console.error("Failed to open Add Entry modal", err);
   }
