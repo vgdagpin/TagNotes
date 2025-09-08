@@ -189,6 +189,20 @@ const TnNoteViewer = ({ note, directoryLoaded, onTitleUpdated }: TnNoteViewerPro
     }));
   };
 
+  // Handle section dimension changes
+  const handleDimensionChange = async (sectionId: string, width: number, height: number) => {
+    if (!isDirLoaded) return;
+
+    await tagNotesContext.updateSectionDimensions(selectedNote.id, sectionId, width, height);
+
+    setSelectedNote((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec) =>
+        sec.id === sectionId ? { ...sec, width, height } : sec
+      ),
+    }));
+  };
+
   // Save section changes
   const handleSaveSection = async (sectionId: string, content: string, language?: string | null, title?: string) => {
     if (!isDirLoaded) return;
@@ -298,6 +312,7 @@ const TnNoteViewer = ({ note, directoryLoaded, onTitleUpdated }: TnNoteViewerPro
             onSaveSection={handleSaveSection}
             onDeleteSection={handleDeleteSection}
             onPositionChange={handlePositionChange}
+            onDimensionChange={handleDimensionChange}
             onTypeChange={handleTypeChange}
           />
         </div>

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Section } from '@shared/models';
 import { Button } from '@/components/ui/button';
 import { Type, Hash, Code, Image } from '@/components/tn-icons';
@@ -14,34 +14,41 @@ interface DraggableSectionProps {
   section: Section;
   children: React.ReactNode;
   onPositionChange: (sectionId: string, x: number, y: number) => void;
+  onDimensionChange: (sectionId: string, width: number, height: number) => void;
   onTypeChange: (sectionId: string, newType: Section['type']) => void;
   isSelected?: boolean;
   onSelect?: (sectionId: string) => void;
 }
 
+type ResizeHandle = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
+
 const TnDraggableSection: React.FC<DraggableSectionProps> = ({
   section,
   children,
   onPositionChange,
+  onDimensionChange,
   onTypeChange,
   isSelected = false,
   onSelect,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeHandle, setResizeHandle] = useState<ResizeHandle | null>(null);
   const [showTypeSelector, setShowTypeSelector] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const sectionRef = useRef<HTMLDivElement>(null);
 
   // Default positioning for sections without coordinates
   const x = section.x ?? 50;
   const y = section.y ?? 50;
   const width = section.width ?? 400;
-  const height = section.height ?? 'auto';
+  const height = section.height ?? 200;
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    // Don't start dragging if clicking on interactive elements
+    // Don't start dragging if clicking on interactive elements or resize handles
     const target = e.target as HTMLElement;
-    if (target.tagName === 'BUTTON' || target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') {
+    if (target.tagName === 'BUTTON' || target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.classList.contains('resize-handle')) {
       return;
     }
 
@@ -57,6 +64,24 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
     }
 
     e.preventDefault();
+  };
+
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    setIsResizing(true);
+    onSelect?.(section.id);
+
+    const rect = sectionRef.current?.getBoundingClientRect();
+    if (rect) {
+      setResizeStart({
+        x: e.clientX,
+        y: e.clientY,
+        width: rect.width,
+        height: rect.height,
+      });
+    }
   };
 
   const handleMouseMove = (e: MouseEvent) => {
@@ -196,8 +221,16 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
         )}
       </div>
 
+      {/* Resize handle */}
+      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+        <div
+          className="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-blue-500 cursor-nw-resize rounded-tl-md"
+          onMouseDown={handleResizeStart}
+        />
+      </div>
+
       {/* Section content */}
-      <div className="relative w-full h-full">
+      <div className="relative w-full h-full overflow-hidden">
         {children}
       </div>
     </div>

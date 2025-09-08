@@ -15,6 +15,7 @@ interface CanvasViewerProps {
   onSaveSection: (sectionId: string, content: string, language?: string | null, title?: string) => void;
   onDeleteSection: (sectionId: string) => void;
   onPositionChange: (sectionId: string, x: number, y: number) => void;
+  onDimensionChange: (sectionId: string, width: number, height: number) => void;
   onTypeChange: (sectionId: string, newType: Section['type']) => void;
 }
 
@@ -25,6 +26,7 @@ const TnCanvasViewer: React.FC<CanvasViewerProps> = ({
   onSaveSection,
   onDeleteSection,
   onPositionChange,
+  onDimensionChange,
   onTypeChange,
 }) => {
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
@@ -119,6 +121,7 @@ const TnCanvasViewer: React.FC<CanvasViewerProps> = ({
         key={section.id}
         section={section}
         onPositionChange={onPositionChange}
+        onDimensionChange={onDimensionChange}
         onTypeChange={onTypeChange}
         isSelected={isSelected}
         onSelect={handleSectionSelect}
