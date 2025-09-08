@@ -14,6 +14,11 @@ export interface Section {
   language?: string | null | undefined; // for code sections
   imageData?: string; // for image sections (base64)
   createdAt: Date;
+  // Canvas positioning properties
+  x?: number; // X coordinate relative to canvas
+  y?: number; // Y coordinate relative to canvas
+  width?: number; // Section width
+  height?: number; // Section height
 }
 
 export interface NoteSummary {

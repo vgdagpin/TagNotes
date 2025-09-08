@@ -201,6 +201,41 @@ export class TagNotesService implements ITagNotesService {
 		});
 	}
 
+	async updateSectionPosition(noteId: string, sectionId: string, x: number, y: number): Promise<void> {
+		await this.update(noteId, n => {
+			const s = n.sections.find(s => s.id === sectionId);
+			if (s) {
+				s.x = x;
+				s.y = y;
+			}
+		});
+	}
+
+	async updateSectionDimensions(noteId: string, sectionId: string, width: number, height: number): Promise<void> {
+		await this.update(noteId, n => {
+			const s = n.sections.find(s => s.id === sectionId);
+			if (s) {
+				s.width = width;
+				s.height = height;
+			}
+		});
+	}
+
+	async convertSectionType(noteId: string, sectionId: string, newType: Section['type']): Promise<void> {
+		await this.update(noteId, n => {
+			const s = n.sections.find(s => s.id === sectionId);
+			if (s) {
+				s.type = newType;
+				// Reset language for non-code sections
+				if (newType !== 'code') {
+					s.language = null;
+				} else if (newType === 'code' && !s.language) {
+					s.language = 'javascript'; // Default language for code sections
+				}
+			}
+		});
+	}
+
 	async updateTitle(noteId: string, title: string): Promise<void> {
 		await this.ensureHandleLoaded();
 		if (!this.dirHandle) throw new Error('Local directory not selected');

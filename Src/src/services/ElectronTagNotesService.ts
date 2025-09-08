@@ -100,6 +100,21 @@ export class ElectronTagNotesService implements ITagNotesService {
 		const dirPath = await get(DIR_HANDLE_KEY);
 		await this.api?.updateSectionTitle(dirPath, noteId, sectionId, title);
 	}
+
+	async updateSectionPosition(noteId: string, sectionId: string, x: number, y: number): Promise<void> {
+		const dirPath = await get(DIR_HANDLE_KEY);
+		await this.api?.updateSectionPosition(dirPath, noteId, sectionId, x, y);
+	}
+
+	async updateSectionDimensions(noteId: string, sectionId: string, width: number, height: number): Promise<void> {
+		const dirPath = await get(DIR_HANDLE_KEY);
+		await this.api?.updateSectionDimensions(dirPath, noteId, sectionId, width, height);
+	}
+
+	async convertSectionType(noteId: string, sectionId: string, newType: Section['type']): Promise<void> {
+		const dirPath = await get(DIR_HANDLE_KEY);
+		await this.api?.convertSectionType(dirPath, noteId, sectionId, newType);
+	}
 	async updateTitle(noteId: string, title: string): Promise<void> {
 		const dirPath = await get(DIR_HANDLE_KEY);
 		await this.api?.updateTitle(dirPath, noteId, title);

@@ -5,12 +5,8 @@ import { Input } from "@/components/ui/input";
 
 import { Edit, Plus, FileText, Hash, Type, Code } from '@/components/tn-icons';
 
-import TnSection from "@/components/ui/tn-section";
 import { Note, Section } from "@shared/models";
-
-import TnSectionCode from "./tn-section-code";
-import TnSectionMarkdown from "@/components/ui/tn-section-markdown";
-import TnSectionImage from "./tn-section-image";
+import TnCanvasViewer from "./tn-canvas-viewer";
 
 import "./tn-note-viewer.css";
 import TnTagsPicker from "./tn-tags-picker";
@@ -123,31 +119,74 @@ const TnNoteViewer = ({ note, directoryLoaded, onTitleUpdated }: TnNoteViewerPro
     }
   }, [editingTitle]);
 
-  // Add image section
+  // Add image section with default positioning
   const addImageSection = async (noteId: string, imageData: string) => {
     if (!isDirLoaded) return;
 
     const newImageSection = await tagNotesContext.addImageSection(noteId, imageData);
+    
+    // Position image at a default location (bottom right of existing sections)
+    const existingSections = selectedNote.sections;
+    const defaultX = 50 + (existingSections.length % 3) * 420;
+    const defaultY = 50 + Math.floor(existingSections.length / 3) * 250;
+    
+    await tagNotesContext.updateSectionPosition(noteId, newImageSection.id, defaultX, defaultY);
+    
+    const updatedSection = { ...newImageSection, x: defaultX, y: defaultY };
+
     setSelectedNote((prev) => ({
       ...prev,
-      sections: [...prev.sections, newImageSection],
+      sections: [...prev.sections, updatedSection],
     }));
 
     setNewSectionId(newImageSection.id);
   };
 
-  // Add new section to note
-  const handleAddSection = async (noteId: string, sectionType: Section["type"]) => {
+  // Add new section to note with canvas coordinates
+  const handleAddSection = async (x: number, y: number, sectionType: Section["type"]) => {
     if (!isDirLoaded) return;
 
-    const newSection = await tagNotesContext.addSection(noteId, sectionType);
+    const newSection = await tagNotesContext.addSection(selectedNote.id, sectionType);
+    
+    // Update section with canvas position
+    await tagNotesContext.updateSectionPosition(selectedNote.id, newSection.id, x, y);
+
+    const updatedSection = { ...newSection, x, y };
 
     setSelectedNote((prev) => ({
       ...prev,
-      sections: [...prev.sections, newSection],
+      sections: [...prev.sections, updatedSection],
     }));
 
     setNewSectionId(newSection.id);
+  };
+
+  // Handle section position changes
+  const handlePositionChange = async (sectionId: string, x: number, y: number) => {
+    if (!isDirLoaded) return;
+
+    await tagNotesContext.updateSectionPosition(selectedNote.id, sectionId, x, y);
+
+    setSelectedNote((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec) =>
+        sec.id === sectionId ? { ...sec, x, y } : sec
+      ),
+    }));
+  };
+
+  // Handle section type changes
+  const handleTypeChange = async (sectionId: string, newType: Section['type']) => {
+    if (!isDirLoaded) return;
+
+    await tagNotesContext.convertSectionType(selectedNote.id, sectionId, newType);
+
+    setSelectedNote((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec) =>
+        sec.id === sectionId ? { ...sec, type: newType } : sec
+      ),
+    }));
   };
 
   // Save section changes
@@ -250,95 +289,17 @@ const TnNoteViewer = ({ note, directoryLoaded, onTitleUpdated }: TnNoteViewerPro
           </div>
         </div>
 
-        {/* Note Sections */}
-        <div className="flex-1 p-4 overflow-y-auto space-y-4 min-w-0 w-full">
-          {note.sections.length === 0 ? (
-            <div className="text-center text-muted-foreground py-8">
-              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No sections yet. Add a section below to get started.</p>
-            </div>
-          ) : (
-            note.sections.map((section) => {
-              if (section.type === "code") {
-                return (
-                  <TnSectionCode
-                    key={section.id}
-                    section={section}
-                    isNew={section.id === newSectionId}
-                    onSaveSection={(content, language, title) => handleSaveSection(section.id, content, language, title)}
-                    onDeleteSection={(sectionId) => handleDeleteSection(sectionId)}
-                  />
-                );
-              } else if (section.type === "markdown") {
-                return (
-                  <TnSectionMarkdown
-                    key={section.id}
-                    section={section}
-                    isNew={section.id === newSectionId}
-                    onSaveSection={(content, language, title) => handleSaveSection(section.id, content, language, title)}
-                    onDeleteSection={(sectionId) => handleDeleteSection(sectionId)}
-                  />
-                );
-              } else if (section.type === "image") {
-                return (
-                  <TnSectionImage
-                    key={section.id}
-                    section={section}
-                    isNew={section.id === newSectionId}
-                    onSaveSection={(content, language, title) => handleSaveSection(section.id, content, language, title)}
-                    onDeleteSection={(sectionId) => handleDeleteSection(sectionId)}
-                  />
-                );
-              } else {
-                return (
-                  <TnSection
-                    key={section.id}
-                    section={section}
-                    isNew={section.id === newSectionId}
-                    onSaveSection={(content, language, title) => handleSaveSection(section.id, content, language, title)}
-                    onDeleteSection={(sectionId) => handleDeleteSection(sectionId)}
-                  />
-                );
-              }
-            })
-          )}
-
-          {/* Add Section Dropdown - At Bottom */}
-          <div className="pt-8 border-t border-border">
-            <div className="flex items-center gap-2 mb-4 text-sm text-muted-foreground">
-              <Plus className="h-4 w-4" />
-              Add New Section
-            </div>
-            <div className="flex gap-2 w-full">
-              <Button
-                variant="outline"
-                className="flex-1 flex items-center gap-2"
-                onClick={() => handleAddSection(selectedNote.id, "text")}
-              >
-                <Type className="h-4 w-4" />
-                Plain Text
-              </Button>
-              <Button
-                variant="outline"
-                className="flex-1 flex items-center gap-2"
-                onClick={() => handleAddSection(selectedNote.id, "markdown")}
-              >
-                <Hash className="h-4 w-4" />
-                Markdown
-              </Button>
-              <Button
-                variant="outline"
-                className="flex-1 flex items-center gap-2"
-                onClick={() => handleAddSection(selectedNote.id, "code")}
-              >
-                <Code className="h-4 w-4" />
-                Code
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Paste images from clipboard to add image sections
-            </p>
-          </div>
+        {/* Canvas Viewer */}
+        <div className="flex-1 min-w-0 w-full">
+          <TnCanvasViewer
+            note={selectedNote}
+            newSectionId={newSectionId}
+            onAddSection={handleAddSection}
+            onSaveSection={handleSaveSection}
+            onDeleteSection={handleDeleteSection}
+            onPositionChange={handlePositionChange}
+            onTypeChange={handleTypeChange}
+          />
         </div>
       </div>
     </div>
