@@ -119,24 +119,26 @@ const TnNoteViewer = ({ note, directoryLoaded, onTitleUpdated }: TnNoteViewerPro
     }
   }, [editingTitle]);
 
+  // Geometry defaults (mirrors service defaults; kept here for local optimistic state)
+  const DEFAULT_WIDTH = 400;
+  const DEFAULT_HEIGHT = 200;
+  const DEFAULT_IMAGE_WIDTH = 400;
+  const DEFAULT_IMAGE_HEIGHT = 300;
+
   // Add image section with default positioning
   const addImageSection = async (noteId: string, imageData: string) => {
     if (!isDirLoaded) return;
 
-    const newImageSection = await tagNotesContext.addImageSection(noteId, imageData);
-    
     // Position image at a default location (bottom right of existing sections)
     const existingSections = selectedNote.sections;
     const defaultX = 50 + (existingSections.length % 3) * 420;
     const defaultY = 50 + Math.floor(existingSections.length / 3) * 250;
-    
-    await tagNotesContext.updateSectionPosition(noteId, newImageSection.id, defaultX, defaultY);
-    
-    const updatedSection = { ...newImageSection, x: defaultX, y: defaultY };
+
+    const newImageSection = await tagNotesContext.addImageSection(noteId, imageData, DEFAULT_IMAGE_WIDTH, DEFAULT_IMAGE_HEIGHT, defaultX, defaultY);
 
     setSelectedNote((prev) => ({
       ...prev,
-      sections: [...prev.sections, updatedSection],
+      sections: [...prev.sections, newImageSection],
     }));
 
     setNewSectionId(newImageSection.id);
@@ -146,16 +148,11 @@ const TnNoteViewer = ({ note, directoryLoaded, onTitleUpdated }: TnNoteViewerPro
   const handleAddSection = async (x: number, y: number, sectionType: Section["type"]) => {
     if (!isDirLoaded) return;
 
-    const newSection = await tagNotesContext.addSection(selectedNote.id, sectionType);
-    
-    // Update section with canvas position
-    await tagNotesContext.updateSectionPosition(selectedNote.id, newSection.id, x, y);
-
-    const updatedSection = { ...newSection, x, y };
+    const newSection = await tagNotesContext.addSection(selectedNote.id, sectionType, DEFAULT_WIDTH, DEFAULT_HEIGHT, x, y);
 
     setSelectedNote((prev) => ({
       ...prev,
-      sections: [...prev.sections, updatedSection],
+      sections: [...prev.sections, newSection],
     }));
 
     setNewSectionId(newSection.id);
@@ -213,9 +210,6 @@ const TnNoteViewer = ({ note, directoryLoaded, onTitleUpdated }: TnNoteViewerPro
       ...prev,
       sections: prev.sections.map((sec) => (sec.id === sectionId ? { ...sec, content, language } : sec)),
     }));
-
-
-  // Title handling removed
 
     setNewSectionId(null);
   };
