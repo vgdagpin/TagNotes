@@ -195,7 +195,11 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
     const sy = section.y ?? 50;
     const sw = section.width ?? 400;
     const sh = section.height ?? 200;
-    if (sx === committed.x && sy === committed.y && sw === committed.width && sh === committed.height) {
+
+    if (committed.x === 0 && committed.y === 0 && committed.width === 0 && committed.height === 0) {
+      setHideUntilSync(false);
+      lastCommitRef.current = null;
+    } else if (sx === committed.x && sy === committed.y && sw === committed.width && sh === committed.height) {
       setHideUntilSync(false);
       lastCommitRef.current = null;
     }
@@ -274,7 +278,9 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
         {/* ...removed type selector UI... */}
         {/* Section content (not rendered while dragging/resizing for perf) */}
         {!(isDragging || isResizing || hideUntilSync) && (
-          <div style={{ width: '100%', height: '100%' }}>{children}</div>
+          <div style={{ width: '100%', height: '100%' }}>
+            {children}
+          </div>
         )}
       </div>
     </>
