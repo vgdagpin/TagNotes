@@ -36,8 +36,8 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
   const [hideUntilSync, setHideUntilSync] = useState(false);
 
   // Default positioning for sections without coordinates
-    // Helper: icon for section type
-    // ...existing code...
+  // Helper: icon for section type
+  // ...existing code...
   const x = section.x ?? 50;
   const y = section.y ?? 50;
   const width = section.width ?? 400;
@@ -51,7 +51,7 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
     const rect = sectionRef.current?.getBoundingClientRect();
     if (rect) {
       setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-  ghostDataRef.current = { x: x, y: y, width: width as number, height: height as number };
+      ghostDataRef.current = { x: x, y: y, width: width as number, height: height as number };
     }
     e.preventDefault();
   };
@@ -75,7 +75,7 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
         width: rect.width,
         height: rect.height,
       });
-  ghostDataRef.current = { x: x, y: y, width: rect.width, height: rect.height };
+      ghostDataRef.current = { x: x, y: y, width: rect.width, height: rect.height };
     }
     onSelect?.(section.id);
   };
@@ -219,9 +219,8 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
       )}
       <div
         ref={sectionRef}
-        className={`absolute ${
-          isSelected ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
-        } group ${(isDragging || isResizing || hideUntilSync) ? '' : 'z-10'}`}
+        className={`absolute ${isSelected ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
+          } group ${(isDragging || isResizing || hideUntilSync) ? '' : 'z-10'}`}
         style={{
           left: `${x}px`,
           top: `${y}px`,
@@ -231,52 +230,52 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
         }}
         onMouseDown={handleContainerMouseDown}
       >
-      {/* Drag handle (only visible on hover) */}
-      <div
-        className="drag-handle absolute top-1 left-1 w-4 h-4 rounded-sm bg-blue-500/70 hover:bg-blue-500 cursor-move opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[10px] text-white select-none"
-        onMouseDown={handleDragHandleMouseDown}
-        title="Drag section"
-      >
-        ⋮
-      </div>
-      {/* Resize handles */}
-      {(['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] as ResizeHandle[]).map((handle) => {
-        const size = handle.length === 2 ? 12 : 8;
-        return (
-          <div
-            key={handle}
-            className={`resize-handle resize-handle-${handle} ${isResizing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}
-            style={{
-              position: 'absolute',
-              width: size,
-              height: size,
-              background: '#2563eb', // tailwind blue-600 equivalent
-              borderRadius: 4,
-              zIndex: 20,
-              boxShadow: '0 0 0 1px #fff',
-              cursor:
-                handle === 'n' ? 'ns-resize' :
-                handle === 's' ? 'ns-resize' :
-                handle === 'e' ? 'ew-resize' :
-                handle === 'w' ? 'ew-resize' :
-                handle === 'ne' ? 'nesw-resize' :
-                handle === 'nw' ? 'nwse-resize' :
-                handle === 'se' ? 'nwse-resize' :
-                handle === 'sw' ? 'nesw-resize' : 'pointer',
-              top:
-                handle.includes('n') ? -6 : handle.includes('s') ? height - 6 : (height / 2) - 4,
-              left:
-                handle.includes('w') ? -6 : handle.includes('e') ? width - 6 : (width / 2) - 4,
-            }}
-            onMouseDown={(e) => handleResizeMouseDown(handle, e)}
-          />
-        );
-      })}
-  {/* ...removed type selector UI... */}
-       {/* Section content (not rendered while dragging/resizing for perf) */}
-  {!(isDragging || isResizing || hideUntilSync) && (
-         <div style={{ width: '100%', height: '100%' }}>{children}</div>
-       )}
+        {/* Drag handle (only visible on hover) */}
+        <div
+          className="drag-handle absolute top-1 left-1 w-4 h-4 rounded-sm bg-blue-500/70 hover:bg-blue-500 cursor-move opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[10px] text-white select-none"
+          onMouseDown={handleDragHandleMouseDown}
+          title="Drag section"
+        >
+          ⋮
+        </div>
+        {/* Resize handles */}
+        {(['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] as ResizeHandle[]).map((handle) => {
+          const size = handle.length === 2 ? 12 : 8;
+          return (
+            <div
+              key={handle}
+              className={`resize-handle resize-handle-${handle} ${isResizing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}
+              style={{
+                position: 'absolute',
+                width: size,
+                height: size,
+                background: '#2563eb', // tailwind blue-600 equivalent
+                borderRadius: 4,
+                zIndex: 20,
+                boxShadow: '0 0 0 1px #fff',
+                cursor:
+                  handle === 'n' ? 'ns-resize' :
+                    handle === 's' ? 'ns-resize' :
+                      handle === 'e' ? 'ew-resize' :
+                        handle === 'w' ? 'ew-resize' :
+                          handle === 'ne' ? 'nesw-resize' :
+                            handle === 'nw' ? 'nwse-resize' :
+                              handle === 'se' ? 'nwse-resize' :
+                                handle === 'sw' ? 'nesw-resize' : 'pointer',
+                top:
+                  handle.includes('n') ? -6 : handle.includes('s') ? height - 6 : (height / 2) - 4,
+                left:
+                  handle.includes('w') ? -6 : handle.includes('e') ? width - 6 : (width / 2) - 4,
+              }}
+              onMouseDown={(e) => handleResizeMouseDown(handle, e)}
+            />
+          );
+        })}
+        {/* ...removed type selector UI... */}
+        {/* Section content (not rendered while dragging/resizing for perf) */}
+        {!(isDragging || isResizing || hideUntilSync) && (
+          <div style={{ width: '100%', height: '100%' }}>{children}</div>
+        )}
       </div>
     </>
   );
