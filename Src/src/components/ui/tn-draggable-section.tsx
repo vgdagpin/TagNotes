@@ -31,6 +31,9 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
   // Ghost (skeleton) element and data (mutable, no re-render during interaction)
   const ghostRef = useRef<HTMLDivElement | null>(null);
   const ghostDataRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
+  // Track last commit and delay content remount until parent reflects values
+  const lastCommitRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
+  const [hideUntilSync, setHideUntilSync] = useState(false);
 
   // Default positioning for sections without coordinates
     // Helper: icon for section type
@@ -99,6 +102,16 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
     });
   }, [onDimensionChange, section.id]);
 
+  // Immediate commit helpers (no rAF) to avoid flicker when releasing
+  const commitPosition = useCallback((newX: number, newY: number) => {
+    dragPositionRef.current = { x: newX, y: newY };
+    onPositionChange(section.id, newX, newY);
+  }, [onPositionChange, section.id]);
+  const commitDimension = useCallback((newWidth: number, newHeight: number) => {
+    resizeDimensionRef.current = { width: newWidth, height: newHeight };
+    onDimensionChange(section.id, newWidth, newHeight);
+  }, [onDimensionChange, section.id]);
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (isDragging) {
@@ -151,14 +164,17 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
     };
     const handleMouseUp = () => {
       if (isDragging) {
-        updatePosition(ghostDataRef.current.x, ghostDataRef.current.y);
+        commitPosition(ghostDataRef.current.x, ghostDataRef.current.y);
       }
       if (isResizing) {
-        updateDimension(ghostDataRef.current.width, ghostDataRef.current.height);
+        commitDimension(ghostDataRef.current.width, ghostDataRef.current.height);
         if (ghostDataRef.current.x !== x || ghostDataRef.current.y !== y) {
-          updatePosition(ghostDataRef.current.x, ghostDataRef.current.y);
+          commitPosition(ghostDataRef.current.x, ghostDataRef.current.y);
         }
       }
+      // Record committed values and keep content hidden until parent props sync
+      lastCommitRef.current = { ...ghostDataRef.current };
+      setHideUntilSync(true);
       setIsDragging(false);
       setIsResizing(false);
       setResizeHandle(null);
@@ -170,6 +186,20 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
       window.removeEventListener('mouseup', handleMouseUp);
     };
   }, [isDragging, dragOffset, updatePosition, isResizing, resizeHandle, resizeStart, x, y, updateDimension]);
+
+  // Reveal content only when parent-supplied section props match committed values
+  useEffect(() => {
+    if (!hideUntilSync || !lastCommitRef.current) return;
+    const committed = lastCommitRef.current;
+    const sx = section.x ?? 50;
+    const sy = section.y ?? 50;
+    const sw = section.width ?? 400;
+    const sh = section.height ?? 200;
+    if (sx === committed.x && sy === committed.y && sw === committed.width && sh === committed.height) {
+      setHideUntilSync(false);
+      lastCommitRef.current = null;
+    }
+  }, [hideUntilSync, section.x, section.y, section.width, section.height]);
 
   return (
     <>
@@ -191,15 +221,13 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
         ref={sectionRef}
         className={`absolute ${
           isSelected ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
-        } group`}
+        } group ${(isDragging || isResizing || hideUntilSync) ? '' : 'z-10'}`}
         style={{
           left: `${x}px`,
           top: `${y}px`,
           width: typeof width === 'number' ? `${width}px` : width,
           height: typeof height === 'number' ? `${height}px` : height,
-          opacity: (isDragging || isResizing) ? 0 : 1,
-          transition: 'opacity 80ms ease-in-out',
-          userSelect: isDragging || isResizing ? 'none' : 'auto',
+          display: (isDragging || isResizing || hideUntilSync) ? 'none' : 'block',
         }}
         onMouseDown={handleContainerMouseDown}
       >
@@ -245,8 +273,10 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
         );
       })}
   {/* ...removed type selector UI... */}
-      {/* Section content */}
-      <div style={{ width: '100%', height: '100%' }}>{children}</div>
+       {/* Section content (not rendered while dragging/resizing for perf) */}
+  {!(isDragging || isResizing || hideUntilSync) && (
+         <div style={{ width: '100%', height: '100%' }}>{children}</div>
+       )}
       </div>
     </>
   );

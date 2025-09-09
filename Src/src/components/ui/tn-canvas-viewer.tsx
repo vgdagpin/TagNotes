@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Note, Section } from '@shared/models';
 import { Button } from '@/components/ui/button';
 import { Plus, Type, Hash, Code } from '@/components/tn-icons';
@@ -32,6 +32,11 @@ const TnCanvasViewer: React.FC<CanvasViewerProps> = ({
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [showCreateMenu, setShowCreateMenu] = useState(false);
   const [createMenuPosition, setCreateMenuPosition] = useState({ x: 0, y: 0 });
+  // Drag-to-create state
+  const [isCreating, setIsCreating] = useState(false);
+  const [createRect, setCreateRect] = useState<null | { x: number; y: number; width: number; height: number }>(null);
+  const dragStartRef = useRef<{ x: number; y: number } | null>(null);
+  const pendingRectRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
   // Assign default positions to sections without coordinates
@@ -43,28 +48,99 @@ const TnCanvasViewer: React.FC<CanvasViewerProps> = ({
     height: section.height ?? 200,
   }));
 
-  const handleCanvasClick = useCallback((e: React.MouseEvent) => {
-    // Only handle clicks on the canvas itself, not on sections
-    if (e.target !== canvasRef.current) return;
-
+  // Begin drag-to-create rectangle
+  const handleCanvasMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button !== 0) return; // left click only
+    if (e.target !== canvasRef.current) return; // ignore if starting over a section child
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
-
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-
-    // Clear any selected section
+    dragStartRef.current = { x, y };
+    setCreateRect({ x, y, width: 0, height: 0 });
+    setIsCreating(true);
+    setShowCreateMenu(false);
     setSelectedSectionId(null);
-
-    // Show create menu at click position
-    setCreateMenuPosition({ x, y });
-    setShowCreateMenu(true);
   }, []);
 
+  const handleCanvasMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isCreating || !dragStartRef.current) return;
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const start = dragStartRef.current;
+    const left = Math.min(start.x, x);
+    const top = Math.min(start.y, y);
+    const width = Math.abs(x - start.x);
+    const height = Math.abs(y - start.y);
+    setCreateRect({ x: left, y: top, width, height });
+  }, [isCreating]);
+
+  const finishCreation = useCallback(() => {
+    if (!isCreating) return;
+    setIsCreating(false);
+    if (createRect && createRect.width > 10 && createRect.height > 10) {
+      // Anchor menu at the beginning (top-left) of the drawn rectangle
+      const canvas = canvasRef.current?.getBoundingClientRect();
+      let menuX = createRect.x;
+      let menuY = createRect.y - 44; // raise slightly above selection
+      if (canvas) {
+        // Clamp so it stays in view
+        menuX = Math.min(Math.max(0, menuX), canvas.width - 160);
+        menuY = Math.min(Math.max(0, menuY), canvas.height - 140);
+      }
+      setCreateMenuPosition({ x: menuX, y: menuY });
+      setShowCreateMenu(true);
+    } else {
+      // Too small: cancel
+      setCreateRect(null);
+    }
+    dragStartRef.current = null;
+  }, [isCreating, createRect]);
+
+  const handleCanvasMouseUp = useCallback(() => {
+    finishCreation();
+  }, [finishCreation]);
+
+  const handleCanvasMouseLeave = useCallback(() => {
+    // If user leaves canvas while creating, finish
+    finishCreation();
+  }, [finishCreation]);
+
+  // ESC to cancel creation
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isCreating) {
+        setIsCreating(false);
+        setCreateRect(null);
+        dragStartRef.current = null;
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isCreating]);
+
   const handleCreateSection = useCallback((type: Section['type']) => {
-    onAddSection(createMenuPosition.x, createMenuPosition.y, type);
+    if (createRect) {
+      onAddSection(createRect.x, createRect.y, type);
+      pendingRectRef.current = { ...createRect };
+    } else {
+      // fallback to menu position
+      onAddSection(createMenuPosition.x, createMenuPosition.y, type);
+    }
     setShowCreateMenu(false);
-  }, [createMenuPosition, onAddSection]);
+    setCreateRect(null);
+  }, [createRect, createMenuPosition, onAddSection]);
+
+  // After new section id appears, apply dimensions from pending rect
+  useEffect(() => {
+    if (newSectionId && pendingRectRef.current) {
+      const r = pendingRectRef.current;
+      onDimensionChange(newSectionId, Math.max(50, r.width), Math.max(30, r.height));
+      pendingRectRef.current = null;
+    }
+  }, [newSectionId, onDimensionChange]);
 
   const handleSectionSelect = useCallback((sectionId: string) => {
     setSelectedSectionId(sectionId);
@@ -144,13 +220,28 @@ const TnCanvasViewer: React.FC<CanvasViewerProps> = ({
           `,
           backgroundSize: '20px 20px',
         }}
-        onDoubleClick={handleCanvasClick}
+        onMouseDown={handleCanvasMouseDown}
+        onMouseMove={handleCanvasMouseMove}
+        onMouseUp={handleCanvasMouseUp}
+        onMouseLeave={handleCanvasMouseLeave}
       >
+        {/* Creation rectangle overlay */}
+        {isCreating && createRect && (
+          <div
+            className="absolute border-2 border-blue-500/70 bg-blue-500/10 pointer-events-none"
+            style={{
+              left: createRect.x,
+              top: createRect.y,
+              width: createRect.width,
+              height: createRect.height,
+            }}
+          />
+        )}
         {/* Render all sections */}
         {sectionsWithPositions.map(renderSection)}
 
         {/* Create menu */}
-        {showCreateMenu && (
+  {showCreateMenu && (
           <div
             className="absolute z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-2"
             style={{
@@ -205,8 +296,8 @@ const TnCanvasViewer: React.FC<CanvasViewerProps> = ({
       {/* Instructions overlay */}
       <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-lg border border-gray-200 text-xs text-gray-600 max-w-xs">
         <div className="space-y-1">
-          <div>• Click empty space to create sections</div>
-          <div>• Drag sections to move them</div>
+          <div>• Drag empty canvas to draw new section</div>
+          <div>• Drag sections by handle to move them</div>
           <div>• Hover sections for controls</div>
         </div>
       </div>
