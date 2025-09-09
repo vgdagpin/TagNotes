@@ -152,25 +152,33 @@ export class TagNotesService implements ITagNotesService {
 		return note;
 	}
 
-async addSection(noteId: string, sectionType: Section['type']): Promise<Section> {
+async addSection(noteId: string, sectionType: Section['type'], width: number, height: number, x: number, y: number): Promise<Section> {
 	const newSection: Section = {
 		id: uuid(),
 		type: sectionType,
 		content: '',
 		createdAt: new Date(),
-		language: sectionType === 'code' ? 'javascript' : null
+		language: sectionType === 'code' ? 'javascript' : null,
+		width,
+		height,
+		x,
+		y,
 	};
 	await this.update(noteId, n => n.sections.push(newSection));
 	return newSection;
 }
 
-	async addImageSection(noteId: string, imageData: string): Promise<Section> {
+	async addImageSection(noteId: string, imageData: string, width: number, height: number, x: number, y: number): Promise<Section> {
 		const newImgSection: Section = {
 			id: uuid(),
 			type: 'image',
 			content: 'Image',
 			imageData,
-			createdAt: new Date()
+			createdAt: new Date(),
+			width,
+			height,
+			x,
+			y,
 		};
 		await this.update(noteId, n => n.sections.push(newImgSection));
 		return newImgSection;

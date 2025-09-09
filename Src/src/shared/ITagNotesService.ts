@@ -10,8 +10,8 @@ export interface ITagNotesService {
 	createNote(initial?: Partial<Note>): Promise<Note>;
 	getNote(noteId: string): Promise<Note>;
 
-	addSection(noteId: string, sectionType: Section['type']): Promise<Section>;
-	addImageSection(noteId: string, imageData: string): Promise<Section>;
+	addSection(noteId: string, sectionType: Section['type'], width: number, height: number, x: number, y: number): Promise<Section>;
+	addImageSection(noteId: string, imageData: string, width: number, height: number, x: number, y: number): Promise<Section>;
 
 	updateSectionContent(noteId: string, sectionId: string, content: string, language?: string | null | undefined): Promise<void>;
 	updateSectionPosition(noteId: string, sectionId: string, x: number, y: number): Promise<void>;

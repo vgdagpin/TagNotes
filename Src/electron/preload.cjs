@@ -35,11 +35,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
 	getNote: async (dirPath, noteId) => {
 		return await ipcRenderer.invoke('get-note', dirPath, noteId);
 	},
-	addSection: async (dirPath, noteId, sectionType) => {
-		return await ipcRenderer.invoke('add-section', dirPath, noteId, sectionType);
+	addSection: async (dirPath, noteId, sectionType, width, height, x, y) => {
+		return await ipcRenderer.invoke('add-section', dirPath, noteId, sectionType, width, height, x, y);
 	},
-	addImageSection: async (dirPath, noteId, imageData) => {
-		return await ipcRenderer.invoke('add-image-section', dirPath, noteId, imageData);
+	addImageSection: async (dirPath, noteId, imageData, width, height, x, y) => {
+		return await ipcRenderer.invoke('add-image-section', dirPath, noteId, imageData, width, height, x, y);
 	},
 	updateSectionContent: async (dirPath, noteId, sectionId, content, language) => {
 		return await ipcRenderer.invoke('update-section-content', dirPath, noteId, sectionId, content, language);

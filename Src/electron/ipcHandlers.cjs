@@ -173,12 +173,23 @@ function registerIpcHandlers() {
         } catch (e){ console.error('get-note error', e); return null; }
     });
 
-    ipcMain.handle('add-section', (event, dirPath, noteId, sectionType) => {
+    ipcMain.handle('add-section', (event, dirPath, noteId, sectionType, width, height, x, y) => {
         const idx = loadIndex(dirPath);
         const entry = idx.notes.find(n => n.id === noteId);
         if(!entry) return null;
         const note = loadNote(entry.location);
-        const section = { id: uuid(), type: sectionType, content: '', createdAt: new Date(), title: sectionType === 'image' ? 'Image' : undefined };
+        const section = { 
+            id: uuid(), 
+            type: sectionType, 
+            content: '', 
+            createdAt: new Date(), 
+            title: sectionType === 'image' ? 'Image' : undefined ,
+            width, 
+            height, 
+            x, 
+            y
+        };
+
         note.sections.push(section);
         note.updatedAt = new Date();
         touchUpdated(idx, noteId, note.updatedAt);
@@ -186,12 +197,24 @@ function registerIpcHandlers() {
         return section;
     });
 
-    ipcMain.handle('add-image-section', (event, dirPath, noteId, imageData) => {
+    ipcMain.handle('add-image-section', (event, dirPath, noteId, imageData, width, height, x, y) => {
         const idx = loadIndex(dirPath);
         const entry = idx.notes.find(n => n.id === noteId);
         if(!entry) return null;
         const note = loadNote(entry.location);
-        const section = { id: uuid(), type: 'image', content: '', imageData, createdAt: new Date(), title: 'Image' };
+        const section = { 
+            id: uuid(), 
+            type: 'image', 
+            content: '', 
+            imageData, 
+            createdAt: new Date(), 
+            title: 'Image', 
+            width, 
+            height, 
+            x, 
+            y 
+        };
+        
         note.sections.push(section);
         note.updatedAt = new Date();
         touchUpdated(idx, noteId, note.updatedAt);

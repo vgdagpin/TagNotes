@@ -83,13 +83,13 @@ export class ElectronTagNotesService implements ITagNotesService {
 		return notes || [];
 	}
 
-	async addSection(noteId: string, sectionType: Section["type"]): Promise<Section> {
+	async addSection(noteId: string, sectionType: Section["type"], width: number, height: number, x: number, y: number): Promise<Section> {
 		const dirPath = await get(DIR_HANDLE_KEY);
-		return await this.api?.addSection(dirPath, noteId, sectionType);
+		return await this.api?.addSection(dirPath, noteId, sectionType, width, height, x, y);
 	}
-	async addImageSection(noteId: string, imageData: string): Promise<Section> {
+	async addImageSection(noteId: string, imageData: string, width: number, height: number, x: number, y: number): Promise<Section> {
 		const dirPath = await get(DIR_HANDLE_KEY);
-		return await this.api?.addImageSection(dirPath, noteId, imageData);
+		return await this.api?.addImageSection(dirPath, noteId, imageData, width, height, x, y);
 	}
 	async updateSectionContent(noteId: string, sectionId: string, content: string, language?: string | null | undefined): Promise<void> {
 		const dirPath = await get(DIR_HANDLE_KEY);
