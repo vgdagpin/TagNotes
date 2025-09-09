@@ -29,8 +29,6 @@ const TnNoteViewer = ({ note, directoryLoaded, onTitleUpdated }: TnNoteViewerPro
   const [selectedNote, setSelectedNote] = useState<Note>(note);
   const [editingTitle, setEditingTitle] = useState(false);
 
-  console.log('TnNoteViewer');
-
   useEffect(() => {
     const checkIfHasSelectedDir = async () => {
       const hasSelectedDir = await tagNotesContext.hasSelectedDirectory();
@@ -40,6 +38,10 @@ const TnNoteViewer = ({ note, directoryLoaded, onTitleUpdated }: TnNoteViewerPro
 
     checkIfHasSelectedDir();
   }, [tagNotesContext]);
+
+  useEffect(() => {
+    setSelectedNote(note);
+  }, [note]);
 
   useEffect(() => {
     setIsDirLoaded(directoryLoaded);

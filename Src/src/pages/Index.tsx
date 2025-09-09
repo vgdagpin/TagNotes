@@ -98,12 +98,15 @@ export default function Index() {
   const openNote = async (noteId: string) => {
     setActiveView(noteId);
     navigate(`/${noteId}`);
+
     if (isDirectoryLoaded) {
       try {
         const note = await tagNotesContext.getNote(noteId);
 
         setSelectedNote(note);
-      } catch { }
+      } catch (error) {
+        console.error('Error opening note:', error);
+      }
     }
   };
 
