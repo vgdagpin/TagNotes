@@ -28,12 +28,11 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const sectionRef = useRef<HTMLDivElement>(null);
   const animationFrameRef = useRef<number | null>(null);
-  // Ghost (skeleton) element and data (mutable, no re-render during interaction)
   const ghostRef = useRef<HTMLDivElement | null>(null);
   const ghostDataRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
-  // Track last commit and delay content remount until parent reflects values
   const lastCommitRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
   const [hideUntilSync, setHideUntilSync] = useState(false);
+  const [hoverCorner, setHoverCorner] = useState<ResizeHandle | null>(null);
 
   // Default positioning for sections without coordinates
   // Helper: icon for section type
@@ -79,6 +78,23 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
     }
     onSelect?.(section.id);
   };
+
+  // Corner hover detection
+  const handleSectionMouseMove = (e: React.MouseEvent) => {
+    if (isDragging || isResizing) return;
+    const rect = sectionRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const threshold = 14;
+    const lx = e.clientX - rect.left;
+    const ly = e.clientY - rect.top;
+    let corner: ResizeHandle | null = null;
+    if (lx <= threshold && ly <= threshold) corner = 'nw';
+    else if (lx >= rect.width - threshold && ly <= threshold) corner = 'ne';
+    else if (lx >= rect.width - threshold && ly >= rect.height - threshold) corner = 'se';
+    else if (lx <= threshold && ly >= rect.height - threshold) corner = 'sw';
+    if (corner !== hoverCorner) setHoverCorner(corner);
+  };
+  const handleSectionMouseLeave = () => { if (!isResizing) setHoverCorner(null); };
 
   // Drag and resize logic with requestAnimationFrame
   const dragPositionRef = useRef({ x, y });
@@ -186,7 +202,7 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, dragOffset, updatePosition, isResizing, resizeHandle, resizeStart, x, y, updateDimension]);
+  }, [isDragging, dragOffset, updatePosition, isResizing, resizeHandle, resizeStart, x, y, updateDimension, commitDimension, commitPosition]);
 
   // Reveal content only when parent-supplied section props match committed values
   useEffect(() => {
@@ -200,7 +216,7 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
     if (committed.x === 0 && committed.y === 0 && committed.width === 0 && committed.height === 0) {
       setHideUntilSync(false);
       lastCommitRef.current = null;
-    } else 
+    } else
       if (sx === committed.x && sy === committed.y && sw === committed.width && sh === committed.height) {
       setHideUntilSync(false);
       lastCommitRef.current = null;
@@ -235,6 +251,8 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
           display: (isDragging || isResizing || hideUntilSync) ? 'none' : 'block',
         }}
         onMouseDown={handleContainerMouseDown}
+        onMouseMove={handleSectionMouseMove}
+        onMouseLeave={handleSectionMouseLeave}
       >
         {/* Drag handle (only visible on hover) */}
         <div
@@ -245,39 +263,17 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
           ⋮
         </div>
         {/* Resize handles */}
-        {(['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] as ResizeHandle[]).map((handle) => {
-          const size = handle.length === 2 ? 12 : 8;
-          return (
-            <div
-              key={handle}
-              className={`resize-handle resize-handle-${handle} ${isResizing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}
-              style={{
-                position: 'absolute',
-                width: size,
-                height: size,
-                background: '#2563eb', // tailwind blue-600 equivalent
-                borderRadius: 4,
-                zIndex: 20,
-                boxShadow: '0 0 0 1px #fff',
-                cursor:
-                  handle === 'n' ? 'ns-resize' :
-                    handle === 's' ? 'ns-resize' :
-                      handle === 'e' ? 'ew-resize' :
-                        handle === 'w' ? 'ew-resize' :
-                          handle === 'ne' ? 'nesw-resize' :
-                            handle === 'nw' ? 'nwse-resize' :
-                              handle === 'se' ? 'nwse-resize' :
-                                handle === 'sw' ? 'nesw-resize' : 'pointer',
-                top:
-                  handle.includes('n') ? -6 : handle.includes('s') ? height - 6 : (height / 2) - 4,
-                left:
-                  handle.includes('w') ? -6 : handle.includes('e') ? width - 6 : (width / 2) - 4,
-              }}
-              onMouseDown={(e) => handleResizeMouseDown(handle, e)}
-            />
-          );
+        {(['nw','ne','se','sw'] as ResizeHandle[]).map(handle => {
+          const active = (hoverCorner === handle && !isResizing) || (isResizing && resizeHandle === handle);
+          if (!active) return null;
+          const size = 14;
+          const style: React.CSSProperties = {
+            position: 'absolute', width: size, height: size, background: '#2563eb', borderRadius: 6, zIndex: 40, boxShadow: '0 0 0 1px #fff',
+            cursor: handle === 'ne' ? 'nesw-resize' : handle === 'nw' ? 'nwse-resize' : handle === 'se' ? 'nwse-resize' : handle === 'sw' ? 'nesw-resize' : 'pointer',
+            top: handle.includes('n') ? -7 : height - 7, left: handle.includes('w') ? -7 : width - 7, transition: 'background 120ms'
+          };
+          return <div key={handle} className={`resize-handle resize-handle-${handle}`} style={style} onMouseDown={(e) => handleResizeMouseDown(handle, e)} />;
         })}
-        {/* ...removed type selector UI... */}
         {/* Section content (not rendered while dragging/resizing for perf) */}
         {!(isDragging || isResizing || hideUntilSync) && (
           <div style={{ width: '100%', height: '100%' }}>
