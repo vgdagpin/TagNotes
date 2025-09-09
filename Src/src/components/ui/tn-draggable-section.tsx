@@ -174,7 +174,8 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
       }
       // Record committed values and keep content hidden until parent props sync
       lastCommitRef.current = { ...ghostDataRef.current };
-      setHideUntilSync(true);
+
+      setHideUntilSync(isDragging || isResizing);
       setIsDragging(false);
       setIsResizing(false);
       setResizeHandle(null);
@@ -199,7 +200,8 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
     if (committed.x === 0 && committed.y === 0 && committed.width === 0 && committed.height === 0) {
       setHideUntilSync(false);
       lastCommitRef.current = null;
-    } else if (sx === committed.x && sy === committed.y && sw === committed.width && sh === committed.height) {
+    } else 
+      if (sx === committed.x && sy === committed.y && sw === committed.width && sh === committed.height) {
       setHideUntilSync(false);
       lastCommitRef.current = null;
     }
