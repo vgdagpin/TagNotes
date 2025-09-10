@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Section } from '@shared/models';
-// ...existing code...
 
 interface DraggableSectionProps {
   section: Section;
@@ -12,6 +11,11 @@ interface DraggableSectionProps {
 }
 
 type ResizeHandle = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
+
+// Hover sensitivity constants
+const RESIZE_HOVER_THRESHOLD = 28; // previously 14 – larger = easier to trigger
+const RESIZE_HOVER_OUTSIDE_ALLOW = 10; // px allowance outside the element bounds
+const HANDLE_OUTSIDE_OFFSET = 6; // reduced (was 10) to bring handles a bit closer
 
 const TnDraggableSection: React.FC<DraggableSectionProps> = ({
   section,
@@ -79,20 +83,29 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
     onSelect?.(section.id);
   };
 
-  // Corner hover detection
+  // Corner + edge hover detection
   const handleSectionMouseMove = (e: React.MouseEvent) => {
+    if (!isSelected) return; // only track hover when focused
     if (isDragging || isResizing) return;
     const rect = sectionRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const threshold = 14;
-    const lx = e.clientX - rect.left;
-    const ly = e.clientY - rect.top;
-    let corner: ResizeHandle | null = null;
-    if (lx <= threshold && ly <= threshold) corner = 'nw';
-    else if (lx >= rect.width - threshold && ly <= threshold) corner = 'ne';
-    else if (lx >= rect.width - threshold && ly >= rect.height - threshold) corner = 'se';
-    else if (lx <= threshold && ly >= rect.height - threshold) corner = 'sw';
-    if (corner !== hoverCorner) setHoverCorner(corner);
+    // Raw relative coords (can be slightly outside)
+    const rawLX = e.clientX - rect.left;
+    const rawLY = e.clientY - rect.top;
+    // Allow a small outside zone so users don't need pixel‑perfect inside positioning
+    const lx = Math.min(Math.max(rawLX, -RESIZE_HOVER_OUTSIDE_ALLOW), rect.width + RESIZE_HOVER_OUTSIDE_ALLOW);
+    const ly = Math.min(Math.max(rawLY, -RESIZE_HOVER_OUTSIDE_ALLOW), rect.height + RESIZE_HOVER_OUTSIDE_ALLOW);
+    const threshold = RESIZE_HOVER_THRESHOLD;
+  let corner: ResizeHandle | null = null;
+  if (lx <= threshold && ly <= threshold) corner = 'nw';
+  else if (lx >= rect.width - threshold && ly <= threshold) corner = 'ne';
+  else if (lx >= rect.width - threshold && ly >= rect.height - threshold) corner = 'se';
+  else if (lx <= threshold && ly >= rect.height - threshold) corner = 'sw';
+  else if (ly <= threshold) corner = 'n';
+  else if (ly >= rect.height - threshold) corner = 's';
+  else if (lx <= threshold) corner = 'w';
+  else if (lx >= rect.width - threshold) corner = 'e';
+  if (corner !== hoverCorner) setHoverCorner(corner);
   };
   const handleSectionMouseLeave = () => { if (!isResizing) setHoverCorner(null); };
 
@@ -218,9 +231,9 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
       lastCommitRef.current = null;
     } else
       if (sx === committed.x && sy === committed.y && sw === committed.width && sh === committed.height) {
-      setHideUntilSync(false);
-      lastCommitRef.current = null;
-    }
+        setHideUntilSync(false);
+        lastCommitRef.current = null;
+      }
   }, [hideUntilSync, section.x, section.y, section.width, section.height]);
 
   return (
@@ -234,27 +247,26 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
             top: ghostDataRef.current.y,
             width: ghostDataRef.current.width,
             height: ghostDataRef.current.height,
-            background: 'rgba(59,130,246,0.05)',
+            background: 'hsl(var(--card))',
             opacity: 1,
           }}
         />
       )}
       <div
         ref={sectionRef}
-        className={`absolute ${isSelected ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
-          } group ${(isDragging || isResizing || hideUntilSync) ? '' : 'z-10'}`}
+        className={`border border-border absolute ${isSelected ? 'ring-2 ring-blue-500 ring-opacity-50' : ''} group ${(isDragging || isResizing || hideUntilSync) ? '' : 'z-10'}`}
         style={{
           left: `${x}px`,
           top: `${y}px`,
           width: typeof width === 'number' ? `${width}px` : width,
           height: typeof height === 'number' ? `${height}px` : height,
           display: (isDragging || isResizing || hideUntilSync) ? 'none' : 'block',
+          background: 'white', // Fill unused space so canvas doesn't show through
         }}
         onMouseDown={handleContainerMouseDown}
         onMouseMove={handleSectionMouseMove}
         onMouseLeave={handleSectionMouseLeave}
       >
-        {/* Drag handle (only visible on hover) */}
         <div
           className="drag-handle absolute top-1 left-1 w-4 h-4 rounded-sm bg-blue-500/70 hover:bg-blue-500 cursor-move opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[10px] text-white select-none"
           onMouseDown={handleDragHandleMouseDown}
@@ -262,21 +274,59 @@ const TnDraggableSection: React.FC<DraggableSectionProps> = ({
         >
           ⋮
         </div>
-        {/* Resize handles */}
-        {(['nw','ne','se','sw'] as ResizeHandle[]).map(handle => {
-          const active = (hoverCorner === handle && !isResizing) || (isResizing && resizeHandle === handle);
-          if (!active) return null;
+  {isSelected && (['nw','ne','se','sw','n','s','e','w'] as ResizeHandle[]).map(handle => {
           const size = 14;
           const style: React.CSSProperties = {
-            position: 'absolute', width: size, height: size, background: '#2563eb', borderRadius: 6, zIndex: 40, boxShadow: '0 0 0 1px #fff',
-            cursor: handle === 'ne' ? 'nesw-resize' : handle === 'nw' ? 'nwse-resize' : handle === 'se' ? 'nwse-resize' : handle === 'sw' ? 'nesw-resize' : 'pointer',
-            top: handle.includes('n') ? -7 : height - 7, left: handle.includes('w') ? -7 : width - 7, transition: 'background 120ms'
+            position: 'absolute',
+            width: size,
+            height: size,
+      background: (isResizing && resizeHandle === handle) || hoverCorner === handle ? '#1d4ed8' : '#2563eb',
+            borderRadius: 6,
+            zIndex: 40,
+            boxShadow: '0 0 0 1px #fff',
+            cursor: handle === 'ne'
+              ? 'nesw-resize'
+              : handle === 'nw'
+                ? 'nwse-resize'
+                : handle === 'se'
+                  ? 'nwse-resize'
+                  : handle === 'sw'
+                    ? 'nesw-resize'
+                    : (handle === 'n' || handle === 's')
+                      ? 'ns-resize'
+                      : (handle === 'e' || handle === 'w')
+                        ? 'ew-resize'
+                        : 'pointer',
+            // Position handles: corners keep previous logic; edges centered on their side
+            // Place handles further outside: center sits HANDLE_OUTSIDE_OFFSET beyond border
+            top: (handle === 'nw' || handle === 'ne')
+              ? -(size / 2 + HANDLE_OUTSIDE_OFFSET)
+              : (handle === 'sw' || handle === 'se')
+                ? (height - size / 2) + HANDLE_OUTSIDE_OFFSET
+                : handle === 'n'
+                  ? -(size / 2 + HANDLE_OUTSIDE_OFFSET)
+                  : handle === 's'
+                    ? (height - size / 2) + HANDLE_OUTSIDE_OFFSET
+                    : (handle === 'e' || handle === 'w')
+                      ? (height / 2) - (size / 2)
+                      : 0,
+            left: (handle === 'nw' || handle === 'sw')
+              ? -(size / 2 + HANDLE_OUTSIDE_OFFSET)
+              : (handle === 'ne' || handle === 'se')
+                ? (width - size / 2) + HANDLE_OUTSIDE_OFFSET
+                : handle === 'w'
+                  ? -(size / 2 + HANDLE_OUTSIDE_OFFSET)
+                  : handle === 'e'
+                    ? (width - size / 2) + HANDLE_OUTSIDE_OFFSET
+                    : (handle === 'n' || handle === 's')
+                      ? (width / 2) - (size / 2)
+                      : 0,
+            transition: 'background 120ms'
           };
           return <div key={handle} className={`resize-handle resize-handle-${handle}`} style={style} onMouseDown={(e) => handleResizeMouseDown(handle, e)} />;
         })}
-        {/* Section content (not rendered while dragging/resizing for perf) */}
         {!(isDragging || isResizing || hideUntilSync) && (
-          <div style={{ width: '100%', height: '100%' }}>
+          <div style={{ width: '100%', height: '100%', overflow: 'auto' }} className="tn-section-scroll">
             {children}
           </div>
         )}

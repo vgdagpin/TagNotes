@@ -1,10 +1,7 @@
-import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-
-import { Trash, Image, Edit, Save } from '../tn-icons';
 import { Section } from "@shared/models";
 import { DialogTitle } from "@radix-ui/react-dialog";
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 
 type TnSectionImageProps = {
   section: Section;
@@ -15,71 +12,49 @@ type TnSectionImageProps = {
 
 const TnSectionImage = ({ section, onSaveSection, onDeleteSection }: TnSectionImageProps) => {
   const [sectionEdit, setSectionEdit] = useState(false);
-  // Title removed
+  const rootRef = useRef<HTMLDivElement | null>(null);
 
-  const handleSave = () => {
-  onSaveSection?.call(null, section.content, undefined);
+  const handleSave = useCallback(() => {
+    onSaveSection?.call(null, section.content, undefined);
     setSectionEdit(false);
+  }, [section.content]);
+
+  const handleDelete = useCallback(() => {
+    onDeleteSection?.call(null, section.id);
+  }, [section.id]);
+
+  const handleBlur: React.FocusEventHandler<HTMLDivElement> = (e) => {
+    if (!sectionEdit) return;
+    const next = e.relatedTarget as Node | null;
+    if (rootRef.current && next && rootRef.current.contains(next)) return;
+    handleSave();
   };
 
-  const handleDelete = () => {
-    if (
-      !window.confirm(
-        "Are you sure you want to delete this section? This action cannot be undone.",
-      )
-    )
-      return;
-
-    onDeleteSection?.call(null, section.id);
+  const handleKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (e) => {
+    if (sectionEdit) {
+      if (e.ctrlKey && e.key === 's') { e.preventDefault(); handleSave(); }
+      if (e.key === 'Escape') { e.preventDefault(); handleSave(); }
+    } else if (e.key === 'Delete') {
+      e.preventDefault();
+      handleDelete();
+    }
   };
 
   return (
-    <div className="note-section border border-border rounded-md pb-2 pl-2 pr-2 group hover:border-accent transition-colors min-w-0 w-full">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center text-muted-foreground">
-          <Image className="w-3" />
-        </div>
-
-        {/* Hover controls */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          {sectionEdit ? (
-            <Button variant="ghost" size="sm" onClick={() => handleSave()}>
-              <Save className="h-3 w-3" />
-            </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSectionEdit(true)}
-            >
-              <Edit className="h-3 w-3" />
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleDelete()}
-            className="text-destructive hover:text-destructive"
-          >
-            <Trash className="h-3 w-3" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Section Content */}
-      {sectionEdit ? (
-        <div className="space-y-2">
-          {/* Title input removed */}
-        </div>
-      ) : (
-        <>
-          {/* Title display removed */}
-        </>
-      )}
+    <div
+      ref={rootRef}
+      className="note-section border border-border rounded-md p-2 min-w-0 w-full focus:outline-none focus:ring-1 focus:ring-accent"
+      tabIndex={0}
+      onDoubleClick={() => !sectionEdit && setSectionEdit(true)}
+      onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
+    >
+  {/* Removed image icon header for cleaner UI */}
+      {/* Image content (no inline editing UI now) */}
       {section.imageData && (
         <Dialog>
           <DialogTrigger asChild>
-            <div className="cursor-pointer">
+            <div className="cursor-pointer inline-block">
               <img
                 src={section.imageData}
                 alt={section.content}

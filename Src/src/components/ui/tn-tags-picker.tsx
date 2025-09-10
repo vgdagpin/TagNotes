@@ -16,9 +16,11 @@ type TnTagsPickerProps = {
     noteId: string;
     noteTags: string[];
     directoryLoaded: boolean | undefined;
+
+    onTagsUpdated?: (tags: string[]) => void;
 };
 
-const TnTagsPicker = ({ noteId, noteTags, directoryLoaded }: TnTagsPickerProps) => {
+const TnTagsPicker = ({ noteId, noteTags, directoryLoaded, onTagsUpdated }: TnTagsPickerProps) => {
     const [isDirLoaded, setIsDirLoaded] = useState<boolean | undefined>(directoryLoaded);
 
     const [defaultTags, setDefaultTags] = useState<string[]>([]);
@@ -32,6 +34,8 @@ const TnTagsPicker = ({ noteId, noteTags, directoryLoaded }: TnTagsPickerProps) 
         }
 
         setSelectedTags(data.selectedOptions);
+
+        onTagsUpdated?.call(null, data.selectedOptions);
 
         console.log("Option selected:", data.value, data.selectedOptions);
 
@@ -106,17 +110,14 @@ const TnTagsPicker = ({ noteId, noteTags, directoryLoaded }: TnTagsPickerProps) 
                 return;
             }
 
-            // // We're creating a new tag; prevent the default to avoid selecting the option
-            // event.preventDefault();
-            // event.stopPropagation();
-
-            // const isAdded = await createTag(normalized);
 
             setDefaultTags(prev => [...prev, normalized]);
 
             setSelectedTags((curr) =>
                 curr.includes(normalized) ? curr : [...curr, normalized]
             );
+
+            onTagsUpdated?.call(null, selectedTags.includes(normalized) ? selectedTags : [...selectedTags, normalized]);
 
             setInputValue("");
 

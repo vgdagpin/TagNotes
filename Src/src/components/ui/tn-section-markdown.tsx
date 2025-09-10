@@ -1,110 +1,65 @@
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-
-import { Edit, Save, Trash, Hash, } from '@/components/tn-icons'; 
-
 import { Section } from "@shared/models";
-import { useState, useEffect } from "react";
-import Markdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
+import { useState, useCallback, useRef } from "react";
+import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 type TnSectionMarkdownProps = {
   section: Section;
   isNew: boolean;
-
   onSaveSection?: (content: string, language?: string) => void;
   onDeleteSection?: (sectionId: string) => void;
 };
 
-const TnSectionMarkdown = ({
-  section,
-  isNew,
-  onSaveSection,
-  onDeleteSection,
-}: TnSectionMarkdownProps) => {
+const TnSectionMarkdown = ({ section, isNew, onSaveSection, onDeleteSection }: TnSectionMarkdownProps) => {
   const [sectionEdit, setSectionEdit] = useState(isNew);
   const [content, setContent] = useState(section.content);
-  // Title removed
+  const rootRef = useRef<HTMLDivElement | null>(null);
 
-  const handleSave = () => {
-  onSaveSection?.call(null, content, undefined);
+  const handleSave = useCallback(() => {
+    onSaveSection?.call(null, content, undefined);
     setSectionEdit(false);
-  };
+  }, [content]);
 
   const handleDelete = () => {
-    if (
-      !window.confirm(
-        "Are you sure you want to delete this section? This action cannot be undone.",
-      )
-    )
-      return;
-
     onDeleteSection?.call(null, section.id);
   };
 
-  // Add keyboard shortcut for section editing
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === "s" && sectionEdit) {
-        e.preventDefault();
-        handleSave();
-      }
-    };
+  const handleBlur: React.FocusEventHandler<HTMLDivElement> = (e) => {
+    if (!sectionEdit) return;
+    const next = e.relatedTarget as Node | null;
+    if (rootRef.current && next && rootRef.current.contains(next)) return;
+    handleSave();
+  };
 
-    if (sectionEdit) {
-      document.addEventListener("keydown", handleKeyDown);
-      return () => document.removeEventListener("keydown", handleKeyDown);
+  const handleKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (e) => {
+    if (!sectionEdit && e.key === 'Delete') {
+      e.preventDefault();
+      handleDelete();
     }
-  }, [sectionEdit, content]);
+  };
 
   return (
-    <div className="note-section border border-border rounded-md pb-2 pl-2 pr-2 group hover:border-accent transition-colors min-w-0 w-full">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center text-muted-foreground">
-          <Hash className="w-3" />
-        </div>
-
-        {/* Hover controls */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          {sectionEdit ? (
-            <Button variant="ghost" size="sm" onClick={() => handleSave()}>
-              <Save className="h-3 w-3" />
-            </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSectionEdit(true)}
-            >
-              <Edit className="h-3 w-3" />
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleDelete()}
-            className="text-destructive hover:text-destructive"
-          >
-            <Trash className="h-3 w-3" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Section Content */}
+    <div
+      ref={rootRef}
+      className="note-section border border-border rounded-md p-2 transition-colors min-w-0 w-full focus:outline-none focus:ring-1 focus:ring-accent"
+      onDoubleClick={() => !sectionEdit && setSectionEdit(true)}
+      tabIndex={0}
+      onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
+    >
       {sectionEdit ? (
-        <div className="space-y-2">
-          {/* Title input removed */}
-          <Textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder={`Enter ${section.type} content...`}
-            className="min-h-32 resize-vertical"
-            autoFocus={!section.content.trim()}
-          />
-        </div>
+        <Textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder={`Enter ${section.type} content...`}
+          className="min-h-32 resize-vertical"
+          onKeyDown={(e) => { if (e.ctrlKey && e.key === 's') { e.preventDefault(); handleSave(); } }}
+          onKeyDownCapture={(e) => { if (e.key === 'Escape') { e.preventDefault(); handleSave(); } }}
+          autoFocus={!section.content.trim()}
+        />
       ) : (
         <div className="prose max-w-none min-w-0 w-full overflow-hidden">
-          {/* Title display removed */}
           <Markdown remarkPlugins={[remarkGfm]}>{content}</Markdown>
         </div>
       )}

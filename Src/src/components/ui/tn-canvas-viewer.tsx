@@ -17,6 +17,7 @@ interface CanvasViewerProps {
   onPositionChange: (sectionId: string, x: number, y: number) => void;
   onDimensionChange: (sectionId: string, width: number, height: number) => void;
   onTypeChange: (sectionId: string, newType: Section['type']) => void;
+  forwardCanvasRef?: React.RefObject<HTMLDivElement>; // external scroll container ref
 }
 
 const TnCanvasViewer: React.FC<CanvasViewerProps> = ({
@@ -28,6 +29,7 @@ const TnCanvasViewer: React.FC<CanvasViewerProps> = ({
   onPositionChange,
   onDimensionChange,
   // ...removed onTypeChange...
+  forwardCanvasRef,
 }) => {
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const [showCreateMenu, setShowCreateMenu] = useState(false);
@@ -37,7 +39,8 @@ const TnCanvasViewer: React.FC<CanvasViewerProps> = ({
   const [createRect, setCreateRect] = useState<null | { x: number; y: number; width: number; height: number }>(null);
   const dragStartRef = useRef<{ x: number; y: number } | null>(null);
   const pendingRectRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
-  const canvasRef = useRef<HTMLDivElement>(null);
+  const internalCanvasRef = useRef<HTMLDivElement>(null);
+  const canvasRef = forwardCanvasRef || internalCanvasRef;
 
   // Assign default positions to sections without coordinates
   const sectionsWithPositions = note.sections.map((section, index) => ({
@@ -48,10 +51,27 @@ const TnCanvasViewer: React.FC<CanvasViewerProps> = ({
     height: section.height ?? 200,
   }));
 
+  // Compute maximum bottom edge of all sections to extend scrollable area
+  const maxBottom = sectionsWithPositions.reduce((acc, s) => {
+    const bottom = (s.y ?? 0) + (s.height ?? 200);
+    return bottom > acc ? bottom : acc;
+  }, 0);
+  // Compute maximum right edge for horizontal expansion
+  const maxRight = sectionsWithPositions.reduce((acc, s) => {
+    const right = (s.x ?? 0) + (s.width ?? 400);
+    return right > acc ? right : acc;
+  }, 0);
+  // Add generous buffer so resize handles & future drag space are accessible
+  const spacerHeight = Math.max(maxBottom + 600, 1000); // at least 1000px
+  const contentWidth = Math.max(maxRight + 800, 1600); // horizontal free space
+
   // Begin drag-to-create rectangle
   const handleCanvasMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button !== 0) return; // left click only
-    if (e.target !== canvasRef.current) return; // ignore if starting over a section child
+    const target = e.target as HTMLElement;
+    // Ignore if clicking inside an existing section or its controls
+    // Also ignore clicks inside the creation menu so choosing a type doesn't start a new rectangle
+    if (target.closest('.note-section') || target.closest('.drag-handle') || target.classList.contains('resize-handle') || target.closest('.create-menu')) return;
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
     const x = e.clientX - rect.left;
@@ -65,10 +85,25 @@ const TnCanvasViewer: React.FC<CanvasViewerProps> = ({
 
   const handleCanvasMouseMove = useCallback((e: React.MouseEvent) => {
     if (!isCreating || !dragStartRef.current) return;
-    const rect = canvasRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const scrollEl = canvasRef.current;
+    if (!scrollEl) return;
+    let rect = scrollEl.getBoundingClientRect();
+
+    // Auto-pan when near edges while creating
+    const edge = 40; // px threshold
+    let panX = 0;
+    let panY = 0;
+    if (e.clientX > rect.right - edge) panX = 40;
+    else if (e.clientX < rect.left + edge) panX = -40;
+    if (e.clientY > rect.bottom - edge) panY = 40;
+    else if (e.clientY < rect.top + edge) panY = -40;
+    if (panX !== 0 || panY !== 0) {
+      scrollEl.scrollBy({ left: panX, top: panY });
+      // After scrolling, recalc rect for accurate position
+      rect = scrollEl.getBoundingClientRect();
+    }
+    const x = e.clientX - rect.left + scrollEl.scrollLeft;
+    const y = e.clientY - rect.top + scrollEl.scrollTop;
     const start = dragStartRef.current;
     const left = Math.min(start.x, x);
     const top = Math.min(start.y, y);
@@ -225,25 +260,30 @@ const TnCanvasViewer: React.FC<CanvasViewerProps> = ({
         onMouseUp={handleCanvasMouseUp}
         onMouseLeave={handleCanvasMouseLeave}
       >
-        {/* Creation rectangle overlay */}
-        {isCreating && createRect && (
-          <div
-            className="absolute border-2 border-blue-500/70 bg-blue-500/10 pointer-events-none"
-            style={{
-              left: createRect.x,
-              top: createRect.y,
-              width: createRect.width,
-              height: createRect.height,
-            }}
-          />
-        )}
-        {/* Render all sections */}
-        {sectionsWithPositions.map(renderSection)}
+        <div
+          className="relative"
+          style={{ width: contentWidth, height: spacerHeight }}
+        >
+          {/* Creation rectangle overlay */}
+          {isCreating && createRect && (
+            <div
+              className="absolute border-2 border-blue-500/70 bg-blue-500/10 pointer-events-none"
+              style={{
+                left: createRect.x,
+                top: createRect.y,
+                width: createRect.width,
+                height: createRect.height,
+              }}
+            />
+          )}
+          {/* Render all sections */}
+          {sectionsWithPositions.map(renderSection)}
+        </div>
 
         {/* Create menu */}
   {showCreateMenu && (
           <div
-            className="absolute z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-2"
+            className="absolute z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-2 create-menu"
             style={{
               left: `${createMenuPosition.x}px`,
               top: `${createMenuPosition.y}px`,

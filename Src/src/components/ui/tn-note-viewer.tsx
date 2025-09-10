@@ -7,6 +7,8 @@ import { Edit } from '@/components/tn-icons';
 
 import { Note, Section } from "@shared/models";
 import TnCanvasViewer from "./tn-canvas-viewer";
+import TnCanvasMinimap from "./tn-canvas-minimap";
+import { useRef } from 'react';
 
 import "./tn-note-viewer.css";
 import TnTagsPicker from "./tn-tags-picker";
@@ -21,12 +23,13 @@ type TnNoteViewerProps = {
 
 const TnNoteViewer = ({ note, directoryLoaded, onTitleUpdated }: TnNoteViewerProps) => {
   const [isDirLoaded, setIsDirLoaded] = useState<boolean | undefined>(undefined);
-  const [noteTags] = useState<string[]>(note.tags);
+  const [noteTags, setNoteTags] = useState<string[]>(note.tags);
   const [newSectionId, setNewSectionId] = useState<string | null>(null);
 
   const tagNotesContext = useTagNotesContext();
 
   const [selectedNote, setSelectedNote] = useState<Note>(note);
+  const canvasRef = useRef<HTMLDivElement>(null);
   const [editingTitle, setEditingTitle] = useState(false);
 
   useEffect(() => {
@@ -38,6 +41,10 @@ const TnNoteViewer = ({ note, directoryLoaded, onTitleUpdated }: TnNoteViewerPro
 
     checkIfHasSelectedDir();
   }, [tagNotesContext]);
+
+  useEffect(() => {
+    setNoteTags(note.tags);
+  }, [note.tags]);
 
   useEffect(() => {
     setSelectedNote(note);
@@ -91,9 +98,9 @@ const TnNoteViewer = ({ note, directoryLoaded, onTitleUpdated }: TnNoteViewerPro
 
   const saveTitle = async () => {
     if (!isDirLoaded) return;
-    const newTitle = note.title;
+    const newTitle = selectedNote.title;
 
-    await tagNotesContext.updateTitle(note.id, newTitle);
+    await tagNotesContext.updateTitle(selectedNote.id, newTitle);
 
     setSelectedNote((prev) => ({
       ...prev,
@@ -101,7 +108,7 @@ const TnNoteViewer = ({ note, directoryLoaded, onTitleUpdated }: TnNoteViewerPro
       updatedAt: new Date(),
     }));
 
-    onTitleUpdated?.(note.id, newTitle);
+    onTitleUpdated?.(selectedNote.id, newTitle);
 
     setEditingTitle(false);
   };
@@ -230,6 +237,13 @@ const TnNoteViewer = ({ note, directoryLoaded, onTitleUpdated }: TnNoteViewerPro
     setNewSectionId(null);
   };
 
+  const handleTagsUpdated = (tags: string[]) => {
+    setSelectedNote((prev) => ({
+      ...prev,
+      tags,
+    }));
+  };
+
   return (
     <div
       key={selectedNote.id}
@@ -238,14 +252,14 @@ const TnNoteViewer = ({ note, directoryLoaded, onTitleUpdated }: TnNoteViewerPro
     >
       <div className="note-viewer-container">
         {/* Note Header */}
-        <div className="p-4 border-b border-border bg-card group">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
+        <div className="p-4 border-b border-border bg-card group relative">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
               {/* Editable Title */}
               <div className="flex items-center gap-2 mb-1">
                 {editingTitle ? (
                   <Input
-                    value={note.title}
+                    value={selectedNote.title}
                     onChange={(e) => handleSetTitle(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
@@ -269,7 +283,7 @@ const TnNoteViewer = ({ note, directoryLoaded, onTitleUpdated }: TnNoteViewerPro
                       onClick={() => setEditingTitle(true)}
                       title="Click to edit title"
                     >
-                      {note.title}
+                      {selectedNote.title}
                     </h2>
                     <Button
                       variant="ghost"
@@ -283,17 +297,26 @@ const TnNoteViewer = ({ note, directoryLoaded, onTitleUpdated }: TnNoteViewerPro
                 )}
               </div>
               <p className="text-sm text-muted-foreground mb-3">
-                Updated {formatDate(note.updatedAt)}
+                Updated {formatDate(selectedNote.updatedAt)}
               </p>
 
-              <TnTagsPicker noteId={note.id} noteTags={noteTags} directoryLoaded={isDirLoaded} />
+              <TnTagsPicker noteId={selectedNote.id} noteTags={noteTags} directoryLoaded={isDirLoaded} onTagsUpdated={handleTagsUpdated} />
 
+            </div>
+            {/* Minimap container (outside canvas, near title bar) */}
+            <div className="pt-1 hidden md:block">
+              <TnCanvasMinimap
+                sections={selectedNote.sections}
+                canvasRef={canvasRef}
+                width={220}
+                height={150}
+              />
             </div>
           </div>
         </div>
 
-        {/* Canvas Viewer */}
-        <div className="flex-1 min-w-0 w-full">
+        {/* Canvas Viewer with overlay minimap */}
+        <div className="flex-1 min-w-0 w-full relative">
           <TnCanvasViewer
             note={selectedNote}
             newSectionId={newSectionId}
@@ -303,6 +326,7 @@ const TnNoteViewer = ({ note, directoryLoaded, onTitleUpdated }: TnNoteViewerPro
             onPositionChange={handlePositionChange}
             onDimensionChange={handleDimensionChange}
             onTypeChange={handleTypeChange}
+            forwardCanvasRef={canvasRef}
           />
         </div>
       </div>
