@@ -1,7 +1,7 @@
 import { set, get } from 'idb-keyval';
 import { v4 as uuid } from 'uuid';
-import { ITagNotesService } from "@/shared/ITagNotesService";
-import { Note, NoteSummary, Section } from "@/shared/models";
+import { ITagNotesService } from '@/shared/ITagNotesService';
+import { Note, NoteSummary, Section } from '@/shared/models';
 
 const DIR_HANDLE_KEY = 'tagnotes.dirHandle';
 const INDEX_FILE = 'index.json';
@@ -18,11 +18,15 @@ export class TagNotesService implements ITagNotesService {
 		if (!(window as any).showDirectoryPicker) {
 			throw new Error('File System Access API not supported in this browser.');
 		}
-		const handle = await (window as any).showDirectoryPicker({ mode: 'readwrite' });
+		const handle = await (window as any).showDirectoryPicker({
+			mode: 'readwrite',
+		});
 		const granted = await this.verifyPermission(handle, true, true);
 		if (!granted) throw new Error('Permission denied for selected directory.');
 		await set(DIR_HANDLE_KEY, handle);
-		try { await this.ensurePersistentStorage(); } catch { }
+		try {
+			await this.ensurePersistentStorage();
+		} catch {}
 		return handle;
 	}
 
@@ -55,7 +59,7 @@ export class TagNotesService implements ITagNotesService {
 				if (persisted) return true;
 				return await (navigator.storage as any).persist();
 			}
-		} catch { }
+		} catch {}
 		return false;
 	}
 
@@ -70,8 +74,10 @@ export class TagNotesService implements ITagNotesService {
 		await this.refreshIndex();
 		const name = (this.dirHandle as any)?.name || '';
 		try {
-			window.dispatchEvent(new CustomEvent('tagnotes:directoryChanged', { detail: { name } }));
-		} catch { }
+			window.dispatchEvent(
+				new CustomEvent('tagnotes:directoryChanged', { detail: { name } }),
+			);
+		} catch {}
 		return name;
 	}
 
@@ -87,11 +93,15 @@ export class TagNotesService implements ITagNotesService {
 
 	async addTag(noteId: string, tag: string): Promise<void> {
 		tag = tag.trim().toLowerCase();
-		await this.update(noteId, n => { if (!n.tags.includes(tag)) n.tags.push(tag); });
+		await this.update(noteId, (n) => {
+			if (!n.tags.includes(tag)) n.tags.push(tag);
+		});
 	}
 
 	async removeTag(noteId: string, tag: string): Promise<void> {
-		await this.update(noteId, n => { n.tags = n.tags.filter(t => t !== tag); });
+		await this.update(noteId, (n) => {
+			n.tags = n.tags.filter((t) => t !== tag);
+		});
 	}
 
 	private async loadTags(handle: FileSystemDirectoryHandle): Promise<string[]> {
@@ -99,7 +109,10 @@ export class TagNotesService implements ITagNotesService {
 			const fh = await handle.getFileHandle(TAGS_FILE, { create: true });
 			const txt = await this.readFileTextSafe(fh);
 			if (!txt) return [];
-			const lines = txt.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+			const lines = txt
+				.split(/\r?\n/)
+				.map((s) => s.trim())
+				.filter(Boolean);
 			const seen = new Set<string>();
 			const out: string[] = [];
 			for (const line of lines) {
@@ -109,7 +122,9 @@ export class TagNotesService implements ITagNotesService {
 				out.push(low);
 			}
 			return out;
-		} catch { return []; }
+		} catch {
+			return [];
+		}
 	}
 
 	// --- Note logic ---
@@ -122,12 +137,26 @@ export class TagNotesService implements ITagNotesService {
 			sections: initial?.sections || [],
 			tags: initial?.tags || [],
 			createdAt: new Date(),
-			updatedAt: new Date()
+			updatedAt: new Date(),
 		};
 		const location = await this.writeNoteFile(this.dirHandle, this.serialize(newNote));
 		newNote.location = location;
-		await this.upsertIndexEntry(this.dirHandle, { id: newNote.id, title: newNote.title, createdAt: newNote.createdAt, updatedAt: newNote.updatedAt, location, tags: newNote.tags } as any);
-		this.loadedIndex.unshift({ id: newNote.id, title: newNote.title, createdAt: newNote.createdAt, updatedAt: newNote.updatedAt, tags: newNote.tags, location });
+		await this.upsertIndexEntry(this.dirHandle, {
+			id: newNote.id,
+			title: newNote.title,
+			createdAt: newNote.createdAt,
+			updatedAt: newNote.updatedAt,
+			location,
+			tags: newNote.tags,
+		} as any);
+		this.loadedIndex.unshift({
+			id: newNote.id,
+			title: newNote.title,
+			createdAt: newNote.createdAt,
+			updatedAt: newNote.updatedAt,
+			tags: newNote.tags,
+			location,
+		});
 		this.indexLoaded = true;
 		return newNote;
 	}
@@ -139,9 +168,18 @@ export class TagNotesService implements ITagNotesService {
 		let list = this.loadedIndex;
 		if (search && search.trim()) {
 			const q = search.toLowerCase();
-			list = list.filter(n => n.title.toLowerCase().includes(q) || n.tags.some(t => t.includes(q)));
+			list = list.filter(
+				(n) => n.title.toLowerCase().includes(q) || n.tags.some((t) => t.includes(q)),
+			);
 		}
-		return list.map(n => ({ id: n.id, title: n.title, createdAt: n.createdAt, updatedAt: n.updatedAt, location: n.location, tags: n.tags }));
+		return list.map((n) => ({
+			id: n.id,
+			title: n.title,
+			createdAt: n.createdAt,
+			updatedAt: n.updatedAt,
+			location: n.location,
+			tags: n.tags,
+		}));
 	}
 
 	async getNote(noteId: string): Promise<Note> {
@@ -152,23 +190,37 @@ export class TagNotesService implements ITagNotesService {
 		return note;
 	}
 
-async addSection(noteId: string, sectionType: Section['type'], width: number, height: number, x: number, y: number): Promise<Section> {
-	const newSection: Section = {
-		id: uuid(),
-		type: sectionType,
-		content: '',
-		createdAt: new Date(),
-		language: sectionType === 'code' ? 'javascript' : null,
-		width,
-		height,
-		x,
-		y,
-	};
-	await this.update(noteId, n => n.sections.push(newSection));
-	return newSection;
-}
+	async addSection(
+		noteId: string,
+		sectionType: Section['type'],
+		width: number,
+		height: number,
+		x: number,
+		y: number,
+	): Promise<Section> {
+		const newSection: Section = {
+			id: uuid(),
+			type: sectionType,
+			content: '',
+			createdAt: new Date(),
+			language: sectionType === 'code' ? 'javascript' : null,
+			width,
+			height,
+			x,
+			y,
+		};
+		await this.update(noteId, (n) => n.sections.push(newSection));
+		return newSection;
+	}
 
-	async addImageSection(noteId: string, imageData: string, width: number, height: number, x: number, y: number): Promise<Section> {
+	async addImageSection(
+		noteId: string,
+		imageData: string,
+		width: number,
+		height: number,
+		x: number,
+		y: number,
+	): Promise<Section> {
 		const newImgSection: Section = {
 			id: uuid(),
 			type: 'image',
@@ -180,13 +232,18 @@ async addSection(noteId: string, sectionType: Section['type'], width: number, he
 			x,
 			y,
 		};
-		await this.update(noteId, n => n.sections.push(newImgSection));
+		await this.update(noteId, (n) => n.sections.push(newImgSection));
 		return newImgSection;
 	}
 
-	async updateSectionContent(noteId: string, sectionId: string, content: string, language?: string | null | undefined): Promise<void> {
-		await this.update(noteId, n => {
-			const s = n.sections.find(s => s.id === sectionId);
+	async updateSectionContent(
+		noteId: string,
+		sectionId: string,
+		content: string,
+		language?: string | null | undefined,
+	): Promise<void> {
+		await this.update(noteId, (n) => {
+			const s = n.sections.find((s) => s.id === sectionId);
 			if (s) {
 				s.content = content;
 				if (language) {
@@ -198,11 +255,16 @@ async addSection(noteId: string, sectionType: Section['type'], width: number, he
 		});
 	}
 
-// Title update removed (titles deprecated)
+	// Title update removed (titles deprecated)
 
-	async updateSectionPosition(noteId: string, sectionId: string, x: number, y: number): Promise<void> {
-		await this.update(noteId, n => {
-			const s = n.sections.find(s => s.id === sectionId);
+	async updateSectionPosition(
+		noteId: string,
+		sectionId: string,
+		x: number,
+		y: number,
+	): Promise<void> {
+		await this.update(noteId, (n) => {
+			const s = n.sections.find((s) => s.id === sectionId);
 			if (s) {
 				s.x = x;
 				s.y = y;
@@ -210,9 +272,14 @@ async addSection(noteId: string, sectionType: Section['type'], width: number, he
 		});
 	}
 
-	async updateSectionDimensions(noteId: string, sectionId: string, width: number, height: number): Promise<void> {
-		await this.update(noteId, n => {
-			const s = n.sections.find(s => s.id === sectionId);
+	async updateSectionDimensions(
+		noteId: string,
+		sectionId: string,
+		width: number,
+		height: number,
+	): Promise<void> {
+		await this.update(noteId, (n) => {
+			const s = n.sections.find((s) => s.id === sectionId);
 			if (s) {
 				s.width = width;
 				s.height = height;
@@ -220,9 +287,13 @@ async addSection(noteId: string, sectionType: Section['type'], width: number, he
 		});
 	}
 
-	async convertSectionType(noteId: string, sectionId: string, newType: Section['type']): Promise<void> {
-		await this.update(noteId, n => {
-			const s = n.sections.find(s => s.id === sectionId);
+	async convertSectionType(
+		noteId: string,
+		sectionId: string,
+		newType: Section['type'],
+	): Promise<void> {
+		await this.update(noteId, (n) => {
+			const s = n.sections.find((s) => s.id === sectionId);
 			if (s) {
 				s.type = newType;
 				// Reset language for non-code sections
@@ -239,9 +310,11 @@ async addSection(noteId: string, sectionType: Section['type'], width: number, he
 		await this.ensureHandleLoaded();
 		if (!this.dirHandle) throw new Error('Local directory not selected');
 		if (!this.indexLoaded) await this.refreshIndex();
-		const entry = this.loadedIndex.find(n => n.id === noteId);
+		const entry = this.loadedIndex.find((n) => n.id === noteId);
 		if (!entry) {
-			this.update(noteId, n => { n.title = title; });
+			this.update(noteId, (n) => {
+				n.title = title;
+			});
 			return;
 		}
 		entry.title = title;
@@ -255,19 +328,28 @@ async addSection(noteId: string, sectionType: Section['type'], width: number, he
 			await this.writeNoteFile(this.dirHandle, this.serialize(full));
 		}
 		if (entry.location) {
-			await this.upsertIndexEntry(this.dirHandle, { id: full.id, title: full.title, createdAt: full.createdAt, updatedAt: full.updatedAt, location: entry.location, tags: full.tags } as any);
+			await this.upsertIndexEntry(this.dirHandle, {
+				id: full.id,
+				title: full.title,
+				createdAt: full.createdAt,
+				updatedAt: full.updatedAt,
+				location: entry.location,
+				tags: full.tags,
+			} as any);
 		}
 	}
 
 	async deleteSection(noteId: string, sectionId: string): Promise<void> {
-		await this.update(noteId, n => { n.sections = n.sections.filter(s => s.id !== sectionId); });
+		await this.update(noteId, (n) => {
+			n.sections = n.sections.filter((s) => s.id !== sectionId);
+		});
 	}
 
 	async deleteNote(noteId: string): Promise<void> {
 		await this.ensureHandleLoaded();
 		if (!this.dirHandle) throw new Error('Local directory not selected');
 		await this.deleteNoteFile(this.dirHandle, noteId);
-		this.loadedIndex = this.loadedIndex.filter(n => n.id !== noteId);
+		this.loadedIndex = this.loadedIndex.filter((n) => n.id !== noteId);
 		await this.removeIndexEntry(this.dirHandle, noteId);
 	}
 
@@ -291,7 +373,7 @@ async addSection(noteId: string, sectionType: Section['type'], width: number, he
 			createdAt: n.createdAt,
 			sections: [],
 			tags: n.tags || [],
-			location: n.location
+			location: n.location,
 		}));
 		this.indexLoaded = true;
 	}
@@ -299,19 +381,27 @@ async addSection(noteId: string, sectionType: Section['type'], width: number, he
 	private async readNote(id: string): Promise<Note | null> {
 		if (!this.dirHandle) return null;
 		if (!this.indexLoaded) await this.refreshIndex();
-		const meta = this.loadedIndex.find(n => n.id === id);
+		const meta = this.loadedIndex.find((n) => n.id === id);
 		if (!meta || !meta.location) return null;
 		const parts = meta.location.split('/');
 		if (parts.length !== 3) return null;
 		try {
 			const [rootName, dateFolder, fileName] = parts as [string, string, string];
-			const notesRoot = await this.dirHandle.getDirectoryHandle(rootName, { create: false });
-			const dateDir = await notesRoot.getDirectoryHandle(dateFolder, { create: false });
-			const fileHandle = await dateDir.getFileHandle(fileName, { create: false });
+			const notesRoot = await this.dirHandle.getDirectoryHandle(rootName, {
+				create: false,
+			});
+			const dateDir = await notesRoot.getDirectoryHandle(dateFolder, {
+				create: false,
+			});
+			const fileHandle = await dateDir.getFileHandle(fileName, {
+				create: false,
+			});
 			const file = await fileHandle.getFile();
 			const text = await file.text();
 			return this.hydrate(JSON.parse(text));
-		} catch { return null; }
+		} catch {
+			return null;
+		}
 	}
 
 	private hydrate(raw: any): Note {
@@ -319,7 +409,10 @@ async addSection(noteId: string, sectionType: Section['type'], width: number, he
 			...raw,
 			createdAt: new Date(raw.createdAt),
 			updatedAt: new Date(raw.updatedAt),
-			sections: (raw.sections || []).map((s: any) => ({ ...s, createdAt: new Date(s.createdAt) }))
+			sections: (raw.sections || []).map((s: any) => ({
+				...s,
+				createdAt: new Date(s.createdAt),
+			})),
 		};
 	}
 
@@ -328,7 +421,10 @@ async addSection(noteId: string, sectionType: Section['type'], width: number, he
 			...note,
 			createdAt: note.createdAt.toISOString(),
 			updatedAt: note.updatedAt.toISOString(),
-			sections: note.sections.map(s => ({ ...s, createdAt: s.createdAt.toISOString() }))
+			sections: note.sections.map((s) => ({
+				...s,
+				createdAt: s.createdAt.toISOString(),
+			})),
 		};
 	}
 
@@ -337,7 +433,7 @@ async addSection(noteId: string, sectionType: Section['type'], width: number, he
 		mutator(note);
 		note.updatedAt = new Date();
 		if (!this.dirHandle) throw new Error('Local directory not selected');
-		const idx = this.loadedIndex.find(i => i.id === note.id);
+		const idx = this.loadedIndex.find((i) => i.id === note.id);
 		const loc = idx?.location;
 		if (loc) {
 			await this.writeNoteFileAtPath(this.dirHandle, loc, this.serialize(note));
@@ -350,7 +446,14 @@ async addSection(noteId: string, sectionType: Section['type'], width: number, he
 			idx.tags = note.tags;
 		}
 		if (loc) {
-			await this.upsertIndexEntry(this.dirHandle, { id: note.id, title: note.title, createdAt: note.createdAt, updatedAt: note.updatedAt, location: loc, tags: note.tags } as any);
+			await this.upsertIndexEntry(this.dirHandle, {
+				id: note.id,
+				title: note.title,
+				createdAt: note.createdAt,
+				updatedAt: note.updatedAt,
+				location: loc,
+				tags: note.tags,
+			} as any);
 		} else {
 			await this.refreshIndex();
 		}
@@ -358,12 +461,19 @@ async addSection(noteId: string, sectionType: Section['type'], width: number, he
 	}
 
 	private async readFileTextSafe(fileHandle: FileSystemFileHandle): Promise<string | null> {
-		try { const f = await fileHandle.getFile(); return await f.text(); } catch { return null; }
+		try {
+			const f = await fileHandle.getFile();
+			return await f.text();
+		} catch {
+			return null;
+		}
 	}
 
 	private async writeNoteFile(handle: FileSystemDirectoryHandle, note: any): Promise<string> {
 		const notesDir = await this.ensureNotesDir(handle);
-		const fileHandle = await notesDir.getFileHandle(`${note.id}.json`, { create: true });
+		const fileHandle = await notesDir.getFileHandle(`${note.id}.json`, {
+			create: true,
+		});
 		const stream = await fileHandle.createWritable();
 		await stream.write(JSON.stringify(note, null, 2));
 		await stream.close();
@@ -371,7 +481,11 @@ async addSection(noteId: string, sectionType: Section['type'], width: number, he
 		return `${NOTES_DIR}/${folderName}/${note.id}.json`;
 	}
 
-	private async writeNoteFileAtPath(handle: FileSystemDirectoryHandle, path: string, note: any): Promise<string> {
+	private async writeNoteFileAtPath(
+		handle: FileSystemDirectoryHandle,
+		path: string,
+		note: any,
+	): Promise<string> {
 		if (!path.startsWith(`${NOTES_DIR}/`)) {
 			return this.writeNoteFile(handle, note);
 		}
@@ -381,7 +495,9 @@ async addSection(noteId: string, sectionType: Section['type'], width: number, he
 			const dateFolder = dateFolderRaw!;
 			const fileName = fileNameRaw!;
 			const root = await handle.getDirectoryHandle(NOTES_DIR, { create: true });
-			const dateDir = await root.getDirectoryHandle(dateFolder, { create: true });
+			const dateDir = await root.getDirectoryHandle(dateFolder, {
+				create: true,
+			});
 			const fh = await dateDir.getFileHandle(fileName, { create: true });
 			const ws = await fh.createWritable();
 			await ws.write(JSON.stringify(note, null, 2));
@@ -400,9 +516,13 @@ async addSection(noteId: string, sectionType: Section['type'], width: number, he
 		return this.writeNoteFile(handle, note);
 	}
 
-	private async ensureNotesDir(handle: FileSystemDirectoryHandle): Promise<FileSystemDirectoryHandle> {
+	private async ensureNotesDir(
+		handle: FileSystemDirectoryHandle,
+	): Promise<FileSystemDirectoryHandle> {
 		const root = await handle.getDirectoryHandle(NOTES_DIR, { create: true });
-		const dated = await root.getDirectoryHandle(this.formatDateFolder(new Date()), { create: true });
+		const dated = await root.getDirectoryHandle(this.formatDateFolder(new Date()), {
+			create: true,
+		});
 		return dated;
 	}
 
@@ -416,7 +536,8 @@ async addSection(noteId: string, sectionType: Section['type'], width: number, he
 	private async upsertIndexEntry(handle: FileSystemDirectoryHandle, entry: any) {
 		const idx = await this.loadIndex(handle);
 		const i = idx.findIndex((e: any) => e.id === entry.id);
-		if (i >= 0) idx[i] = entry; else idx.push(entry);
+		if (i >= 0) idx[i] = entry;
+		else idx.push(entry);
 		await this.writeIndex(handle, idx);
 	}
 
@@ -451,13 +572,19 @@ async addSection(noteId: string, sectionType: Section['type'], width: number, he
 							entries.push({
 								id: parsed.id,
 								title: parsed.title,
-								createdAt: parsed.createdAt || parsed.updatedAt || new Date().toISOString(),
-								updatedAt: parsed.updatedAt || parsed.createdAt || new Date().toISOString(),
+								createdAt:
+									parsed.createdAt ||
+									parsed.updatedAt ||
+									new Date().toISOString(),
+								updatedAt:
+									parsed.updatedAt ||
+									parsed.createdAt ||
+									new Date().toISOString(),
 								location,
-								tags: parsed.tags || []
+								tags: parsed.tags || [],
 							});
 						}
-					} catch { }
+					} catch {}
 				} else if (entry.kind === 'directory') {
 					for await (const fileEntry of entry.values()) {
 						if (fileEntry.kind === 'file' && fileEntry.name.endsWith('.json')) {
@@ -470,13 +597,19 @@ async addSection(noteId: string, sectionType: Section['type'], width: number, he
 									entries.push({
 										id: parsed.id,
 										title: parsed.title,
-										createdAt: parsed.createdAt || parsed.updatedAt || new Date().toISOString(),
-										updatedAt: parsed.updatedAt || parsed.createdAt || new Date().toISOString(),
+										createdAt:
+											parsed.createdAt ||
+											parsed.updatedAt ||
+											new Date().toISOString(),
+										updatedAt:
+											parsed.updatedAt ||
+											parsed.createdAt ||
+											new Date().toISOString(),
 										location,
-										tags: parsed.tags || []
+										tags: parsed.tags || [],
 									});
 								}
-							} catch { }
+							} catch {}
 						}
 					}
 				}
@@ -501,13 +634,21 @@ async addSection(noteId: string, sectionType: Section['type'], width: number, he
 					createdAt: n.createdAt,
 					updatedAt: n.updatedAt,
 					location: n.location || n.path,
-					tags: n.tags || []
+					tags: n.tags || [],
 				}));
-		} catch { return null; }
+		} catch {
+			return null;
+		}
 	}
 
-	private async getNotesDirIfExists(handle: FileSystemDirectoryHandle): Promise<FileSystemDirectoryHandle | null> {
-		try { return await handle.getDirectoryHandle(NOTES_DIR, { create: false }); } catch { return null; }
+	private async getNotesDirIfExists(
+		handle: FileSystemDirectoryHandle,
+	): Promise<FileSystemDirectoryHandle | null> {
+		try {
+			return await handle.getDirectoryHandle(NOTES_DIR, { create: false });
+		} catch {
+			return null;
+		}
 	}
 
 	private async readAllNoteFiles(handle: FileSystemDirectoryHandle): Promise<NoteSummary[]> {
@@ -518,26 +659,30 @@ async addSection(noteId: string, sectionType: Section['type'], width: number, he
 			createdAt: new Date(createdAt as any),
 			updatedAt: new Date(updatedAt as any),
 			location,
-			tags: tags || []
+			tags: tags || [],
 		}));
 	}
 
 	private async deleteNoteFile(handle: FileSystemDirectoryHandle, noteId: string) {
 		try {
-			const root = await handle.getDirectoryHandle(NOTES_DIR, { create: false });
+			const root = await handle.getDirectoryHandle(NOTES_DIR, {
+				create: false,
+			});
 			for await (const entry of (root as any).values()) {
 				if (entry.kind === 'directory') {
 					try {
-						const dir = await root.getDirectoryHandle(entry.name, { create: false });
+						const dir = await root.getDirectoryHandle(entry.name, {
+							create: false,
+						});
 						await dir.removeEntry(`${noteId}.json`);
 						break;
-					} catch { }
+					} catch {}
 				} else if (entry.kind === 'file' && entry.name === `${noteId}.json`) {
 					await root.removeEntry(entry.name);
 					break;
 				}
 			}
-		} catch { }
+		} catch {}
 	}
 }
 

@@ -1,5 +1,5 @@
-import { ITagNotesService } from "@/shared/ITagNotesService";
-import { Note, NoteSummary, Section } from "@/shared/models";
+import { ITagNotesService } from '@/shared/ITagNotesService';
+import { Note, NoteSummary, Section } from '@/shared/models';
 import { set, get } from 'idb-keyval';
 import { v4 as uuid } from 'uuid';
 
@@ -9,18 +9,17 @@ const DIR_HANDLE_KEY = 'tagnotes:electron.dirHandle';
 
 // Electron-specific service that delegates to exposed preload APIs if available.
 export class ElectronTagNotesService implements ITagNotesService {
-
-    private api: any;
-    constructor(api: any) {
-        this.api = api;
-    }
+	private api: any;
+	constructor(api: any) {
+		this.api = api;
+	}
 	async getDefaultTags(): Promise<string[]> {
 		const dirPath = await get(DIR_HANDLE_KEY);
 
 		return await this.api?.getDefaultTags(dirPath);
 	}
 
-    async hasSelectedDirectory(): Promise<boolean> {
+	async hasSelectedDirectory(): Promise<boolean> {
 		const isValidDir = this.api?.isValidDirectory;
 
 		if (isValidDir === undefined) {
@@ -29,16 +28,16 @@ export class ElectronTagNotesService implements ITagNotesService {
 
 		const dirPath = await get(DIR_HANDLE_KEY);
 
-        const isValid:boolean = await isValidDir(dirPath);
+		const isValid: boolean = await isValidDir(dirPath);
 
 		return isValid;
-    }
+	}
 
-    async getDirectoryName(): Promise<string | null> {
-        const dirPath = await get(DIR_HANDLE_KEY);
+	async getDirectoryName(): Promise<string | null> {
+		const dirPath = await get(DIR_HANDLE_KEY);
 
-        return dirPath;
-    }
+		return dirPath;
+	}
 
 	async browseDirectory(): Promise<string> {
 		const setDirHandle = this.api?.browseDirectory;
@@ -54,14 +53,14 @@ export class ElectronTagNotesService implements ITagNotesService {
 		return result;
 	}
 
-    async createNote(initial?: Partial<Note>): Promise<Note> {
-        const newNote: Note = {
+	async createNote(initial?: Partial<Note>): Promise<Note> {
+		const newNote: Note = {
 			id: initial?.id || uuid(),
 			title: initial?.title || 'New Note',
 			sections: initial?.sections || [],
 			tags: initial?.tags || [],
 			createdAt: new Date(),
-			updatedAt: new Date()
+			updatedAt: new Date(),
 		};
 
 		const dirPath = await get(DIR_HANDLE_KEY);
@@ -69,7 +68,7 @@ export class ElectronTagNotesService implements ITagNotesService {
 		await this.api?.createNote(dirPath, newNote);
 
 		return newNote;
-    }
+	}
 
 	async getNote(noteId: string): Promise<Note> {
 		const dirPath = await get(DIR_HANDLE_KEY);
@@ -83,15 +82,34 @@ export class ElectronTagNotesService implements ITagNotesService {
 		return notes || [];
 	}
 
-	async addSection(noteId: string, sectionType: Section["type"], width: number, height: number, x: number, y: number): Promise<Section> {
+	async addSection(
+		noteId: string,
+		sectionType: Section['type'],
+		width: number,
+		height: number,
+		x: number,
+		y: number,
+	): Promise<Section> {
 		const dirPath = await get(DIR_HANDLE_KEY);
 		return await this.api?.addSection(dirPath, noteId, sectionType, width, height, x, y);
 	}
-	async addImageSection(noteId: string, imageData: string, width: number, height: number, x: number, y: number): Promise<Section> {
+	async addImageSection(
+		noteId: string,
+		imageData: string,
+		width: number,
+		height: number,
+		x: number,
+		y: number,
+	): Promise<Section> {
 		const dirPath = await get(DIR_HANDLE_KEY);
 		return await this.api?.addImageSection(dirPath, noteId, imageData, width, height, x, y);
 	}
-	async updateSectionContent(noteId: string, sectionId: string, content: string, language?: string | null | undefined): Promise<void> {
+	async updateSectionContent(
+		noteId: string,
+		sectionId: string,
+		content: string,
+		language?: string | null | undefined,
+	): Promise<void> {
 		const dirPath = await get(DIR_HANDLE_KEY);
 		await this.api?.updateSectionContent(dirPath, noteId, sectionId, content, language);
 	}
@@ -101,17 +119,31 @@ export class ElectronTagNotesService implements ITagNotesService {
 		await this.api?.updateSectionTitle(dirPath, noteId, sectionId, title);
 	}
 
-	async updateSectionPosition(noteId: string, sectionId: string, x: number, y: number): Promise<void> {
+	async updateSectionPosition(
+		noteId: string,
+		sectionId: string,
+		x: number,
+		y: number,
+	): Promise<void> {
 		const dirPath = await get(DIR_HANDLE_KEY);
 		await this.api?.updateSectionPosition(dirPath, noteId, sectionId, x, y);
 	}
 
-	async updateSectionDimensions(noteId: string, sectionId: string, width: number, height: number): Promise<void> {
+	async updateSectionDimensions(
+		noteId: string,
+		sectionId: string,
+		width: number,
+		height: number,
+	): Promise<void> {
 		const dirPath = await get(DIR_HANDLE_KEY);
 		await this.api?.updateSectionDimensions(dirPath, noteId, sectionId, width, height);
 	}
 
-	async convertSectionType(noteId: string, sectionId: string, newType: Section['type']): Promise<void> {
+	async convertSectionType(
+		noteId: string,
+		sectionId: string,
+		newType: Section['type'],
+	): Promise<void> {
 		const dirPath = await get(DIR_HANDLE_KEY);
 		await this.api?.convertSectionType(dirPath, noteId, sectionId, newType);
 	}
@@ -136,14 +168,13 @@ export class ElectronTagNotesService implements ITagNotesService {
 		await this.api?.removeTag(dirPath, noteId, tag);
 	}
 
-
 	async verifyPermission(handle: any, requestWrite: boolean, promptIfNeeded: boolean) {
 		if (!handle) {
 			return false;
 		}
 
 		const opts: any = {
-			mode: requestWrite ? 'readwrite' : 'read'
+			mode: requestWrite ? 'readwrite' : 'read',
 		};
 
 		const current = await handle.queryPermission(opts);

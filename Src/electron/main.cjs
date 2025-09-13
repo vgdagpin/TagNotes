@@ -1,18 +1,18 @@
-"use strict";
+'use strict';
 
 const {
-  app,
-  BrowserWindow,
-  Menu,
-  dialog,
-  Tray,
-  nativeImage,
-  ipcMain,
-  globalShortcut,
-} = require("electron");
+	app,
+	BrowserWindow,
+	Menu,
+	dialog,
+	Tray,
+	nativeImage,
+	ipcMain,
+	globalShortcut,
+} = require('electron');
 
-const path = require("path");
-const isExplicitDev = process.env.NODE_ENV === "development" || process.env.ELECTRON_DEV === "true";
+const path = require('path');
+const isExplicitDev = process.env.NODE_ENV === 'development' || process.env.ELECTRON_DEV === 'true';
 const { registerIpcHandlers } = require('./ipcHandlers.cjs');
 
 // Register IPC handlers (encapsulated in separate module)
@@ -24,361 +24,355 @@ let isQuiting = false;
 let mainWindow = null;
 let mainWindowUrl = null;
 
-app
-  .whenReady()
-  .then(() => {
-    createTray();
-    start();
-    createGlobalShortcuts();
-  })
-  .catch((err) => {
-    console.error("Failed during startup", err);
-    dialog.showErrorBox("Startup Error", String(err?.message || err));
-  });
+app.whenReady()
+	.then(() => {
+		createTray();
+		start();
+		createGlobalShortcuts();
+	})
+	.catch((err) => {
+		console.error('Failed during startup', err);
+		dialog.showErrorBox('Startup Error', String(err?.message || err));
+	});
 
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    if (server && server.close) server.close();
-    // Unregister global shortcuts
-    try {
-      globalShortcut.unregisterAll();
-    } catch (e) { }
-    app.quit();
-  }
+app.on('window-all-closed', () => {
+	if (process.platform !== 'darwin') {
+		if (server && server.close) server.close();
+		// Unregister global shortcuts
+		try {
+			globalShortcut.unregisterAll();
+		} catch (e) {}
+		app.quit();
+	}
 });
 
-app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) start();
+app.on('activate', () => {
+	if (BrowserWindow.getAllWindows().length === 0) start();
 });
 
 function getTrayIconPath() {
-  // In dev we can load directly from /public. In production the contents of /public
-  // are copied by Vite into /dist, which IS packaged (see build.files in package.json).
-  // So prefer dist/favicon.ico when app is packaged.
-  try {
-    const devPath = path.join(__dirname, "..", "public", "favicon.ico");
-    const prodPath = path.join(__dirname, "..", "dist", "favicon.ico");
-    const target = app.isPackaged ? prodPath : devPath;
-    return target;
-  } catch (e) {
-    // Fallback (should rarely happen)
-    return path.join(__dirname, "..", "dist", "favicon.ico");
-  }
+	// In dev we can load directly from /public. In production the contents of /public
+	// are copied by Vite into /dist, which IS packaged (see build.files in package.json).
+	// So prefer dist/favicon.ico when app is packaged.
+	try {
+		const devPath = path.join(__dirname, '..', 'public', 'favicon.ico');
+		const prodPath = path.join(__dirname, '..', 'dist', 'favicon.ico');
+		const target = app.isPackaged ? prodPath : devPath;
+		return target;
+	} catch (e) {
+		// Fallback (should rarely happen)
+		return path.join(__dirname, '..', 'dist', 'favicon.ico');
+	}
 }
 
 async function createTray() {
-  // Setup tray (small embedded transparent PNG used as icon)
-  try {
-    const iconPath = getTrayIconPath();
-    tray = new Tray(iconPath);
-    const trayMenu = Menu.buildFromTemplate([
-      {
-        label: "Add New Note",
-        click: () => {
-          openAddNewWindow();
-        },
-      },
-      {
-        label: "TagNotes",
-        click: () => {
-          BrowserWindow.getAllWindows().forEach((w) => w.show());
-        },
-      },
-      {
-        label: "Settings",
-        click: () => {
-          openSettingsWindow();
-        },
-      },
-      {
-        type: "separator",
-      },
-      {
-        label: "Quit",
-        click: () => {
-          isQuiting = true;
-          app.quit();
-        },
-      },
-    ]);
-    tray.setContextMenu(trayMenu);
-    tray.setToolTip("TagNote");
-    tray.on("click", () => {
-      openAddNewWindow();
-    });
-  } catch (e) {
-    console.error("Failed to create tray", e);
-  }
+	// Setup tray (small embedded transparent PNG used as icon)
+	try {
+		const iconPath = getTrayIconPath();
+		tray = new Tray(iconPath);
+		const trayMenu = Menu.buildFromTemplate([
+			{
+				label: 'Add New Note',
+				click: () => {
+					openAddNewWindow();
+				},
+			},
+			{
+				label: 'TagNotes',
+				click: () => {
+					BrowserWindow.getAllWindows().forEach((w) => w.show());
+				},
+			},
+			{
+				label: 'Settings',
+				click: () => {
+					openSettingsWindow();
+				},
+			},
+			{
+				type: 'separator',
+			},
+			{
+				label: 'Quit',
+				click: () => {
+					isQuiting = true;
+					app.quit();
+				},
+			},
+		]);
+		tray.setContextMenu(trayMenu);
+		tray.setToolTip('TagNote');
+		tray.on('click', () => {
+			openAddNewWindow();
+		});
+	} catch (e) {
+		console.error('Failed to create tray', e);
+	}
 }
 
 async function createGlobalShortcuts() {
-
-  // Register a global shortcut to open Add Entry modal (Ctrl+Alt+N)
-  try {
-    const reg2 = globalShortcut.register("Control+Alt+N", () => {
-      try {
-        //openAddEntryWindow("/add-entry");
-        console.log('Control+Alt+N pressed - would open Add Entry window');
-      } catch (err) {
-        console.error("Global shortcut Add Entry handler error", err);
-      }
-    });
-    if (!reg2) console.warn("Global shortcut (Add Entry) registration failed");
-  } catch (err) {
-    console.error("Failed to register Add Entry global shortcut", err);
-  }
+	// Register a global shortcut to open Add Entry modal (Ctrl+Alt+N)
+	try {
+		const reg2 = globalShortcut.register('Control+Alt+N', () => {
+			try {
+				//openAddEntryWindow("/add-entry");
+				console.log('Control+Alt+N pressed - would open Add Entry window');
+			} catch (err) {
+				console.error('Global shortcut Add Entry handler error', err);
+			}
+		});
+		if (!reg2) console.warn('Global shortcut (Add Entry) registration failed');
+	} catch (err) {
+		console.error('Failed to register Add Entry global shortcut', err);
+	}
 }
 
 function createMainWindow(url) {
-  console.log(">> Creating main window at", url);
+	console.log('>> Creating main window at', url);
 
-  const win = new BrowserWindow({
-    width: 1024,
-    height: 768,
-    show: false,
-    webPreferences: {
-      preload: path.join(__dirname, "preload.cjs"),
-      contextIsolation: true,
-      devTools: true,
-    },
-  });
+	const win = new BrowserWindow({
+		width: 1024,
+		height: 768,
+		show: false,
+		webPreferences: {
+			preload: path.join(__dirname, 'preload.cjs'),
+			contextIsolation: true,
+			devTools: true,
+		},
+	});
 
-  win.loadURL(url);
-  // track main window and its base URL
-  mainWindow = win;
-  mainWindowUrl = url;
+	win.loadURL(url);
+	// track main window and its base URL
+	mainWindow = win;
+	mainWindowUrl = url;
 
-  // In dev, open devtools so HMR errors are visible
-  if (!app.isPackaged) {
-    win.webContents.openDevTools({ mode: "right" });
+	// In dev, open devtools so HMR errors are visible
+	if (!app.isPackaged) {
+		win.webContents.openDevTools({ mode: 'right' });
 
-    // forward console messages from renderer to main's console
-    win.webContents.on(
-      "console-message",
-      (e, level, message, line, sourceId) => {
-        console.log("[renderer]", message, sourceId, line);
-      }
-    );
-  }
+		// forward console messages from renderer to main's console
+		win.webContents.on('console-message', (e, level, message, line, sourceId) => {
+			console.log('[renderer]', message, sourceId, line);
+		});
+	}
 
-  // minimize to tray behavior
-  win.on("minimize", (event) => {
-    // Prevent the default minimize and hide to tray instead
-    event.preventDefault();
-    win.hide();
-  });
+	// minimize to tray behavior
+	win.on('minimize', (event) => {
+		// Prevent the default minimize and hide to tray instead
+		event.preventDefault();
+		win.hide();
+	});
 
-  // When window is closed, clean up tray if quitting
-  win.on("close", (e) => {
-    if (!isQuiting) {
-      e.preventDefault();
-      win.hide();
-    }
-  });
+	// When window is closed, clean up tray if quitting
+	win.on('close', (e) => {
+		if (!isQuiting) {
+			e.preventDefault();
+			win.hide();
+		}
+	});
 
-  win.on("closed", () => {
-    if (mainWindow === win) {
-      mainWindow = null;
-      mainWindowUrl = null;
-    }
-  });
+	win.on('closed', () => {
+		if (mainWindow === win) {
+			mainWindow = null;
+			mainWindowUrl = null;
+		}
+	});
 }
 
 async function start() {
-  // Build application menu with "Say Hello"
-  try {
-    const template = [
-      {
-        label: "File",
-        submenu: [{ role: "quit" }],
-      },
-      {
-        label: "Actions",
-        submenu: [
-          {
-            label: "Say Hello",
-            click: () => {
-              dialog.showMessageBox({
-                type: "info",
-                title: "Greeting",
-                message: "Hello Vince",
-              });
-            },
-          },
-          {
-            label: "Add Entry",
-            click: () => {
-              try {
-                openAddNewWindow();
-              } catch (e) {
-                console.error(e);
-              }
-            },
-          },
-        ],
-      },
-    ];
-    const menu = Menu.buildFromTemplate(template);
-    // Hide the application menu (keep template available for programmatic use / tray)
-    Menu.setApplicationMenu(menu);
-  } catch (e) {
-    // non-fatal
-    console.error("Failed to set application menu", e);
-  }
+	// Build application menu with "Say Hello"
+	try {
+		const template = [
+			{
+				label: 'File',
+				submenu: [{ role: 'quit' }],
+			},
+			{
+				label: 'Actions',
+				submenu: [
+					{
+						label: 'Say Hello',
+						click: () => {
+							dialog.showMessageBox({
+								type: 'info',
+								title: 'Greeting',
+								message: 'Hello Vince',
+							});
+						},
+					},
+					{
+						label: 'Add Entry',
+						click: () => {
+							try {
+								openAddNewWindow();
+							} catch (e) {
+								console.error(e);
+							}
+						},
+					},
+				],
+			},
+		];
+		const menu = Menu.buildFromTemplate(template);
+		// Hide the application menu (keep template available for programmatic use / tray)
+		Menu.setApplicationMenu(menu);
+	} catch (e) {
+		// non-fatal
+		console.error('Failed to set application menu', e);
+	}
 
-  // First, if the user explicitly set a dev env, prefer that.
-  if (isExplicitDev) {
-    createMainWindow("http://localhost:8080");
-    return;
-  }
+	// First, if the user explicitly set a dev env, prefer that.
+	if (isExplicitDev) {
+		createMainWindow('http://localhost:8080');
+		return;
+	}
 
-  // In production/fallback, serve the built files from dist using express
-  const express = require("express");
-  const expressApp = express();
-  const distPath = path.join(__dirname, "..", "dist");
+	// In production/fallback, serve the built files from dist using express
+	const express = require('express');
+	const expressApp = express();
+	const distPath = path.join(__dirname, '..', 'dist');
 
-  expressApp.use(require("compression")());
-  expressApp.use(express.static(distPath));
+	expressApp.use(require('compression')());
+	expressApp.use(express.static(distPath));
 
-  expressApp.get("/", (req, res) => {
-    res.sendFile(path.join(distPath, "index.html"));
-  });
+	expressApp.get('/', (req, res) => {
+		res.sendFile(path.join(distPath, 'index.html'));
+	});
 
-  // Serve the SPA entry for /new so React Router can render NewNote
-  expressApp.get("/electron/NewNote", (req, res) => {
-    res.sendFile(path.join(distPath, "index.html"));
-  });
+	// Serve the SPA entry for /new so React Router can render NewNote
+	expressApp.get('/electron/NewNote', (req, res) => {
+		res.sendFile(path.join(distPath, 'index.html'));
+	});
 
-  expressApp.get("/electron/Viewer/:noteId", (req, res) => {
-    res.sendFile(path.join(distPath, "index.html"));
-  });
+	expressApp.get('/electron/Viewer/:noteId', (req, res) => {
+		res.sendFile(path.join(distPath, 'index.html'));
+	});
 
-  expressApp.get("/electron/Settings", (req, res) => {
-    res.sendFile(path.join(distPath, "index.html"));
-  });
+	expressApp.get('/electron/Settings', (req, res) => {
+		res.sendFile(path.join(distPath, 'index.html'));
+	});
 
+	const listener = expressApp.listen(0, () => {
+		const port = listener.address().port;
+		const url = `http://127.0.0.1:${port}`;
+		createMainWindow(url);
+	});
 
-  const listener = expressApp.listen(0, () => {
-    const port = listener.address().port;
-    const url = `http://127.0.0.1:${port}`;
-    createMainWindow(url);
-  });
-
-  server = listener;
+	server = listener;
 }
 
 // Opens a modal child window and navigates it to the given route
 function openAddNewWindow() {
-  try {
-    const parent = mainWindow && !mainWindow.isDestroyed() ? mainWindow : null;
-    const iconPath = getTrayIconPath();
+	try {
+		const parent = mainWindow && !mainWindow.isDestroyed() ? mainWindow : null;
+		const iconPath = getTrayIconPath();
 
+		const modal = new BrowserWindow({
+			width: 1024,
+			height: 768,
+			icon: nativeImage.createFromPath(iconPath),
+			parent,
+			modal: false,
+			show: true,
+			webPreferences: {
+				preload: path.join(__dirname, 'preload.cjs'),
+				contextIsolation: true,
+			},
+		});
 
-    const modal = new BrowserWindow({
-      width: 1024,
-      height: 768,
-      icon: nativeImage.createFromPath(iconPath),
-      parent,
-      modal: false,
-      show: true,
-      webPreferences: {
-        preload: path.join(__dirname, "preload.cjs"),
-        contextIsolation: true,
-      },
-    });
+		modal.setMenu(null);
 
-    modal.setMenu(null);
+		let target;
+		// If mainWindowUrl is an http dev server, load dev route
+		if (mainWindowUrl && mainWindowUrl.startsWith('http')) {
+			const base = mainWindowUrl.replace(/\/$/, '');
+			target = `${base}/electron/NewNote`;
+		} else {
+			// production: load built index.html and use hash routing to reach the route
+			const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
+			target = `file://${indexPath}/electron/NewNote`;
+		}
 
-    let target;
-    // If mainWindowUrl is an http dev server, load dev route
-    if (mainWindowUrl && mainWindowUrl.startsWith("http")) {
-      const base = mainWindowUrl.replace(/\/$/, "");
-      target = `${base}/electron/NewNote`;
-    } else {
-      // production: load built index.html and use hash routing to reach the route
-      const indexPath = path.join(__dirname, "..", "dist", "index.html");
-      target = `file://${indexPath}/electron/NewNote`;
-    }
+		console.log('Opening Add New window at', target);
 
-    console.log('Opening Add New window at', target);
+		modal.loadURL(target);
 
-    modal.loadURL(target);
+		// open devtools for modal if in dev
+		//if (!app.isPackaged) {
+		modal.webContents.openDevTools({ mode: 'right' });
+		//}
 
-    // open devtools for modal if in dev
-    //if (!app.isPackaged) {
-    modal.webContents.openDevTools({ mode: "right" });
-    //}
+		// forward console messages from modal to main process for easier debugging
+		modal.webContents.on('console-message', (e, level, message, line, sourceId) => {
+			console.log('[modal]', message, sourceId, line);
+		});
 
-    // forward console messages from modal to main process for easier debugging
-    modal.webContents.on("console-message", (e, level, message, line, sourceId) => {
-      console.log("[modal]", message, sourceId, line);
-    });
+		// Close on ESC key from within modal (renderer may not need its own listener now)
+		modal.webContents.on('before-input-event', (event, input) => {
+			if (input.type === 'keyDown' && input.key === 'Escape') {
+				modal.close();
+			}
+		});
 
-    // Close on ESC key from within modal (renderer may not need its own listener now)
-    modal.webContents.on('before-input-event', (event, input) => {
-      if (input.type === 'keyDown' && input.key === 'Escape') {
-        modal.close();
-      }
-    });
-
-    modal.on("closed", () => { /* noop */ });
-  } catch (err) {
-    console.error("Failed to open Add Entry modal", err);
-  }
+		modal.on('closed', () => {
+			/* noop */
+		});
+	} catch (err) {
+		console.error('Failed to open Add Entry modal', err);
+	}
 }
 
 function openSettingsWindow() {
-  try {
-    const parent = mainWindow && !mainWindow.isDestroyed() ? mainWindow : null;
-    const iconPath = getTrayIconPath();
+	try {
+		const parent = mainWindow && !mainWindow.isDestroyed() ? mainWindow : null;
+		const iconPath = getTrayIconPath();
 
+		const modal = new BrowserWindow({
+			width: 1024,
+			height: 768,
+			icon: nativeImage.createFromPath(iconPath),
+			parent,
+			modal: false,
+			show: true,
+			webPreferences: {
+				preload: path.join(__dirname, 'preload.cjs'),
+				contextIsolation: true,
+			},
+		});
 
-    const modal = new BrowserWindow({
-      width: 1024,
-      height: 768,
-      icon: nativeImage.createFromPath(iconPath),
-      parent,
-      modal: false,
-      show: true,
-      webPreferences: {
-        preload: path.join(__dirname, "preload.cjs"),
-        contextIsolation: true,
-      },
-    });
+		modal.setMenu(null);
 
-    modal.setMenu(null);
+		let target;
+		// If mainWindowUrl is an http dev server, load dev route
+		if (mainWindowUrl && mainWindowUrl.startsWith('http')) {
+			const base = mainWindowUrl.replace(/\/$/, '');
+			target = `${base}/electron/Settings`;
+		} else {
+			// production: load built index.html and use hash routing to reach the route
+			const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
+			target = `file://${indexPath}/electron/Settings`;
+		}
 
-    let target;
-    // If mainWindowUrl is an http dev server, load dev route
-    if (mainWindowUrl && mainWindowUrl.startsWith("http")) {
-      const base = mainWindowUrl.replace(/\/$/, "");
-      target = `${base}/electron/Settings`;
-    } else {
-      // production: load built index.html and use hash routing to reach the route
-      const indexPath = path.join(__dirname, "..", "dist", "index.html");
-      target = `file://${indexPath}/electron/Settings`;
-    }
+		console.log('Opening Settings window at', target);
 
-    console.log('Opening Settings window at', target);
+		modal.loadURL(target);
 
-    modal.loadURL(target);
+		// open devtools for modal if in dev
+		//if (!app.isPackaged) {
+		modal.webContents.openDevTools({ mode: 'right' });
+		//}
 
-    // open devtools for modal if in dev
-    //if (!app.isPackaged) {
-    modal.webContents.openDevTools({ mode: "right" });
-    //}
+		// forward console messages from modal to main process for easier debugging
+		modal.webContents.on('console-message', (e, level, message, line, sourceId) => {
+			console.log('[modal]', message, sourceId, line);
+		});
 
-    // forward console messages from modal to main process for easier debugging
-    modal.webContents.on("console-message", (e, level, message, line, sourceId) => {
-      console.log("[modal]", message, sourceId, line);
-    });
-
-    modal.on("closed", () => {
-      // noop
-    });
-  } catch (err) {
-    console.error("Failed to open Settings modal", err);
-  }
+		modal.on('closed', () => {
+			// noop
+		});
+	} catch (err) {
+		console.error('Failed to open Settings modal', err);
+	}
 }
 
 // // Handle form submission from renderer

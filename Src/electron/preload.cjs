@@ -1,10 +1,10 @@
-"use strict";
+'use strict';
 
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
 	submitEntry: (data) => ipcRenderer.invoke('submit-entry', data),
-    openAddNewNotesWindow: () => ipcRenderer.invoke('open-add-new-notes-window'),
+	openAddNewNotesWindow: () => ipcRenderer.invoke('open-add-new-notes-window'),
 	setDirectoryHandle: async (handle) => {
 		console.log('>>>>> preload: Setting directory handle', handle);
 		return await ipcRenderer.invoke('set-directory-handle', handle);
@@ -36,13 +36,38 @@ contextBridge.exposeInMainWorld('electronAPI', {
 		return await ipcRenderer.invoke('get-note', dirPath, noteId);
 	},
 	addSection: async (dirPath, noteId, sectionType, width, height, x, y) => {
-		return await ipcRenderer.invoke('add-section', dirPath, noteId, sectionType, width, height, x, y);
+		return await ipcRenderer.invoke(
+			'add-section',
+			dirPath,
+			noteId,
+			sectionType,
+			width,
+			height,
+			x,
+			y,
+		);
 	},
 	addImageSection: async (dirPath, noteId, imageData, width, height, x, y) => {
-		return await ipcRenderer.invoke('add-image-section', dirPath, noteId, imageData, width, height, x, y);
+		return await ipcRenderer.invoke(
+			'add-image-section',
+			dirPath,
+			noteId,
+			imageData,
+			width,
+			height,
+			x,
+			y,
+		);
 	},
 	updateSectionContent: async (dirPath, noteId, sectionId, content, language) => {
-		return await ipcRenderer.invoke('update-section-content', dirPath, noteId, sectionId, content, language);
+		return await ipcRenderer.invoke(
+			'update-section-content',
+			dirPath,
+			noteId,
+			sectionId,
+			content,
+			language,
+		);
 	},
 	updateSectionTitle: async (dirPath, noteId, sectionId, title) => {
 		return await ipcRenderer.invoke('update-section-title', dirPath, noteId, sectionId, title);
@@ -61,5 +86,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
 	},
 	removeTag: async (dirPath, noteId, tag) => {
 		return await ipcRenderer.invoke('remove-tag', dirPath, noteId, tag);
-	}
+	},
 });

@@ -1,61 +1,61 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Vite Dev Server (terminal)",
-            "type": "node-terminal",
-            "request": "launch",
-            "command": "npm run dev",
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "name": "Chrome: Vite + React",
-            "type": "chrome",
-            "request": "launch",
-            "url": "http://localhost:8080",
-            "webRoot": "${workspaceFolder}/src",
-            "preLaunchTask": "npm: dev",
-            "smartStep": true,
-            "sourceMapPathOverrides": {
-                "/@fs/*": "${workspaceFolder}/*",
-                "/src/*": "${workspaceFolder}/src/*",
-                "/*": "${workspaceFolder}/*"
-            }
-        },
-        {
-            "name": "Edge: Vite + React",
-            "type": "msedge",
-            "request": "launch",
-            "url": "http://localhost:8080",
-            "webRoot": "${workspaceFolder}/src",
-            "preLaunchTask": "npm: dev",
-            "smartStep": true,
-            "sourceMapPathOverrides": {
-                "/@fs/*": "${workspaceFolder}/*",
-                "/src/*": "${workspaceFolder}/src/*",
-                "/*": "${workspaceFolder}/*"
-            }
-        },
-        {
-            "name": "Electron: Launch (dev)",
-            "type": "node-terminal",
-            "request": "launch",
-            "command": "npm run electron:dev",
-            "cwd": "${workspaceFolder}"
-        }
-    ],
-    "compounds": [
-        {
-            "name": "Debug (Chrome)",
-            "configurations": ["Chrome: Vite + React"]
-        },
-        {
-            "name": "Debug (Edge)",
-            "configurations": ["Edge: Vite + React"]
-        },
-        {
-            "name": "Electron (All)",
-            "configurations": ["Electron: Launch (dev)"]
-        }
-    ]
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Vite Dev Server (terminal)",
+			"type": "node-terminal",
+			"request": "launch",
+			"command": "npm run dev",
+			"cwd": "${workspaceFolder}"
+		},
+		{
+			"name": "Chrome: Vite + React",
+			"type": "chrome",
+			"request": "launch",
+			"url": "http://localhost:8080",
+			"webRoot": "${workspaceFolder}/src",
+			"preLaunchTask": "npm: dev",
+			"smartStep": true,
+			"sourceMapPathOverrides": {
+				"/@fs/*": "${workspaceFolder}/*",
+				"/src/*": "${workspaceFolder}/src/*",
+				"/*": "${workspaceFolder}/*"
+			}
+		},
+		{
+			"name": "Edge: Vite + React",
+			"type": "msedge",
+			"request": "launch",
+			"url": "http://localhost:8080",
+			"webRoot": "${workspaceFolder}/src",
+			"preLaunchTask": "npm: dev",
+			"smartStep": true,
+			"sourceMapPathOverrides": {
+				"/@fs/*": "${workspaceFolder}/*",
+				"/src/*": "${workspaceFolder}/src/*",
+				"/*": "${workspaceFolder}/*"
+			}
+		},
+		{
+			"name": "Electron: Launch (dev)",
+			"type": "node-terminal",
+			"request": "launch",
+			"command": "npm run electron:dev",
+			"cwd": "${workspaceFolder}"
+		}
+	],
+	"compounds": [
+		{
+			"name": "Debug (Chrome)",
+			"configurations": ["Chrome: Vite + React"]
+		},
+		{
+			"name": "Debug (Edge)",
+			"configurations": ["Edge: Vite + React"]
+		},
+		{
+			"name": "Electron (All)",
+			"configurations": ["Electron: Launch (dev)"]
+		}
+	]
 }

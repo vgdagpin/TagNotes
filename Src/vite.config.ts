@@ -7,16 +7,16 @@ import { fileURLToPath } from 'node:url';
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig({
-    plugins: [react()],
-    server: {
-        port: 8080,       // Changed from default 5173
-        strictPort: true, // Fail if 8080 is taken instead of incrementing
-        open: true        // Automatically open browser
-    },
-    resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-      "@shared": path.resolve(__dirname, "./src/shared"),
-    },
-  },
+	plugins: [react()],
+	server: {
+		port: 8080, // Changed from default 5173
+		strictPort: true, // Fail if 8080 is taken instead of incrementing
+		open: true, // Automatically open browser
+	},
+	resolve: {
+		alias: {
+			'@': path.resolve(__dirname, './src'),
+			'@shared': path.resolve(__dirname, './src/shared'),
+		},
+	},
 });

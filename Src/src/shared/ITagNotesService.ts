@@ -1,4 +1,4 @@
-import { Note, NoteSummary, Section } from "./models";
+import { Note, NoteSummary, Section } from './models';
 
 export interface ITagNotesService {
 	hasSelectedDirectory(): Promise<boolean>;
@@ -10,12 +10,36 @@ export interface ITagNotesService {
 	createNote(initial?: Partial<Note>): Promise<Note>;
 	getNote(noteId: string): Promise<Note>;
 
-	addSection(noteId: string, sectionType: Section['type'], width: number, height: number, x: number, y: number): Promise<Section>;
-	addImageSection(noteId: string, imageData: string, width: number, height: number, x: number, y: number): Promise<Section>;
+	addSection(
+		noteId: string,
+		sectionType: Section['type'],
+		width: number,
+		height: number,
+		x: number,
+		y: number,
+	): Promise<Section>;
+	addImageSection(
+		noteId: string,
+		imageData: string,
+		width: number,
+		height: number,
+		x: number,
+		y: number,
+	): Promise<Section>;
 
-	updateSectionContent(noteId: string, sectionId: string, content: string, language?: string | null | undefined): Promise<void>;
+	updateSectionContent(
+		noteId: string,
+		sectionId: string,
+		content: string,
+		language?: string | null | undefined,
+	): Promise<void>;
 	updateSectionPosition(noteId: string, sectionId: string, x: number, y: number): Promise<void>;
-	updateSectionDimensions(noteId: string, sectionId: string, width: number, height: number): Promise<void>;
+	updateSectionDimensions(
+		noteId: string,
+		sectionId: string,
+		width: number,
+		height: number,
+	): Promise<void>;
 	convertSectionType(noteId: string, sectionId: string, newType: Section['type']): Promise<void>;
 	updateTitle(noteId: string, title: string): Promise<void>;
 	deleteSection(noteId: string, sectionId: string): Promise<void>;

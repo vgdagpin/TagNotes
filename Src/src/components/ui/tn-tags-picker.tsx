@@ -1,156 +1,155 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from 'react';
 import {
-    Tag,
-    TagPicker,
-    TagPickerControl,
-    TagPickerGroup,
-    TagPickerInput,
-    TagPickerList,
-    TagPickerOption,
-    TagPickerProps,
-    useTagPickerFilter
-} from "@fluentui/react-components";
-import { useTagNotesContext } from "@/contexts/TagNotesContextProvider";
+	Tag,
+	TagPicker,
+	TagPickerControl,
+	TagPickerGroup,
+	TagPickerInput,
+	TagPickerList,
+	TagPickerOption,
+	TagPickerProps,
+	useTagPickerFilter,
+} from '@fluentui/react-components';
+import { useTagNotesContext } from '@/contexts/TagNotesContextProvider';
 
 type TnTagsPickerProps = {
-    noteId: string;
-    noteTags: string[];
-    directoryLoaded: boolean | undefined;
+	noteId: string;
+	noteTags: string[];
+	directoryLoaded: boolean | undefined;
 
-    onTagsUpdated?: (tags: string[]) => void;
+	onTagsUpdated?: (tags: string[]) => void;
 };
 
 const TnTagsPicker = ({ noteId, noteTags, directoryLoaded, onTagsUpdated }: TnTagsPickerProps) => {
-    const [isDirLoaded, setIsDirLoaded] = useState<boolean | undefined>(directoryLoaded);
+	const [isDirLoaded, setIsDirLoaded] = useState<boolean | undefined>(directoryLoaded);
 
-    const [defaultTags, setDefaultTags] = useState<string[]>([]);
-    const [inputValue, setInputValue] = useState("");
-    const [selectedTags, setSelectedTags] = useState<string[]>(noteTags);
-    const tagNotesContext = useTagNotesContext();
+	const [defaultTags, setDefaultTags] = useState<string[]>([]);
+	const [inputValue, setInputValue] = useState('');
+	const [selectedTags, setSelectedTags] = useState<string[]>(noteTags);
+	const tagNotesContext = useTagNotesContext();
 
-    const onOptionSelect: TagPickerProps["onOptionSelect"] = async (_, data) => {
-        if (data.value === "no-matches") {
-            return;
-        }
+	const onOptionSelect: TagPickerProps['onOptionSelect'] = async (_, data) => {
+		if (data.value === 'no-matches') {
+			return;
+		}
 
-        setSelectedTags(data.selectedOptions);
+		setSelectedTags(data.selectedOptions);
 
-        onTagsUpdated?.call(null, data.selectedOptions);
+		onTagsUpdated?.call(null, data.selectedOptions);
 
-        console.log("Option selected:", data.value, data.selectedOptions);
+		console.log('Option selected:', data.value, data.selectedOptions);
 
-        setInputValue("");
+		setInputValue('');
 
-        if (data.selectedOptions.includes(data.value)) {
-            await tagNotesContext.addTag(noteId, data.value);
-        } else {
-            removeTagFromNote(data.value);
-        }
-    };
+		if (data.selectedOptions.includes(data.value)) {
+			await tagNotesContext.addTag(noteId, data.value);
+		} else {
+			removeTagFromNote(data.value);
+		}
+	};
 
-    const children = useTagPickerFilter({
-        query: inputValue,
-        options: defaultTags,
-        noOptionsElement: (
-            <TagPickerOption value="no-matches">{inputValue}</TagPickerOption>
-        ),
-        renderOption: (option) => (
-            <TagPickerOption key={option} value={option}>{option}</TagPickerOption>
-        ),
+	const children = useTagPickerFilter({
+		query: inputValue,
+		options: defaultTags,
+		noOptionsElement: <TagPickerOption value="no-matches">{inputValue}</TagPickerOption>,
+		renderOption: (option) => (
+			<TagPickerOption key={option} value={option}>
+				{option}
+			</TagPickerOption>
+		),
 
-        filter: (option) => !selectedTags.includes(option) && option.toLowerCase().includes(inputValue.toLowerCase()),
-    });
+		filter: (option) =>
+			!selectedTags.includes(option) &&
+			option.toLowerCase().includes(inputValue.toLowerCase()),
+	});
 
-    // Locally compute filtered options to control Enter key behavior
-    const filteredOptions = useMemo(() => {
-        const q = inputValue.toLowerCase();
-        return defaultTags.filter(
-            (option) => !selectedTags.includes(option) && option.toLowerCase().includes(q)
-        );
-    }, [defaultTags, selectedTags, inputValue]);
+	// Locally compute filtered options to control Enter key behavior
+	const filteredOptions = useMemo(() => {
+		const q = inputValue.toLowerCase();
+		return defaultTags.filter(
+			(option) => !selectedTags.includes(option) && option.toLowerCase().includes(q),
+		);
+	}, [defaultTags, selectedTags, inputValue]);
 
-    useEffect(() => {
-        setIsDirLoaded(directoryLoaded);
-    }, [directoryLoaded]);
+	useEffect(() => {
+		setIsDirLoaded(directoryLoaded);
+	}, [directoryLoaded]);
 
-    useEffect(() => {
-        const fetchTags = async () => {
-            const tags = await tagNotesContext.getDefaultTags();
+	useEffect(() => {
+		const fetchTags = async () => {
+			const tags = await tagNotesContext.getDefaultTags();
 
-            setDefaultTags(tags);
-        };
-        fetchTags();
-    }, []);
+			setDefaultTags(tags);
+		};
+		fetchTags();
+	}, []);
 
-    // Remove tag from note
-    const removeTagFromNote = async (tagToRemove: string) => {
-        if (!isDirLoaded) return;
+	// Remove tag from note
+	const removeTagFromNote = async (tagToRemove: string) => {
+		if (!isDirLoaded) return;
 
-        await tagNotesContext.removeTag(noteId, tagToRemove);
-    };
+		await tagNotesContext.removeTag(noteId, tagToRemove);
+	};
 
-    useEffect(() => {
-        setSelectedTags(noteTags);
-    }, [noteTags]);
+	useEffect(() => {
+		setSelectedTags(noteTags);
+	}, [noteTags]);
 
-    const handleKeyDown = async (event: React.KeyboardEvent) => {
-        if (event.key === "Enter" && inputValue) {
-            const normalized = inputValue.trim().toLowerCase();
-            if (!normalized) return;
+	const handleKeyDown = async (event: React.KeyboardEvent) => {
+		if (event.key === 'Enter' && inputValue) {
+			const normalized = inputValue.trim().toLowerCase();
+			if (!normalized) return;
 
-            if (normalized.length < 3 || normalized.length > 15) {
-                setInputValue("");
-                return;
-            }
+			if (normalized.length < 3 || normalized.length > 15) {
+				setInputValue('');
+				return;
+			}
 
+			const hasMatches = filteredOptions.length > 0;
+			if (hasMatches) {
+				// There are suggestions; let the picker handle selection instead of adding a new tag
+				return;
+			}
 
-            const hasMatches = filteredOptions.length > 0;
-            if (hasMatches) {
-                // There are suggestions; let the picker handle selection instead of adding a new tag
-                return;
-            }
+			setDefaultTags((prev) => [...prev, normalized]);
 
+			setSelectedTags((curr) => (curr.includes(normalized) ? curr : [...curr, normalized]));
 
-            setDefaultTags(prev => [...prev, normalized]);
+			onTagsUpdated?.call(
+				null,
+				selectedTags.includes(normalized) ? selectedTags : [...selectedTags, normalized],
+			);
 
-            setSelectedTags((curr) =>
-                curr.includes(normalized) ? curr : [...curr, normalized]
-            );
+			setInputValue('');
 
-            onTagsUpdated?.call(null, selectedTags.includes(normalized) ? selectedTags : [...selectedTags, normalized]);
+			await tagNotesContext.addTag(noteId, normalized);
+		}
+	};
 
-            setInputValue("");
+	return (
+		<>
+			<TagPicker onOptionSelect={onOptionSelect} selectedOptions={selectedTags}>
+				<TagPickerControl>
+					<TagPickerGroup>
+						{selectedTags.map((option) => (
+							<Tag key={option} shape="rounded" value={option}>
+								{option}
+							</Tag>
+						))}
+					</TagPickerGroup>
 
-            await tagNotesContext.addTag(noteId, normalized);
-        }
-    };
+					<TagPickerInput
+						value={inputValue}
+						placeholder="Add tag..."
+						onChange={(e) => setInputValue(e.target.value)}
+						onKeyDown={handleKeyDown}
+					/>
+				</TagPickerControl>
 
-    return (
-        <>
-            <TagPicker
-                onOptionSelect={onOptionSelect}
-                selectedOptions={selectedTags}
-            >
-                <TagPickerControl>
-                    <TagPickerGroup>
-                        {selectedTags.map((option) => (
-                            <Tag key={option} shape="rounded" value={option}>{option}</Tag>
-                        ))}
-                    </TagPickerGroup>
-
-                    <TagPickerInput
-                        value={inputValue}
-                        placeholder="Add tag..."
-                        onChange={(e) => setInputValue(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                    />
-
-                </TagPickerControl>
-
-                <TagPickerList>{children}</TagPickerList>
-            </TagPicker>
-        </>
-    );
+				<TagPickerList>{children}</TagPickerList>
+			</TagPicker>
+		</>
+	);
 };
 
 export default TnTagsPicker;
